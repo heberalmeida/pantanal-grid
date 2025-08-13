@@ -1,3 +1,4 @@
+// playground/vite.config.ts
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
@@ -5,19 +6,25 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+const base = process.env.VITE_BASE ?? '/'
+
 export default defineConfig({
+  base,
   plugins: [vue()],
   resolve: {
     alias: {
-      '@pantanal/grid': path.resolve(__dirname, '../packages/pantanal-grid/src')
-    }
+      '@pantanal/grid': path.resolve(__dirname, '../packages/pantanal-grid/src'),
+    },
   },
   optimizeDeps: {
-    // não tente pré-empacotar a lib local
-    exclude: ['@pantanal/grid']
+    exclude: ['@pantanal/grid'],
   },
   server: {
     port: 5173,
-    open: true
-  }
+    open: true,
+  },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
 })

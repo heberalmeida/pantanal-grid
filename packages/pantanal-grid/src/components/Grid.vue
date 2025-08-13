@@ -146,7 +146,7 @@ function nextPage() { page.value = Math.min(totalPages(), page.value + 1) }
 const { focusRow, focusCol, onKeydown } = useKeyboardNav()
 
 /** Persistência */
-const persist = usePersist(props.persistStateKey, {})
+const persist = usePersist(props.persistStateKey)
 onMounted(() => {
   const loaded = persist.load() as any
   if (!loaded) return
@@ -175,7 +175,7 @@ watch([sortState, page, pageSize, filters, order, widths], () => {
     <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
       <div v-if="props.selectable" class="v3grid__cell">
         <input class="v3grid__checkbox" type="checkbox"
-          :checked="visibleRows.length && visibleRows.every(r => selectedKeys.has((r as any)[keyFieldStr]))"
+          :checked="visibleRows.length > 0 && visibleRows.every(r => selectedKeys.has((r as any)[keyFieldStr]))"
           :indeterminate="visibleRows.some(r => selectedKeys.has((r as any)[keyFieldStr])) &&
             !visibleRows.every(r => selectedKeys.has((r as any)[keyFieldStr]))
             " @change="toggleAllVisible(visibleRows)" />

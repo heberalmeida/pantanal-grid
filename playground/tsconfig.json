@@ -3,5 +3,12 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@pantanal/grid": ["../packages/pantanal-grid/src/index.ts"],
+      "@pantanal/grid/*": ["../packages/pantanal-grid/src/*"]
+    }
+  }
 }

@@ -1,12 +1,14 @@
-import { onMounted, watch } from 'vue'
+import { onMounted } from 'vue'
 
-export function usePersist<T extends object>(key?: string, state?: T) {
+export function usePersist<T extends object>(key?: string) {
   function load(): Partial<T> | null {
     if (!key) return null
     try {
       const raw = localStorage.getItem(key)
-      return raw ? JSON.parse(raw) as Partial<T> : null
-    } catch { return null }
+      return raw ? (JSON.parse(raw) as Partial<T>) : null
+    } catch {
+      return null
+    }
   }
   function save(v: T) {
     if (!key) return

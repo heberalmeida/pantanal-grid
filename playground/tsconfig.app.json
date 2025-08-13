@@ -1,6 +1,11 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@pantanal/grid": ["../packages/pantanal-grid/src/index.ts"],
+      "@pantanal/grid/*": ["../packages/pantanal-grid/src/*"]
+    },
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
 
     /* Linting */
