@@ -2,6 +2,8 @@
 
 A modern data grid for **Vue 3**, styled to play nicely with **Tailwind**. Ships with a Vite-based playground and supports sorting, filtering, selection, client/server pagination, column resize & reorder, keyboard navigation, **virtual scroll**, and **i18n** (pt/en/es).
 
+**Live demo:** [https://heberalmeida.github.io/pantanal-grid/](https://heberalmeida.github.io/pantanal-grid/)
+
 ## layout
 - `packages/pantanal-grid` — the **@pantanal/grid** library package
 - `playground` — Vite app with example pages: `/basic`, `/i18n/en`, `/i18n/es`, `/virtual`, `/server`
