@@ -1,0 +1,13 @@
+{
+  "name": "pantanal-grid-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "playground"
+  ],
+  "scripts": {
+    "dev": "yarn workspace pantanal-grid-playground dev",
+    "build": "yarn workspace @pantanal/grid build",
+    "test": "yarn workspace @pantanal/grid test"
+  }
+}

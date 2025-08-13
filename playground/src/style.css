@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* tema padrão (a lib usa estas vars também) */
+:root{
+  --grid-bg:#ffffff;
+  --grid-border:#e5e7eb;
+  --grid-text:#111827;
+  --grid-header:#f3f4f6;
+  --grid-accent:#18a058;
+}
+[data-theme="dark"]{
+  --grid-bg:#0b1220;
+  --grid-border:#1f2937;
+  --grid-text:#e5e7eb;
+  --grid-header:#111827;
+}
