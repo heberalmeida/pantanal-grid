@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { PantanalGrid } from '@pantanalms/grid'
+import { PantanalGrid } from '@pantanal/grid'
 const rows = ref(Array.from({ length: 50 }, (_, i) => ({ id: i+1, name: `Item ${i+1}`, price: Math.round(Math.random()*1000)/100 })))
 const columns = [
   { field:'id', title:'ID', width:80, sortable:true, filterable:true },

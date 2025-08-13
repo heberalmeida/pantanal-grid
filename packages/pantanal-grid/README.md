@@ -5,7 +5,7 @@ A modern data grid for **Vue 3**, styled to play nicely with **Tailwind**. Ships
 **Live demo:** [https://heberalmeida.github.io/pantanal-grid/](https://heberalmeida.github.io/pantanal-grid/)
 
 ## layout
-- `packages/pantanal-grid` — the **@pantanalms/grid** library package
+- `packages/pantanal-grid` — the **@pantanal/grid** library package
 - `playground` — Vite app with example pages: `/basic`, `/i18n/en`, `/i18n/es`, `/virtual`, `/server`
 
 ## Core features
@@ -27,11 +27,11 @@ A modern data grid for **Vue 3**, styled to play nicely with **Tailwind**. Ships
 yarn
 yarn dev   # http://localhost:5173
 ```
-The playground aliases `@pantanalms/grid` to the local source and uses Tailwind.
+The playground aliases `@pantanal/grid` to the local source and uses Tailwind.
 
 ## Install (in your app)
 ```bash
-yarn add @pantanalms/grid
+yarn add @pantanal/grid
 # peer deps in your app:
 # yarn add vue@^3
 # yarn add -D tailwindcss postcss autoprefixer
@@ -40,7 +40,7 @@ yarn add @pantanalms/grid
 ## Minimal usage
 ```vue
 <script setup lang="ts">
-import { PantanalGrid } from '@pantanalms/grid'
+import { PantanalGrid } from '@pantanal/grid'
 
 const rows = [{ id: 1, name: 'Alpha', price: 9.9 }]
 const columns = [
@@ -140,7 +140,7 @@ export async function fetchProducts(page: number, pageSize: number, query?: stri
 ```vue
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
-import { PantanalGrid, type FilterDescriptor, type SortDescriptor } from '@pantanalms/grid'
+import { PantanalGrid, type FilterDescriptor, type SortDescriptor } from '@pantanal/grid'
 import { fetchProducts, type Product } from './dummyjson'
 
 const rows = ref<Product[]>([])

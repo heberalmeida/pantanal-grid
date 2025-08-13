@@ -13,11 +13,11 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@pantanalms/grid': path.resolve(__dirname, '../packages/pantanal-grid/src'),
+      '@pantanal/grid': path.resolve(__dirname, '../packages/pantanal-grid/src'),
     },
   },
   optimizeDeps: {
-    exclude: ['@pantanalms/grid'],
+    exclude: ['@pantanal/grid'],
   },
   server: {
     port: 5173,

@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { PantanalGrid } from '@pantanalms/grid'
+import { PantanalGrid } from '@pantanal/grid'
 
 const rows = ref(Array.from({ length: 5000 }, (_, i) => ({
   id: i + 1,

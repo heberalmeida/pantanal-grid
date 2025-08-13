@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
-import { PantanalGrid, type FilterDescriptor, type SortDescriptor } from '@pantanalms/grid'
+import { PantanalGrid, type FilterDescriptor, type SortDescriptor } from '@pantanal/grid'
 import { fetchProducts, type Product } from '../api/dummyjson'
 
 const rows = ref<Product[]>([])
