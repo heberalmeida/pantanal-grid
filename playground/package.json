@@ -9,8 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@pantanal/grid": "0.0.1",
-    "vue": "^3.5.18"
+    "@pantanal/grid": "link:../packages/pantanal-grid",
+    "vue": "^3.5.18",
+    "vue-router": "^4.4.0"
   },
   "devDependencies": {
     "@types/node": "^24.2.1",

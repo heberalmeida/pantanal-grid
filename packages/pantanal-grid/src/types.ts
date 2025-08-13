@@ -63,6 +63,10 @@ export interface GridProps<T = Row> {
   /** Colunas */
   enableColumnResize?: boolean
   enableColumnReorder?: boolean
+
+  /** Server-side data (desativa sort/filter/paginação locais) */
+  serverSide?: boolean
+  total?: number        // total remoto (para paginação)
 }
 
 export interface GridEmits {
