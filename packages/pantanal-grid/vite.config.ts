@@ -1,21 +1,20 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import dts from 'vite-plugin-dts'
+import { resolve } from 'path'
 
 export default defineConfig({
-  plugins: [vue(), dts({ rollupTypes: true })],
+  plugins: [vue(), dts({ insertTypesEntry: true })],
   build: {
     lib: {
-      entry: 'src/index.ts',
+      entry: resolve(__dirname, 'src/index.ts'),
       name: 'PantanalGrid',
-      fileName: (format) => ({ es: 'index.js', umd: 'index.umd.cjs' }[format]!),
-      formats: ['es', 'umd']
+      formats: ['es', 'umd'],
+      fileName: (format) => format === 'es' ? 'index.es.js' : 'index.umd.cjs'
     },
     rollupOptions: {
       external: ['vue'],
-      output: {
-        globals: { vue: 'Vue' }
-      }
+      output: { globals: { vue: 'Vue' } }
     }
   }
 })

@@ -7,8 +7,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@pantanal/grid": ["../packages/pantanal-grid/src/index.ts"],
-      "@pantanal/grid/*": ["../packages/pantanal-grid/src/*"]
+      "@pantanalms/grid": ["../packages/pantanal-grid/src/index.ts"],
+      "@pantanalms/grid/*": ["../packages/pantanal-grid/src/*"]
     }
   }
 }

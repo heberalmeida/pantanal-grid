@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "yarn workspace pantanal-grid-playground dev",
-    "build": "yarn workspace @pantanal/grid build",
-    "test": "yarn workspace @pantanal/grid test"
+    "build": "yarn workspace @pantanalms/grid build",
+    "test": "yarn workspace @pantanalms/grid test"
   }
 }

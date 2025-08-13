@@ -1,7 +1,7 @@
 {
   "name": "pantanal-grid-playground",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@pantanal/grid": "link:../packages/pantanal-grid",
+    "@pantanalms/grid": "link:../packages/pantanal-grid",
     "vue": "^3.5.18",
     "vue-router": "^4.4.0"
   },

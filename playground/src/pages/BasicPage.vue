@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { PantanalGrid, type SortDescriptor, type FilterDescriptor } from '@pantanal/grid'
+import { PantanalGrid, type SortDescriptor, type FilterDescriptor } from '@pantanalms/grid'
 
 const rows = ref(Array.from({ length: 150 }, (_, i) => ({
   id: i + 1,
