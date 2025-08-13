@@ -100,16 +100,26 @@ watch(filters, v => emit('update:filter', v))
 function headerTemplate(cols: ColumnDef[]) {
   ensureOrder(); ensureWidths()
   const ordered = mapColumns(cols)
-  return ordered.map((c, idx) => widths.value[idx] ? `${widths.value[idx]}px` : (c.width ? `${c.width}px` : 'minmax(0,1fr)')).join(' ')
+  const widthsList = ordered.map((c, idx) =>
+    widths.value[idx]
+      ? `${widths.value[idx]}px`
+      : (c.width ? `${c.width}px` : 'minmax(0,1fr)')
+  )
+  return (props.selectable ? ['52px', ...widthsList] : widthsList).join(' ')
 }
-function bodyTemplate(cols: ColumnDef[]) { return headerTemplate(cols) }
+
+function bodyTemplate(cols: ColumnDef[]) {
+  return headerTemplate(cols)
+}
+
+
 function sortIcon(c: ColumnDef) {
   const s = sortState.value.find(s => s.field === String(c.field))
   if (!s) return ''
   return s.dir === 'asc' ? '▲' : '▼'
 }
 function toggleSort(col: ColumnDef) {
-  if (!col.sortable || props.serverSide) return // server-side: não faz sort local
+  if (!col.sortable) return
   const cur = sortState.value.find(s => s.field === String(col.field))
   if (!cur) sortState.value = [{ field: String(col.field), dir: 'asc' }]
   else if (cur.dir === 'asc') cur.dir = 'desc'
@@ -162,42 +172,49 @@ watch([sortState, page, pageSize, filters, order, widths], () => {
 <template>
   <div class="v3grid" :dir="props.rtl ? 'rtl' : undefined">
     <!-- HEADER -->
-    <div class="v3grid__head" :style="{ display:'grid', gridTemplateColumns: headerTemplate(columns) }">
-      <template v-for="(c,i) in mapColumns(columns)" :key="i">
-        <div class="v3grid__cell v3grid__headercell"
-             draggable="true"
-             @dragstart="props.enableColumnReorder && onDragStart(i, $event)"
-             @dragover="props.enableColumnReorder && onDragOver($event)"
-             @drop="props.enableColumnReorder && (onDrop(i), $emit('columnReorder',{from: 0, to: i}))"
-             @click="toggleSort(c)">
+    <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
+      <div v-if="props.selectable" class="v3grid__cell">
+        <input class="v3grid__checkbox" type="checkbox"
+          :checked="visibleRows.length && visibleRows.every(r => selectedKeys.has((r as any)[keyFieldStr]))"
+          :indeterminate="visibleRows.some(r => selectedKeys.has((r as any)[keyFieldStr])) &&
+            !visibleRows.every(r => selectedKeys.has((r as any)[keyFieldStr]))
+            " @change="toggleAllVisible(visibleRows)" />
+      </div>
+
+      <template v-for="(c, i) in mapColumns(columns)" :key="i">
+        <div class="v3grid__cell v3grid__headercell" draggable="true"
+          @dragstart="props.enableColumnReorder && onDragStart(i, $event)"
+          @dragover="props.enableColumnReorder && onDragOver($event)"
+          @drop="props.enableColumnReorder && (onDrop(i), $emit('columnReorder', { from: 0, to: i }))"
+          @click="toggleSort(c)">
           <span style="flex:1 1 auto">{{ c.title ?? String(c.field) }} <span>{{ sortIcon(c) }}</span></span>
-          <span v-if="props.enableColumnResize && (c.resizable ?? true)"
-                class="v3grid__resizer" @mousedown="(e:any) => { onResizeDown(e, i); $emit('columnResize',{field:String(c.field), width: widths[i]||c.width||0}) }"></span>
+          <span v-if="props.enableColumnResize && (c.resizable ?? true)" class="v3grid__resizer"
+            @mousedown="(e: any) => { onResizeDown(e, i); $emit('columnResize', { field: String(c.field), width: widths[i] || c.width || 0 }) }"></span>
         </div>
       </template>
     </div>
 
     <!-- FILTER ROW -->
-    <div class="v3grid__filters" :style="{ display:'grid', gridTemplateColumns: headerTemplate(columns) }">
-      <div v-for="(c,i) in mapColumns(columns)" :key="i" class="v3grid__cell">
+    <div class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
+      <div v-if="props.selectable" class="v3grid__cell"></div>
+      <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell">
         <input v-if="c.filterable" class="v3grid__input" type="text"
-               :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`"
-               :value="getFilterValue(String(c.field))"
-               @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
+          :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
+          @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
       </div>
     </div>
 
     <!-- BODY (virtual ou normal) -->
-    <div v-if="props.virtual" :style="{ height: props.height + 'px', overflow:'auto' }" @scroll="onScroll"
-         @keydown="onKeydown($event, sorted.length, columns.length)" tabindex="0">
+    <div v-if="props.virtual" :style="{ height: props.height + 'px', overflow: 'auto' }" @scroll="onScroll"
+      @keydown="onKeydown($event, sorted.length, columns.length)" tabindex="0">
       <div :style="{ height: topPad + 'px' }"></div>
-      <div v-for="(row,r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r"
-           class="v3grid__row"
-           :style="{ gridTemplateColumns: bodyTemplate(columns) }">
-        <div v-for="(c,i) in mapColumns(columns)" :key="i" class="v3grid__cell"
-             :tabindex="0"
-             :data-focus="focusRow===r && focusCol===i"
-             @click="$emit('rowClick', row)">
+      <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
+        :style="{ gridTemplateColumns: bodyTemplate(columns) }">
+        <div v-if="props.selectable" class="v3grid__cell" @click.stop>
+          <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
+        </div>
+        <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell" :tabindex="0"
+          :data-focus="focusRow === r && focusCol === i" @click="$emit('rowClick', row)">
           <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
             {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
           </slot>
@@ -207,12 +224,14 @@ watch([sortState, page, pageSize, filters, order, widths], () => {
     </div>
 
     <div v-else>
-      <div v-for="(row,r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r"
-           class="v3grid__row" :style="{ gridTemplateColumns: bodyTemplate(columns) }"
-           @keydown="onKeydown($event, visibleRows.length, columns.length)" tabindex="0">
-        <div v-for="(c,i) in mapColumns(columns)" :key="i" class="v3grid__cell"
-             :tabindex="0" :data-focus="focusRow===r && focusCol===i"
-             @click="$emit('rowClick', row)">
+      <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
+        :style="{ gridTemplateColumns: bodyTemplate(columns) }"
+        @keydown="onKeydown($event, visibleRows.length, columns.length)" tabindex="0">
+        <div v-if="props.selectable" class="v3grid__cell" @click.stop>
+          <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
+        </div>
+        <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell" :tabindex="0"
+          :data-focus="focusRow === r && focusCol === i" @click="$emit('rowClick', row)">
           <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
             {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
           </slot>
@@ -221,15 +240,18 @@ watch([sortState, page, pageSize, filters, order, widths], () => {
     </div>
 
     <!-- FOOTER / PAGING -->
-    <div class="v3grid__cell" style="display:flex;gap:.75rem;justify-content:space-between;align-items:center;padding:0.5rem 0.75rem;">
-      <div class="text-sm">{{ msgs.total }}: {{ total }} • {{ msgs.page }} {{ page }}<span v-if="!props.virtual"> / {{ totalPages() }}</span></div>
+    <div class="v3grid__cell"
+      style="display:flex;gap:.75rem;justify-content:space-between;align-items:center;padding:0.5rem 0.75rem;">
+      <div class="text-sm">{{ msgs.total }}: {{ total }} • {{ msgs.page }} {{ page }}<span v-if="!props.virtual"> / {{
+          totalPages() }}</span></div>
       <div style="display:flex;align-items:center;gap:.5rem" v-if="!props.virtual">
         <label class="text-sm">{{ msgs.rowsPerPage }}</label>
-        <select class="v3grid__input" style="width:auto" :value="pageSize" @change="pageSize = Number(($event.target as HTMLSelectElement).value)">
-          <option v-for="n in [10,20,50,100]" :key="n" :value="n">{{ n }}</option>
+        <select class="v3grid__input" style="width:auto" :value="pageSize"
+          @change="pageSize = Number(($event.target as HTMLSelectElement).value)">
+          <option v-for="n in [10, 20, 50, 100]" :key="n" :value="n">{{ n }}</option>
         </select>
-        <button @click="prevPage" :disabled="page<=1">{{ msgs.previous }}</button>
-        <button @click="nextPage" :disabled="page>=totalPages()">{{ msgs.next }}</button>
+        <button @click="prevPage" :disabled="page <= 1">{{ msgs.previous }}</button>
+        <button @click="nextPage" :disabled="page >= totalPages()">{{ msgs.next }}</button>
       </div>
     </div>
   </div>
