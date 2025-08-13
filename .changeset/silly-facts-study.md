@@ -1,5 +1,0 @@
----
-"@pantanal/grid": patch
----
-
-ok
