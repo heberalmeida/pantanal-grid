@@ -8,6 +8,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/i18n/es', component: () => import('./pages/I18nEsPage.vue') },
   { path: '/virtual', component: () => import('./pages/VirtualPage.vue') },
   { path: '/server', component: () => import('./pages/ServerSidePage.vue') },
+  { path: '/grouping', component: () => import('./pages/GroupingPage.vue') }
 ]
 
 export const router = createRouter({

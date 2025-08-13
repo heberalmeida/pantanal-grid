@@ -21,6 +21,9 @@ export interface Messages {
   next: string
   filterPlaceholder: string
   selectAll: string
+  expandAll: string
+  collapseAll: string
+  subtotal: string
 }
 
 export interface ColumnDef<T = Row> {
@@ -48,25 +51,24 @@ export interface GridProps<T = Row> {
   pageSize?: number
   selectable?: SelectionMode
 
-  /** i18n */
   locale?: Locale
   messages?: Partial<Messages>
 
-  /** Persistência de estado (localStorage) */
   persistStateKey?: string
 
-  /** Virtual scroll */
   virtual?: boolean
-  height?: number       // px do container
-  rowHeight?: number    // px por linha
+  height?: number       
+  rowHeight?: number    
 
-  /** Colunas */
   enableColumnResize?: boolean
   enableColumnReorder?: boolean
 
-  /** Server-side data (desativa sort/filter/paginação locais) */
   serverSide?: boolean
-  total?: number        // total remoto (para paginação)
+  total?: number      
+
+  group?: GroupDescriptor[]
+  aggregates?: Record<string, AggregateName[]>
+  showGroupFooters?: boolean   
 }
 
 export interface GridEmits {
@@ -79,4 +81,9 @@ export interface GridEmits {
   (e: 'editCommit', value: { row: unknown; field: string; value: unknown }): void
   (e: 'columnResize', value: { field: string; width: number }): void
   (e: 'columnReorder', value: { from: number; to: number }): void
+  (e: 'toggleGroup', key: string, open: boolean): void
 }
+
+export type AggregateName = 'sum' | 'avg' | 'min' | 'max' | 'count'
+
+export interface GroupDescriptor { field: string; dir?: 'asc' | 'desc' }

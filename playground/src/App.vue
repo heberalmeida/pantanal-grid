@@ -10,6 +10,7 @@
       <RouterLink to="/i18n/es" class="px-3 py-1 rounded bg-slate-200 hover:bg-slate-300">i18n ES</RouterLink>
       <RouterLink to="/virtual" class="px-3 py-1 rounded bg-slate-200 hover:bg-slate-300">Virtual</RouterLink>
       <RouterLink to="/server" class="px-3 py-1 rounded bg-slate-200 hover:bg-slate-300">Server-side</RouterLink>
+      <RouterLink to="/grouping" class="px-3 py-1 rounded bg-slate-200 hover:bg-slate-300">Grouping</RouterLink>
     </nav>
 
     <RouterView />

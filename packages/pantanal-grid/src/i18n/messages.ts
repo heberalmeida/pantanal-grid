@@ -9,6 +9,9 @@ export const defaultMsgs: Record<Locale, Messages> = {
     next: 'Próxima',
     filterPlaceholder: 'Filtrar',
     selectAll: 'Selecionar todos',
+    expandAll: 'expandir tudo', 
+    collapseAll: 'recolher tudo', 
+    subtotal: 'Subtotal'
   },
   en: {
     total: 'Total',
@@ -18,6 +21,9 @@ export const defaultMsgs: Record<Locale, Messages> = {
     next: 'Next',
     filterPlaceholder: 'Filter',
     selectAll: 'Select all',
+    expandAll: 'expand all', 
+    collapseAll: 'collapse all', 
+    subtotal: 'Subtotal'
   },
   es: {
     total: 'Total',
@@ -27,5 +33,8 @@ export const defaultMsgs: Record<Locale, Messages> = {
     next: 'Siguiente',
     filterPlaceholder: 'Filtrar',
     selectAll: 'Seleccionar todos',
+    expandAll: 'expandir todo', 
+    collapseAll: 'colapsar todo', 
+    subtotal: 'Subtotal'
   },
 }

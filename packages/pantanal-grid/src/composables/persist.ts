@@ -15,7 +15,7 @@ export function usePersist<T extends object>(key?: string) {
     localStorage.setItem(key, JSON.stringify(v))
   }
   onMounted(() => {
-    // noop; o carregamento é feito pelo chamador
+    
   })
   return { load, save }
 }
