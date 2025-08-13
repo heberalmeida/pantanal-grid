@@ -11,6 +11,18 @@ export interface FilterDescriptor {
   value: unknown
 }
 
+export type Locale = 'pt' | 'en' | 'es'
+
+export interface Messages {
+  total: string
+  page: string
+  rowsPerPage: string
+  previous: string
+  next: string
+  filterPlaceholder: string
+  selectAll: string
+}
+
 export interface ColumnDef<T = Row> {
   field: keyof T | string
   title?: string
@@ -18,6 +30,8 @@ export interface ColumnDef<T = Row> {
   sortable?: boolean
   filterable?: boolean
   editable?: boolean
+  resizable?: boolean
+  reorderable?: boolean
   format?: (value: any, row: T) => string
   cell?: (ctx: { value: any; row: T; rowIndex: number }) => any
 }
@@ -33,6 +47,22 @@ export interface GridProps<T = Row> {
   page?: number
   pageSize?: number
   selectable?: SelectionMode
+
+  /** i18n */
+  locale?: Locale
+  messages?: Partial<Messages>
+
+  /** Persistência de estado (localStorage) */
+  persistStateKey?: string
+
+  /** Virtual scroll */
+  virtual?: boolean
+  height?: number       // px do container
+  rowHeight?: number    // px por linha
+
+  /** Colunas */
+  enableColumnResize?: boolean
+  enableColumnReorder?: boolean
 }
 
 export interface GridEmits {
@@ -43,4 +73,6 @@ export interface GridEmits {
   (e: 'selectionChange', value: unknown[]): void
   (e: 'rowClick', value: unknown): void
   (e: 'editCommit', value: { row: unknown; field: string; value: unknown }): void
+  (e: 'columnResize', value: { field: string; width: number }): void
+  (e: 'columnReorder', value: { from: number; to: number }): void
 }
