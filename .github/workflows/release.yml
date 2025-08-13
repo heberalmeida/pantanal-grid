@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
 
 jobs:
   release:
@@ -27,8 +28,8 @@ jobs:
       - name: Create Release PR or Publish
         uses: changesets/action@v1
         with:
-          version: yarn changeset version
-          publish: yarn changeset publish
+          version: node scripts/ci-pin-playground.js && yarn changeset version && git checkout -- playground/package.json
+          publish: node scripts/ci-pin-playground.js && yarn changeset publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
