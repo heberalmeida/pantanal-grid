@@ -1,13 +1,27 @@
 <template>
-  <div class="flex flex-wrap items-center gap-3">
-    <div v-if="showTotal" class="text-sm opacity-80">
+  <div
+    class="pg pg-row"
+    :class="tailwind ? 'flex flex-wrap items-center gap-3' : ''"
+  >
+    <!-- total -->
+    <div
+      v-if="showTotal"
+      class="pg-total"
+      :class="tailwind ? 'text-sm opacity-80' : ''"
+    >
       {{ M.total }}: {{ total }}
     </div>
 
-    <div v-if="showPageSize" class="flex items-center gap-2">
-      <label class="text-sm">{{ M.rowsPerPage }}</label>
+    <!-- seletor de page size -->
+    <div
+      v-if="showPageSize"
+      class="pg-row"
+      :class="tailwind ? 'flex items-center gap-2' : ''"
+    >
+      <label class="pg-label" :class="tailwind ? 'text-sm' : ''">{{ M.rowsPerPage }}</label>
       <select
-        class="border border-slate-300 rounded-md bg-white text-sm px-2 py-1"
+        class="pg-select"
+        :class="tailwind ? 'border border-slate-300 rounded-md bg-white text-sm px-2 py-1' : ''"
         :value="pageSize"
         @change="changeSize(($event.target as HTMLSelectElement).value)"
       >
@@ -15,92 +29,116 @@
       </select>
     </div>
 
-    <div v-if="variant==='simple'" class="flex items-center gap-1">
-      <button :class="btnClass" :disabled="page<=1" @click="go(page-1)">
-        <img v-if="showIcons" :src="iconPrev" :class="iconClass" alt="prev" />
+    <!-- variant: simple -->
+    <div
+      v-if="variant==='simple'"
+      class="pg-row"
+      :class="tailwind ? 'flex items-center gap-1' : ''"
+    >
+      <button :class="[btnClass, tailwind && btnTW]" :disabled="page<=1" @click="go(page-1)">
+        <img v-if="showIcons" :src="iconPrev" :class="[iconClass, tailwind && iconTW]" alt="prev" />
         <span v-if="showText">{{ M.previous }}</span>
       </button>
 
-      <button :class="btnClass" :disabled="page>=totalPages" @click="go(page+1)">
+      <button :class="[btnClass, tailwind && btnTW]" :disabled="page>=totalPages" @click="go(page+1)">
         <span v-if="showText">{{ M.next }}</span>
-        <img v-if="showIcons" :src="iconNext" :class="iconClass" alt="next" />
+        <img v-if="showIcons" :src="iconNext" :class="[iconClass, tailwind && iconTW]" alt="next" />
       </button>
     </div>
 
     <!-- variant: pages (1 2 3 ...) -->
-    <div v-else-if="variant==='pages'" class="flex items-center gap-1">
+    <div
+      v-else-if="variant==='pages'"
+      class="pg-row"
+      :class="tailwind ? 'flex items-center gap-1' : ''"
+    >
       <button
-        :class="btnClass"
+        :class="[btnClass, tailwind && btnTW]"
         :disabled="page<=1"
         @click="go(page-1)"
         :aria-label="M.previous"
         :title="M.previous"
       >
-        <img v-if="showIcons" :src="iconPrev" :class="iconClass" alt="prev" />
+        <img v-if="showIcons" :src="iconPrev" :class="[iconClass, tailwind && iconTW]" alt="prev" />
         <span v-if="showText">{{ M.previous }}</span>
       </button>
 
       <button
         v-for="p in pages"
         :key="p"
-        class="inline-flex items-center justify-center border rounded-md"
-        :class="[pillClass, p===page ? 'bg-gray-900 text-white border-gray-900' : 'bg-white border-slate-300 hover:bg-slate-50']"
+        class="pg-pill"
+        :class="[
+          pillSize,
+          { 'is-active': p===page },
+          tailwind && 'inline-flex items-center justify-center border rounded-md',
+          tailwind && (p===page ? 'bg-gray-900 text-white border-gray-900' : 'bg-white border-slate-300 hover:bg-slate-50')
+        ]"
         @click="go(p)"
       >
         {{ p }}
       </button>
 
       <button
-        :class="btnClass"
+        :class="[btnClass, tailwind && btnTW]"
         :disabled="page>=totalPages"
         @click="go(page+1)"
         :aria-label="M.next"
         :title="M.next"
       >
         <span v-if="showText">{{ M.next }}</span>
-        <img v-if="showIcons" :src="iconNext" :class="iconClass" alt="next" />
+        <img v-if="showIcons" :src="iconNext" :class="[iconClass, tailwind && iconTW]" alt="next" />
       </button>
     </div>
 
-    <div v-else class="flex items-center gap-1">
-      <button :class="btnClass" :disabled="page<=1" @click="go(1)" aria-label="first" title="first">
-        <img v-if="showIcons" :src="iconFirst" :class="iconClass" alt="first" />
+    <!-- variant: edges (<< < 1 2 3 > >>) -->
+    <div
+      v-else
+      class="pg-row"
+      :class="tailwind ? 'flex items-center gap-1' : ''"
+    >
+      <button :class="[btnClass, tailwind && btnTW]" :disabled="page<=1" @click="go(1)" aria-label="first" title="first">
+        <img v-if="showIcons" :src="iconFirst" :class="[iconClass, tailwind && iconTW]" alt="first" />
       </button>
 
       <button
-        :class="btnClass"
+        :class="[btnClass, tailwind && btnTW]"
         :disabled="page<=1"
         @click="go(page-1)"
         :aria-label="M.previous"
         :title="M.previous"
       >
-        <img v-if="showIcons" :src="iconPrev" :class="iconClass" alt="prev" />
+        <img v-if="showIcons" :src="iconPrev" :class="[iconClass, tailwind && iconTW]" alt="prev" />
         <span v-if="showText">{{ M.previous }}</span>
       </button>
 
       <button
         v-for="p in pages"
         :key="p"
-        class="inline-flex items-center justify-center border rounded-md"
-        :class="[pillClass, p===page ? 'bg-gray-900 text-white border-gray-900' : 'bg-white border-slate-300 hover:bg-slate-50']"
+        class="pg-pill"
+        :class="[
+          pillSize,
+          { 'is-active': p===page },
+          tailwind && 'inline-flex items-center justify-center border rounded-md',
+          tailwind && (p===page ? 'bg-gray-900 text-white border-gray-900' : 'bg-white border-slate-300 hover:bg-slate-50')
+        ]"
         @click="go(p)"
       >
         {{ p }}
       </button>
 
       <button
-        :class="btnClass"
+        :class="[btnClass, tailwind && btnTW]"
         :disabled="page>=totalPages"
         @click="go(page+1)"
         :aria-label="M.next"
         :title="M.next"
       >
         <span v-if="showText">{{ M.next }}</span>
-        <img v-if="showIcons" :src="iconNext" :class="iconClass" alt="next" />
+        <img v-if="showIcons" :src="iconNext" :class="[iconClass, tailwind && iconTW]" alt="next" />
       </button>
 
-      <button :class="btnClass" :disabled="page>=totalPages" @click="go(totalPages)" aria-label="last" title="last">
-        <img v-if="showIcons" :src="iconLast" :class="iconClass" alt="last" />
+      <button :class="[btnClass, tailwind && btnTW]" :disabled="page>=totalPages" @click="go(totalPages)" aria-label="last" title="last">
+        <img v-if="showIcons" :src="iconLast" :class="[iconClass, tailwind && iconTW]" alt="last" />
       </button>
     </div>
   </div>
@@ -128,6 +166,8 @@ const props = withDefaults(defineProps<{
   showPageSize?: boolean
   pageSizeOptions?: number[]
   dense?: boolean
+
+  tailwind?: boolean
 }>(), {
   variant: 'simple',
   showTotal: true,
@@ -138,6 +178,7 @@ const props = withDefaults(defineProps<{
   showPageSize: false,
   pageSizeOptions: () => [10, 20, 50, 100],
   dense: false,
+  tailwind: true,
 })
 
 const emit = defineEmits<{
@@ -162,12 +203,13 @@ const pages = computed(() => {
   return Array.from({ length: end - start + 1 }, (_, i) => start + i)
 })
 
-const btnClass = computed(() =>
-  props.dense ? 'pg-btn pg-btn--dense' : 'pg-btn pg-btn--normal'
-)
-
+const btnClass = computed(() => props.dense ? 'pg-btn pg-btn--dense' : 'pg-btn pg-btn--normal')
 const iconClass = computed(() => (props.dense ? 'pg-icon--dense' : 'pg-icon--normal'))
-const pillClass = computed(() => (props.dense ? 'w-8 h-8' : 'w-9 h-9'))
+const pillSize  = computed(() => (props.dense ? 'pg-pill--dense' : 'pg-pill--normal'))
+
+const tailwind = computed(() => !!props.tailwind)
+const btnTW = 'inline-flex items-center gap-1.5 border border-slate-300 rounded-md bg-white disabled:opacity-50'
+const iconTW = 'w-3.5 h-3.5'
 
 const iconPrev  = new URL('../assets/arrow-left.svg',  import.meta.url).href
 const iconNext  = new URL('../assets/arrow-right.svg', import.meta.url).href

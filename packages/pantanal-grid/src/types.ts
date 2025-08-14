@@ -38,6 +38,7 @@ export interface ColumnDef<T = Row> {
   reorderable?: boolean
   format?: (value: any, row: T) => string
   cell?: (ctx: { value: any; row: T; rowIndex: number }) => any
+  pinned?: boolean | 'left' | 'right'
 }
 
 export type PaginationVariant = 'simple' | 'pages' | 'edges'
@@ -90,6 +91,8 @@ export interface GridProps<T = Row> {
   paginationMaxPages?: number   
   
   showFilterRow?: boolean
+
+  pinnedShadows?: boolean
 }
 
 export interface GridEmits {
