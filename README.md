@@ -73,6 +73,74 @@ const columns = [
 />
 ```
 
+## Grouping & Aggregations
+
+Pantanal Grid supports **multi-level grouping** with optional **aggregations** and **expand/collapse**.  
+This works fully on the client. For server-side grouping, pre-aggregate on your API and feed the grid already grouped.
+
+### Quick start
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type GroupDescriptor } from '@pantanal/grid'
+import '@pantanal/grid/styles.css'
+
+const rows = [
+  { id: 1, title: 'Airpods',  brand: 'Apple',  category: 'mobile-accessories', price: 129.99 },
+  { id: 2, title: 'CK One',   brand: 'Calvin Klein', category: 'fragrances', price: 49.99 },
+  // ...
+]
+
+const columns = [
+  { field:'id', title:'ID', width:80 },
+  { field:'title', title:'Title', filterable:true },
+  { field:'brand', title:'Brand', filterable:true },
+  { field:'category', title:'Category', filterable:true },
+  // tip: format your currency/decimal columns to avoid long floating outputs
+  { field:'price', title:'Price', sortable:true, format:(v:number)=>`$ ${v.toFixed(2)}` }
+]
+
+// multi-level grouping: Category -> Brand
+const group: GroupDescriptor[] = [
+  { field:'category', dir:'asc' },
+  { field:'brand',    dir:'asc' }
+]
+
+// per-field aggregation names: 'sum' | 'avg' | 'min' | 'max' | 'count'
+const aggregates = {
+  price: ['sum','avg'],
+  id:    ['count']
+} as const
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :group="group"
+    :aggregates="aggregates"
+    :showGroupFooters="true"
+    :pageSize="10"
+    :height="520"
+  />
+</template>
+```
+
+### How it renders
+- Each **group header** occupies the full row and shows its **field/value** plus the number of items.
+- A small **expander** (▶/▼) indicates collapsed/expanded state. You can expand/collapse all with helper buttons in the footer.
+- When `showGroupFooters` is true, a **group footer** appears after each group with the selected aggregations (e.g., *Sum*, *Average*).
+- Row **selection** honors grouping: the header checkbox only selects **data rows** on the current page.
+
+### Props & events
+- `group: Array<{ field: string; dir?: 'asc' | 'desc' }>` — order defines the grouping hierarchy.
+- `aggregates: Record<string, Array<'sum'|'avg'|'min'|'max'|'count'>>` — which metrics to compute per numeric field.
+- `showGroupFooters?: boolean` — show/hide footers (default: `true`).
+- Emits `toggleGroup(key: string, open: boolean)` whenever a group is expanded/collapsed.
+
+### Tips
+- For currency/decimal fields, prefer a column `format` (e.g., `toFixed(2)`) so values like `229.98000000000002` render as `$ 229.98`.
+- Client-side grouping works with **filters**, **sorting**, and **pagination**. In `serverSide` mode, perform grouping/aggregation on the server and pass preprocessed rows.
+
 ## Server-side mode (generic)
 In **serverSide** mode the grid does not sort/filter/paginate locally; it only **emits models** (`update:page`, `update:pageSize`, `update:filter`, `update:sort`). Your app performs the fetch and passes the current page `:rows` plus the remote `:total` count.
 

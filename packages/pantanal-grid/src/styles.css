@@ -28,4 +28,21 @@
 .v3grid__expander { background: transparent; }
 .v3grid__group { background: rgba(0,0,0,.03); font-weight: 600; }
 .v3grid__groupfooter { background: rgba(0,0,0,.02); font-style: italic; }
-.v3grid__btn { border: 1px solid rgba(0,0,0,.15); padding: 0 .35rem; border-radius: .25rem; line-height: 1.2; }
+.v3grid__btn__group { border: 1px solid rgba(0,0,0,.15); padding: 0 .35rem; border-radius: .25rem; line-height: 1.2; }
+.v3grid__icon {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.v3grid__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}

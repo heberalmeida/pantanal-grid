@@ -13,8 +13,8 @@ describe('PantanalGrid sorting', () => {
     const wrapper = mount(Grid as any, { props: { rows, columns } })
     const header = wrapper.findAll('.v3grid__cell').at(0)!
     await header.trigger('click') // asc
-    expect(wrapper.text()).toContain('▲')
+    expect(wrapper.find('img[alt="sort-asc"]').exists()).toBe(true)
     await header.trigger('click') // desc
-    expect(wrapper.text()).toContain('▼')
+    expect(wrapper.find('img[alt="sort-desc"]').exists()).toBe(true)
   })
 })

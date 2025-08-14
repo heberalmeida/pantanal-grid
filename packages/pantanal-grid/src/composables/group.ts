@@ -31,11 +31,13 @@ export type GroupNode = GroupNodeGroup | GroupNodeRow | GroupNodeFooter
 
 type AggSpec = Record<string, AggregateName[]>
 
+const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100
+
 const aggs: Record<AggregateName, (vals: number[]) => number> = {
-  sum: (v) => v.reduce((a, b) => a + (Number(b) || 0), 0),
-  avg: (v) => (v.length ? v.reduce((a, b) => a + (Number(b) || 0), 0) / v.length : 0),
-  min: (v) => (v.length ? Math.min(...v.map(Number)) : 0),
-  max: (v) => (v.length ? Math.max(...v.map(Number)) : 0),
+  sum: (v) => round2(v.reduce((a, b) => a + (Number(b) || 0), 0)),
+  avg: (v) => (v.length ? round2(v.reduce((a, b) => a + (Number(b) || 0), 0) / v.length) : 0),
+  min: (v) => (v.length ? round2(Math.min(...v.map(Number))) : 0),
+  max: (v) => (v.length ? round2(Math.max(...v.map(Number))) : 0),
   count: (v) => v.length
 }
 

@@ -16,9 +16,11 @@
           @dragover="props.enableColumnReorder && onDragOver($event)"
           @drop="props.enableColumnReorder && (onDrop(i), $emit('columnReorder', { from: 0, to: i }))"
           @click="toggleSort(c)">
-          <span style="flex:1 1 auto">
-            {{ c.title ?? String(c.field) }} <span>{{ sortIcon(c) }}</span>
+          <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
+            {{ c.title ?? String(c.field) }}
+            <img v-if="sortIconData(c)" :src="sortIconData(c)!.src" :alt="sortIconData(c)!.alt" class="v3grid__icon" />
           </span>
+
           <span v-if="props.enableColumnResize && (c.resizable ?? true)" class="v3grid__resizer"
             @mousedown="(e: any) => { onResizeDown(e, i); $emit('columnResize', { field: String(c.field), width: widths[i] || c.width || 0 }) }"></span>
         </div>
@@ -74,7 +76,8 @@
             :style="{ paddingLeft: ((n.level ?? 0) * 14) + 'px' }">
             <template v-if="n.type === 'group'">
               <button class="v3grid__btn" @click="toggleGroupKey(n.key)">
-                <span v-if="expanded.has(n.key)">▼</span><span v-else>▶</span>
+                <img :src="expanded.has(n.key) ? iconArrowDown : iconArrowRight"
+                  :alt="expanded.has(n.key) ? 'collapse' : 'expand'" class="v3grid__icon" />
               </button>
             </template>
           </div>
@@ -134,8 +137,8 @@
         {{ msgs.total }}: {{ total }} • {{ msgs.page }} {{ page
         }}<span v-if="!props.virtual"> / {{ totalPages() }}</span>
         <template v-if="isGrouped">
-          • <button class="v3grid__btn" @click="expandAll">expand all</button>
-          <button class="v3grid__btn" @click="collapseAll">collapse all</button>
+          • <button class="v3grid__btn__group" @click="expandAll">expand all</button>
+          <button class="v3grid__btn__group" @click="collapseAll">collapse all</button>
         </template>
       </div>
       <div style="display:flex;align-items:center;gap:.5rem" v-if="!props.virtual">
@@ -162,6 +165,10 @@ import { useVirtual } from '../composables/virtual'
 import { usePersist } from '../composables/persist'
 import { defaultMsgs } from '../i18n/messages'
 import { buildGroupTree, flattenTree, type GroupDescriptor } from '../composables/group'
+import iconOrderUp from '../assets/order-up.svg'
+import iconOrderDown from '../assets/order-down.svg'
+const iconArrowRight = new URL('../assets/arrow-right.svg', import.meta.url).href
+const iconArrowDown = new URL('../assets/arrow-down.svg', import.meta.url).href
 
 type DataRow = Record<string, unknown>
 
@@ -325,6 +332,14 @@ function sortIcon(c: ColumnDef) {
   if (!s) return ''
   return s.dir === 'asc' ? '▲' : '▼'
 }
+function sortIconData(c: ColumnDef) {
+  const s = sortState.value.find(s => s.field === String(c.field))
+  if (!s) return null
+  return s.dir === 'asc'
+    ? { src: iconOrderUp, alt: 'sort-asc' }
+    : { src: iconOrderDown, alt: 'sort-desc' }
+}
+
 function toggleSort(col: ColumnDef) {
   if (!col.sortable) return
   const cur = sortState.value.find(s => s.field === String(col.field))

@@ -8,9 +8,10 @@
   "scripts": {
     "dev": "yarn workspace pantanal-grid-playground dev",
     "build": "yarn workspace @pantanal/grid build",
-     "changeset": "changeset",
-     "version-packages": "changeset version",
-     "release": "changeset publish"
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish",
+    "test": "yarn workspace @pantanal/grid test"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.5"
