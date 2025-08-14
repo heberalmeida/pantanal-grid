@@ -14,5 +14,5 @@ export function useVirtual<T>(allRows: () => T[], rowHeight = 44, height = 400) 
   const bottomPad = computed(() => Math.max(0, (total.value - end.value) * rowHeight))
   const slice = computed(() => allRows().slice(start.value, end.value))
 
-  return { onScroll, slice, topPad, bottomPad, rowHeight, height, total }
+  return { onScroll, slice, topPad, bottomPad, rowHeight, height, total, start }
 }

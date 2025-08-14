@@ -101,6 +101,13 @@
   font-size:.95rem;
 }
 
+.v3grid__row--alt .v3grid__cell {
+  background: var(--grid-row-alt, #f9fafb);
+}
+
+.v3grid__row--alt .v3grid__cell:hover {
+  filter: brightness(0.98);
+}
 
 .v3grid__card--group{
   display:flex;

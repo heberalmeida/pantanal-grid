@@ -14,10 +14,12 @@
         :page="page1"
         :pageSize="size1"
         :paginationVariant="'simple'"
+        :showFilterRow="false"   
         :paginationShowText="true"
         :paginationShowIcons="true"
         :responsive="'table'"
         :cardBreakpoint="0"
+        :striped="true"
         @update:page="page1 = $event"
         @update:pageSize="size1 = $event"
       />

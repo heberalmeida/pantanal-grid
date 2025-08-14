@@ -1,5 +1,11 @@
 # @pantanal/grid
 
+## 1.0.7
+
+### Patch Changes
+
+- grid zebrada
+
 ## 1.0.6
 
 ### Patch Changes

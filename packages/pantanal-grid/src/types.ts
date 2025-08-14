@@ -57,6 +57,8 @@ export interface GridProps<T = Row> {
   pageSize?: number
   selectable?: SelectionMode
 
+  striped?: boolean
+
   locale?: Locale
   messages?: Partial<Messages>
 
@@ -85,7 +87,9 @@ export interface GridProps<T = Row> {
   paginationShowText?: boolean            
   paginationShowIcons?: boolean           
   paginationShowTotal?: boolean           
-  paginationMaxPages?: number             
+  paginationMaxPages?: number   
+  
+  showFilterRow?: boolean
 }
 
 export interface GridEmits {
