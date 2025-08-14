@@ -1,5 +1,11 @@
 # @pantanal/grid
 
+## 1.0.9
+
+### Patch Changes
+
+- size icon
+
 ## 1.0.8
 
 ### Patch Changes
