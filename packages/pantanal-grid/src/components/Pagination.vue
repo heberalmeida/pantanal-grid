@@ -164,10 +164,10 @@ const pages = computed(() => {
 
 const btnClass = computed(() =>
   props.dense
-    ? 'inline-flex items-center gap-1 px-2 py-1 border border-slate-300 rounded-md bg-white disabled:opacity-50 h-8'
-    : 'inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-300 rounded-md bg-white disabled:opacity-50 h-9'
+    ? 'inline-flex items-center justify-center gap-1 px-2 py-1 border border-slate-300 rounded-md bg-white disabled:opacity-50 h-8 text-sm'
+    : 'inline-flex items-center justify-center gap-1.5 px-3 py-1.5 border border-slate-300 rounded-md bg-white disabled:opacity-50 h-9 text-sm'
 )
-const iconClass = computed(() => (props.dense ? 'w-3 h-3' : 'w-3.5 h-3.5'))
+const iconClass = computed(() => (props.dense ? 'w-4 h-4' : 'w-4 h-4'))
 const pillClass = computed(() => (props.dense ? 'w-8 h-8' : 'w-9 h-9'))
 
 const iconPrev  = new URL('../assets/arrow-left.svg',  import.meta.url).href

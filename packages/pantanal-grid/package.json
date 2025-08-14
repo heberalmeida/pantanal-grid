@@ -1,6 +1,6 @@
 {
   "name": "@pantanal/grid",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "type": "module",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.es.js",
@@ -23,7 +23,7 @@
     "build": "vite build",
     "test": "vitest run",
     "test:ui": "vitest",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "cp ../../README.md ./README.md && yarn build"
   },
   "peerDependencies": {
     "vue": "^3.3.0"
