@@ -11,7 +11,7 @@ describe('PantanalGrid sorting', () => {
 
   it('toggle sort on header click', async () => {
     const wrapper = mount(Grid as any, { props: { rows, columns } })
-    const header = wrapper.findAll('.v3grid__cell').at(0)!
+    const header = wrapper.findAll('.v3grid__cell')[0]!
     await header.trigger('click') // asc
     expect(wrapper.find('img[alt="sort-asc"]').exists()).toBe(true)
     await header.trigger('click') // desc

@@ -1,3 +1,4 @@
+
 export type Row = Record<string, unknown>
 
 export type SortDir = 'asc' | 'desc'
@@ -39,12 +40,17 @@ export interface ColumnDef<T = Row> {
   cell?: (ctx: { value: any; row: T; rowIndex: number }) => any
 }
 
+export type PaginationVariant = 'simple' | 'pages' | 'edges'
+
+export type ResponsiveMode = 'auto' | 'table' | 'cards'
+
 export interface GridProps<T = Row> {
   rows: T[]
   columns: ColumnDef<T>[]
   keyField?: keyof T | string
   rtl?: boolean
   density?: 'default' | 'compact'
+
   sort?: SortDescriptor[]
   filter?: FilterDescriptor[]
   page?: number
@@ -57,18 +63,29 @@ export interface GridProps<T = Row> {
   persistStateKey?: string
 
   virtual?: boolean
-  height?: number       
-  rowHeight?: number    
+  height?: number
+  rowHeight?: number
 
   enableColumnResize?: boolean
   enableColumnReorder?: boolean
 
   serverSide?: boolean
-  total?: number      
+  total?: number
 
   group?: GroupDescriptor[]
   aggregates?: Record<string, AggregateName[]>
-  showGroupFooters?: boolean   
+  showGroupFooters?: boolean
+
+  responsive?: ResponsiveMode          
+  cardBreakpoint?: number              
+  showFiltersInCards?: boolean         
+
+  showFooter?: boolean                 
+  paginationVariant?: PaginationVariant   
+  paginationShowText?: boolean            
+  paginationShowIcons?: boolean           
+  paginationShowTotal?: boolean           
+  paginationMaxPages?: number             
 }
 
 export interface GridEmits {

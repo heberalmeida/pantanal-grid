@@ -19,7 +19,7 @@
 .v3grid__checkbox { width: 1rem; height: 1rem; accent-color: var(--grid-accent, #18a058); }
 .v3grid__resizer { width: 6px; cursor: col-resize; user-select: none; align-self: stretch; }
 .v3grid__headercell { display:flex; align-items:center; gap:.5rem; }
-/* foco navegação por teclado */
+
 .v3grid__cell[data-focus="true"]{outline:2px solid var(--grid-accent,#18a058);outline-offset:-2px}
 .v3grid__group { background: rgba(0,0,0,.03); font-weight: 600; }
 .v3grid__groupfooter { background: rgba(0,0,0,.02); }
@@ -46,3 +46,82 @@
   border: 0;
   cursor: pointer;
 }
+
+.v3grid--cards .v3grid__head,
+.v3grid--cards .v3grid__filters {
+  display: none !important;
+}
+
+.v3grid--cards {
+  border-radius: 12px;
+}
+
+.v3grid__cards{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:.75rem;
+  padding:.75rem;
+}
+
+.v3grid__card{
+  border:1px solid var(--grid-border,#e5e7eb);
+  border-radius:10px;
+  background:#fff;
+  overflow:hidden;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04);
+  padding:.5rem .75rem;
+  margin-left: calc(var(--indent, 0) * 14px);
+}
+
+.v3grid__cardheader{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:.5rem;
+}
+
+.v3grid__cardbody{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:.35rem;
+  margin-top:.25rem;
+}
+
+.v3grid__carditem{
+  display:grid;
+  grid-template-columns: 120px 1fr;
+  gap:.5rem;
+  align-items:start;
+}
+.v3grid__cardlabel{
+  font-size:.75rem;
+  color:#6b7280;
+}
+.v3grid__cardvalue{
+  font-size:.95rem;
+}
+
+
+.v3grid__card--group{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  background: rgba(0,0,0,.03);
+}
+.v3grid__card--footer{
+  background: rgba(0,0,0,.02);
+}
+.v3grid__cardtitle{ font-weight:600; }
+.v3grid__cardmeta{ font-size:.75rem; color:#6b7280; margin-left:.35rem; }
+
+.v3grid__cardfoot{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.5rem .75rem;
+  align-items:center;
+}
+.v3grid__cardaggs{ display:flex; gap:.5rem; flex-wrap:wrap; }
+.v3grid__cardagg{ font-size:.8rem; color:#374151; }
+
+
+.v3grid__btn__group{ white-space:nowrap; }

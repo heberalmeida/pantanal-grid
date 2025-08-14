@@ -38,3 +38,6 @@ temp/
 .pnp.*
 .pnp.cjs
 *.tgz
+
+**/package1/
+Arquivo.zip

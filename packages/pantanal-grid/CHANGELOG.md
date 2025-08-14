@@ -1,5 +1,11 @@
 # @pantanal/grid
 
+## 1.0.6
+
+### Patch Changes
+
+- pagination, group
+
 ## 1.0.5
 
 ### Patch Changes

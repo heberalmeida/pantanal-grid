@@ -9,7 +9,6 @@
       v-model:filter="filter"
       v-model:page="page"
       v-model:pageSize="pageSize"
-      selectable="multiple"
       persist-state-key="pantanal-demo-basic"
       :enable-column-resize="true"
       :enable-column-reorder="true"

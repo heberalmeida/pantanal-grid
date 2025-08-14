@@ -8,7 +8,9 @@ const routes: RouteRecordRaw[] = [
   { path: '/i18n/es', component: () => import('./pages/I18nEsPage.vue') },
   { path: '/virtual', component: () => import('./pages/VirtualPage.vue') },
   { path: '/server', component: () => import('./pages/ServerSidePage.vue') },
-  { path: '/grouping', component: () => import('./pages/GroupingPage.vue') }
+  { path: '/grouping', component: () => import('./pages/GroupingPage.vue') },
+  { path:'/table-only', component: ()=>import('./pages/TableOnlyPage.vue') },
+  { path:'/pagination', component: ()=>import('./pages/PaginationShowcase.vue') },
 ]
 
 export const router = createRouter({
