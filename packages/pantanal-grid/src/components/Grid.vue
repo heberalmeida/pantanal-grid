@@ -118,12 +118,20 @@
               </div>
 
               <!-- footer do grupo (agregados) -->
-              <div v-else-if="n.type === 'footer' && (props.showGroupFooters ?? true)" class="v3grid__card v3grid__card--footer" :style="{ '--indent': (n.level || 0) }">
+              <div
+                v-else-if="n.type === 'footer' && (props.showGroupFooters ?? true)"
+                class="v3grid__card v3grid__card--footer"
+                :style="{ '--indent': (n.level || 0) }"
+              >
                 <div class="v3grid__cardfoot">
                   <div class="v3grid__cardlabel"><em>Subtotal — {{ n.field }}: {{ n.value }}</em></div>
                   <div class="v3grid__cardaggs">
-                    <span v-for="(val, k) in n.aggregates" :key="k" class="v3grid__cardagg">
-                      <template v-if="aggTextForCell(k.split(':')[0], n.aggregates) as txt">{{ txt }}</template>
+                    <span
+                      v-for="k in aggKeys(n.aggregates)"
+                      :key="k"
+                      class="v3grid__cardagg"
+                    >
+                      {{ aggTextForKey(k, n.aggregates) }}
                     </span>
                   </div>
                 </div>
@@ -383,10 +391,17 @@ const filtered = computed(() => props.serverSide ? (props.rows as any[]) : apply
 const sorted   = computed(() => props.serverSide ? filtered.value : applySort(filtered.value, sortState.value))
 
 const isGrouped = computed(() => (groupState.value?.length ?? 0) > 0)
-const groupedTree = computed(() => !isGrouped.value ? [] : buildGroupTree(sorted.value as any[], groupState.value!, props.aggregates ?? {}))
-const flatNodes   = computed(() => !isGrouped.value ? [] : flattenTree(groupedTree.value as any[], expanded.value, props.showGroupFooters ?? true))
+const groupedTree = computed(() =>
+  !isGrouped.value ? [] : buildGroupTree(sorted.value as any[], groupState.value!, props.aggregates ?? {})
+)
+const flatNodes   = computed(() =>
+  !isGrouped.value ? [] : flattenTree(groupedTree.value as any[], expanded.value, props.showGroupFooters ?? true)
+)
 
-const total = computed(() => isGrouped.value ? flatNodes.value.length : (props.serverSide && typeof props.total === 'number' ? props.total : sorted.value.length))
+const total = computed(() =>
+  isGrouped.value ? flatNodes.value.length
+                  : (props.serverSide && typeof props.total === 'number' ? props.total : sorted.value.length)
+)
 
 /** VIRTUAL vs padrão */
 const allRowsRef = () => sorted.value
@@ -397,9 +412,10 @@ const visibleRows = computed(() => {
   return props.serverSide ? sorted.value : paginate(sorted.value, page.value, pageSize.value)
 })
 
-/** Aggregates helpers */
+/** ---- helpers de agregados ---- */
 type AggName = 'sum' | 'avg' | 'min' | 'max' | 'count'
 const aggLabels: Record<AggName, string> = { sum: 'Sum', avg: 'Average', min: 'Min', max: 'Max', count: 'Count' }
+
 function firstAggFor(field: string): AggName | undefined {
   const arr = (props.aggregates as Record<string, AggName[]> | undefined)?.[field]
   return arr?.[0]
@@ -411,6 +427,40 @@ function aggTextForCell(field: string, aggs: Record<string, number>): string {
   if (v == null) return ''
   return `${aggLabels[a]}: ${v}`
 }
+
+/** chaves e texto para footer em cards */
+function aggKeys(aggs: Record<string, number>): string[] {
+  return Object.keys(aggs) // ex.: ['price:sum','qty:max','count']
+}
+function aggTextForKey(key: string, aggs: Record<string, number>): string {
+  if (key === 'count') return `${aggLabels.count}: ${aggs['count'] ?? 0}`
+  const [field, a] = key.split(':') as [string, AggName]
+  const v = aggs[key]
+  if (v == null) return ''
+  const label = aggLabels[a] ?? a
+  return `${label}: ${v}`
+}
+
+/** ---- seleção visível (checkbox do header) ---- */
+const selectableRowsOnPage = computed<DataRow[]>(() => {
+  return (visibleRows.value as unknown[]).map((it) => {
+    if (it && typeof it === 'object' && 'type' in (it as any)) {
+      const node = it as { type: string; row?: DataRow }
+      return node.type === 'row' ? (node.row as DataRow) : null
+    }
+    return it as DataRow
+  }).filter((x): x is DataRow => x != null)
+})
+const allVisibleSelected = computed<boolean>(() => {
+  const rows = selectableRowsOnPage.value
+  if (rows.length === 0) return false
+  return rows.every(row => selectedKeys.value.has((row as any)[keyFieldStr.value]))
+})
+const someVisibleSelected = computed<boolean>(() => {
+  const rows = selectableRowsOnPage.value
+  const anySel = rows.some(row => selectedKeys.value.has((row as any)[keyFieldStr.value]))
+  return anySel && !allVisibleSelected.value
+})
 
 /** two-way */
 watch(() => props.sort, v => { if (v) sortState.value = v })
@@ -472,8 +522,6 @@ function totalPages() {
   const ps = pageSize.value || 1
   return Math.max(1, Math.ceil(t / ps))
 }
-function prevPage() { page.value = Math.max(1, page.value - 1) }
-function nextPage() { page.value = Math.min(totalPages(), page.value + 1) }
 
 const { focusRow, focusCol, onKeydown } = useKeyboardNav()
 
