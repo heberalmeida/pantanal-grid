@@ -434,7 +434,7 @@ function aggKeys(aggs: Record<string, number>): string[] {
 }
 function aggTextForKey(key: string, aggs: Record<string, number>): string {
   if (key === 'count') return `${aggLabels.count}: ${aggs['count'] ?? 0}`
-  const [field, a] = key.split(':') as [string, AggName]
+  const [_field, a] = key.split(':') as [string, AggName]
   const v = aggs[key]
   if (v == null) return ''
   const label = aggLabels[a] ?? a
