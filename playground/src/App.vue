@@ -13,6 +13,7 @@
       <RouterLink to="/grouping" class="px-3 py-1 rounded bg-slate-200 hover:bg-slate-300">Grouping</RouterLink>
       <RouterLink to="/table-only" class="px-3 py-1 rounded bg-slate-200 hover:bg-slate-300">Table only</RouterLink>
       <RouterLink to="/pagination" class="px-3 py-1 rounded bg-slate-200 hover:bg-slate-300">Pagination</RouterLink>
+      <RouterLink to="/locked" class="px-3 py-1 rounded bg-slate-200 hover:bg-slate-300">Pinned/Locked</RouterLink>
     </nav>
 
     <RouterView />

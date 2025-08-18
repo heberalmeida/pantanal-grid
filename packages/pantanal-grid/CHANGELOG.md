@@ -1,5 +1,11 @@
 # @pantanal/grid
 
+## 1.0.11
+
+### Patch Changes
+
+- feat(grid, playground, docs, tests): pinned/locked columns with horizontal scroll + fixed footer; demo page; tests; README
+
 ## 1.0.10
 
 ### Patch Changes

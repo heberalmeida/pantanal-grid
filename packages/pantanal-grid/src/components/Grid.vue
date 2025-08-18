@@ -1,225 +1,235 @@
 <template>
   <div class="v3grid" :class="{ 'v3grid--cards': isCardMode, 'v3grid--striped': !!props.striped }"
     :dir="props.rtl ? 'rtl' : undefined" ref="rootEl">
-    <!-- HEADER -->
-    <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
-      <div v-if="props.selectable" class="v3grid__cell">
-        <input class="v3grid__checkbox" type="checkbox" :checked="allVisibleSelected"
-          :indeterminate="someVisibleSelected" @change="toggleAllVisible(selectableRowsOnPage)" />
+    <!-- HSCROLL WRAPPER -->
+    <div class="v3grid__scroll" ref="hScrollEl" @scroll="onHScroll">
+      <!-- HEADER -->
+      <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
+        <div v-if="props.selectable" class="v3grid__cell">
+          <input class="v3grid__checkbox" type="checkbox" :checked="allVisibleSelected"
+            :indeterminate="someVisibleSelected" @change="toggleAllVisible(selectableRowsOnPage)" />
+        </div>
+
+        <div v-if="isGrouped" class="v3grid__cell"></div>
+
+        <template v-for="(c, i) in mapColumns(columns)" :key="i">
+          <div class="v3grid__cell v3grid__headercell" :class="pinClass(i)" :style="pinStyle(i)" draggable="true"
+            @dragstart="props.enableColumnReorder && onDragStart(i, $event)"
+            @dragover="props.enableColumnReorder && onDragOver($event)"
+            @drop="props.enableColumnReorder && (onDrop(i), $emit('columnReorder', { from: 0, to: i }))"
+            @click="toggleSort(c)">
+            <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
+              {{ c.title ?? String(c.field) }}
+              <img v-if="sortIconData(c)" :src="sortIconData(c)!.src" :alt="sortIconData(c)!.alt"
+                class="v3grid__icon" />
+            </span>
+
+            <span v-if="props.enableColumnResize && (c.resizable ?? true)" class="v3grid__resizer"
+              @mousedown="(e: any) => { onResizeDown(e, i); $emit('columnResize', { field: String(c.field), width: widths[i] || c.width || 0 }) }"></span>
+          </div>
+        </template>
       </div>
 
-      <div v-if="isGrouped" class="v3grid__cell"></div>
+      <!-- FILTER ROW -->
+      <div v-if="props.showFilterRow && anyFilterable && (!isCardMode || props.showFiltersInCards)"
+        class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
+        <div v-if="props.selectable" class="v3grid__cell"></div>
+        <div v-if="isGrouped" class="v3grid__cell"></div>
+        <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell--header" :class="pinClass(i)"
+          :style="pinStyle(i)">
 
-      <template v-for="(c, i) in mapColumns(columns)" :key="i">
-        <div class="v3grid__cell v3grid__headercell" draggable="true"
-          @dragstart="props.enableColumnReorder && onDragStart(i, $event)"
-          @dragover="props.enableColumnReorder && onDragOver($event)"
-          @drop="props.enableColumnReorder && (onDrop(i), $emit('columnReorder', { from: 0, to: i }))"
-          @click="toggleSort(c)">
-          <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
-            {{ c.title ?? String(c.field) }}
-            <img v-if="sortIconData(c)" :src="sortIconData(c)!.src" :alt="sortIconData(c)!.alt" class="v3grid__icon" />
-          </span>
-
-          <span v-if="props.enableColumnResize && (c.resizable ?? true)" class="v3grid__resizer"
-            @mousedown="(e: any) => { onResizeDown(e, i); $emit('columnResize', { field: String(c.field), width: widths[i] || c.width || 0 }) }"></span>
-        </div>
-      </template>
-    </div>
-
-    <!-- FILTER ROW -->
-    <div v-if="props.showFilterRow && anyFilterable && (!isCardMode || props.showFiltersInCards)"
-      class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
-      <div v-if="props.selectable" class="v3grid__cell"></div>
-      <div v-if="isGrouped" class="v3grid__cell"></div>
-      <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell">
-        <input v-if="c.filterable" class="v3grid__input" type="text"
-          :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
-          @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
-      </div>
-    </div>
-
-    <!-- BODY (VIRTUAL) -->
-    <div v-if="props.virtual" :style="{ height: props.height + 'px', overflow: 'auto' }" @scroll="onScroll"
-      @keydown="onKeydown($event, sorted.length, columns.length)" tabindex="0">
-      <div :style="{ height: topPad + 'px' }"></div>
-      <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
-        :class="props.striped && ((start ?? 0) + r) % 2 === 1 ? 'v3grid__row--alt' : ''"
-        :style="{ gridTemplateColumns: bodyTemplate(columns) }">
-        <div v-if="props.selectable" class="v3grid__cell" @click.stop>
-          <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
-        </div>
-        <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell" :tabindex="0"
-          :data-focus="focusRow === r && focusCol === i" @click="$emit('rowClick', row)">
-          <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
-            {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
-          </slot>
+          <input v-if="c.filterable" class="v3grid__input" type="text"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
+            @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
         </div>
       </div>
-      <div :style="{ height: bottomPad + 'px' }"></div>
-    </div>
 
-    <!-- BODY (NÃO VIRTUAL) -->
-    <div v-else>
+      <!-- BODY (VIRTUAL) -->
+      <div v-if="props.virtual" :style="{ height: props.height + 'px', overflowY: 'auto', overflowX: 'hidden' }"
+        @scroll="onScroll" @keydown="onKeydown($event, sorted.length, columns.length)" tabindex="0">
+        <div :style="{ height: topPad + 'px' }"></div>
+        <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
+          :class="props.striped && ((start ?? 0) + r) % 2 === 1 ? 'v3grid__row--alt' : ''"
+          :style="{ gridTemplateColumns: bodyTemplate(columns) }">
+          <div v-if="props.selectable" class="v3grid__cell" @click.stop>
+            <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
+          </div>
+          <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell" :class="pinClass(i)"
+            :style="pinStyle(i)" :tabindex="0" :data-focus="focusRow === r && focusCol === i"
+            @click="$emit('rowClick', row)">
+            <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
+              {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
+            </slot>
+          </div>
+        </div>
+        <div :style="{ height: bottomPad + 'px' }"></div>
+      </div>
 
-      <!-- ====== MODO CARDS ====== -->
-      <template v-if="isCardMode">
-        <div class="v3grid__cards">
-          <!-- AGRUPADO -->
-          <template v-if="isGrouped">
-            <div v-for="(n, r) in visibleRows" :key="n.key ?? r">
+      <!-- BODY (NÃO VIRTUAL) -->
+      <div v-else>
 
-              <!-- header do grupo -->
-              <div v-if="n.type === 'group'" class="v3grid__card v3grid__card--group"
-                :style="{ '--indent': (n.level || 0) }">
-                <button class="v3grid__btn" @click="toggleGroupKey(n.key)" aria-label="toggle group">
-                  <img :src="expanded.has(n.key) ? iconArrowDown : iconArrowRight" class="v3grid__icon" />
-                </button>
-                <div class="v3grid__cardtitle">
-                  <strong>{{ n.field }}:</strong>&nbsp;<span>{{ n.value }}</span>
-                  <span class="v3grid__cardmeta">• {{ n.aggregates.count }}</span>
+        <!-- ====== MODO CARDS ====== -->
+        <template v-if="isCardMode">
+          <div class="v3grid__cards">
+            <!-- AGRUPADO -->
+            <template v-if="isGrouped">
+              <div v-for="(n, r) in visibleRows" :key="n.key ?? r">
+
+                <!-- header do grupo -->
+                <div v-if="n.type === 'group'" class="v3grid__card v3grid__card--group"
+                  :style="{ '--indent': (n.level || 0) }">
+                  <button class="v3grid__btn" @click="toggleGroupKey(n.key)" aria-label="toggle group">
+                    <img :src="expanded.has(n.key) ? iconArrowDown : iconArrowRight" class="v3grid__icon" />
+                  </button>
+                  <div class="v3grid__cardtitle">
+                    <strong>{{ n.field }}:</strong>&nbsp;<span>{{ n.value }}</span>
+                    <span class="v3grid__cardmeta">• {{ n.aggregates.count }}</span>
+                  </div>
                 </div>
-              </div>
 
-              <!-- linha normal como card -->
-              <div v-else-if="n.type === 'row'" class="v3grid__card" :style="{ '--indent': (n.level || 0) }">
+                <!-- linha normal como card -->
+                <div v-else-if="n.type === 'row'" class="v3grid__card" :style="{ '--indent': (n.level || 0) }">
+                  <div class="v3grid__cardheader">
+                    <div v-if="props.selectable" class="v3grid__cardcheck" @click.stop>
+                      <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(n.row)"
+                        @change="toggleRow(n.row)" />
+                    </div>
+                  </div>
+                  <div class="v3grid__cardbody">
+                    <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__carditem">
+                      <div class="v3grid__cardlabel">{{ c.title ?? String(c.field) }}</div>
+                      <div class="v3grid__cardvalue">
+                        <slot name="cell" :column="c" :row="n.row" :value="(n.row as any)[c.field as any]">
+                          {{ c.format ? c.format((n.row as any)[c.field as any], n.row as any) : (n.row as any)[c.field as any] }}
+                        </slot>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- footer do grupo (agregados) -->
+                <div v-else-if="n.type === 'footer' && (props.showGroupFooters ?? true)"
+                  class="v3grid__card v3grid__card--footer" :style="{ '--indent': (n.level || 0) }">
+                  <div class="v3grid__cardfoot">
+                    <div class="v3grid__cardlabel"><em>Subtotal — {{ n.field }}: {{ n.value }}</em></div>
+                    <div class="v3grid__cardaggs">
+                      <span v-for="k in aggKeys(n.aggregates)" :key="k" class="v3grid__cardagg">
+                        {{ aggTextForKey(k, n.aggregates) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </template>
+
+            <!-- NÃO AGRUPADO -->
+            <template v-else>
+              <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__card">
                 <div class="v3grid__cardheader">
                   <div v-if="props.selectable" class="v3grid__cardcheck" @click.stop>
-                    <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(n.row)"
-                      @change="toggleRow(n.row)" />
+                    <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)"
+                      @change="toggleRow(row)" />
                   </div>
                 </div>
                 <div class="v3grid__cardbody">
                   <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__carditem">
                     <div class="v3grid__cardlabel">{{ c.title ?? String(c.field) }}</div>
                     <div class="v3grid__cardvalue">
-                      <slot name="cell" :column="c" :row="n.row" :value="(n.row as any)[c.field as any]">
-                        {{ c.format ? c.format((n.row as any)[c.field as any], n.row as any) : (n.row as any)[c.field as
-                          any] }}
+                      <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
+                        {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any]
+                        }}
                       </slot>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <!-- footer do grupo (agregados) -->
-              <div v-else-if="n.type === 'footer' && (props.showGroupFooters ?? true)"
-                class="v3grid__card v3grid__card--footer" :style="{ '--indent': (n.level || 0) }">
-                <div class="v3grid__cardfoot">
-                  <div class="v3grid__cardlabel"><em>Subtotal — {{ n.field }}: {{ n.value }}</em></div>
-                  <div class="v3grid__cardaggs">
-                    <span v-for="k in aggKeys(n.aggregates)" :key="k" class="v3grid__cardagg">
-                      {{ aggTextForKey(k, n.aggregates) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </template>
-
-          <!-- NÃO AGRUPADO -->
-          <template v-else>
-            <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__card">
-              <div class="v3grid__cardheader">
-                <div v-if="props.selectable" class="v3grid__cardcheck" @click.stop>
-                  <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
-                </div>
-              </div>
-              <div class="v3grid__cardbody">
-                <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__carditem">
-                  <div class="v3grid__cardlabel">{{ c.title ?? String(c.field) }}</div>
-                  <div class="v3grid__cardvalue">
-                    <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
-                      {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
-                    </slot>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-        </div>
-      </template>
-
-      <!-- ====== MODO TABELA ====== -->
-      <template v-else>
-        <!-- CAMINHO AGRUPADO -->
-        <template v-if="isGrouped">
-          <div v-for="(n, r) in visibleRows" :key="n.key ?? r" class="v3grid__row"
-            :class="props.striped && n.type === 'row' && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
-            :style="{ gridTemplateColumns: bodyTemplate(columns) }">
-            <!-- seleção (só para linhas) -->
-            <div v-if="props.selectable" class="v3grid__cell" @click.stop>
-              <template v-if="n.type === 'row'">
-                <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(n.row)"
-                  @change="toggleRow(n.row)" />
-              </template>
-            </div>
-
-            <!-- coluna do expander com indent por nível -->
-            <div v-if="isGrouped" class="v3grid__cell v3grid__expander"
-              :style="{ paddingLeft: ((n.level ?? 0) * 14) + 'px' }">
-              <template v-if="n.type === 'group'">
-                <button class="v3grid__btn" @click="toggleGroupKey(n.key)">
-                  <img :src="expanded.has(n.key) ? iconArrowDown : iconArrowRight"
-                    :alt="expanded.has(n.key) ? 'collapse' : 'expand'" class="v3grid__icon" />
-                </button>
-              </template>
-            </div>
-
-            <!-- células de dados -->
-            <template v-for="(c, i) in mapColumns(columns)" :key="i">
-              <div v-if="n.type === 'group'" class="v3grid__cell v3grid__group">
-                <template v-if="String(c.field) === String(n.field)">
-                  <strong>{{ n.value }}</strong>
-                  <span class="text-xs opacity-70" style="margin-left:.5rem">• {{ n.aggregates.count }}</span>
-                </template>
-              </div>
-
-              <div v-else-if="n.type === 'row'" class="v3grid__cell" :tabindex="0"
-                :data-focus="focusRow === r && focusCol === i" @click="$emit('rowClick', n.row)">
-                <slot name="cell" :column="c" :row="n.row" :value="(n.row as any)[c.field as any]">
-                  {{ c.format ? c.format((n.row as any)[c.field as any], n.row as any) : (n.row as any)[c.field as any]
-                  }}
-                </slot>
-              </div>
-
-              <div v-else-if="n.type === 'footer' && (props.showGroupFooters ?? true)"
-                class="v3grid__cell v3grid__groupfooter">
-                <span v-if="aggTextForCell(String(c.field), n.aggregates)">
-                  {{ aggTextForCell(String(c.field), n.aggregates) }}
-                </span>
-              </div>
             </template>
           </div>
         </template>
 
-        <!-- CAMINHO NORMAL -->
+        <!-- ====== MODO TABELA ====== -->
         <template v-else>
-          <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
-            :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
-            :style="{ gridTemplateColumns: bodyTemplate(columns) }"
-            @keydown="onKeydown($event, visibleRows.length, columns.length)" tabindex="0">
-            <div v-if="props.selectable" class="v3grid__cell" @click.stop>
-              <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
-            </div>
-            <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell" :tabindex="0"
-              :data-focus="focusRow === r && focusCol === i" @click="$emit('rowClick', row)">
-              <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
-                {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
-              </slot>
-            </div>
-          </div>
-        </template>
-      </template>
-    </div>
+          <!-- CAMINHO AGRUPADO -->
+          <template v-if="isGrouped">
+            <div v-for="(n, r) in visibleRows" :key="n.key ?? r" class="v3grid__row"
+              :class="props.striped && n.type === 'row' && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
+              :style="{ gridTemplateColumns: bodyTemplate(columns) }">
+              <!-- seleção (só para linhas) -->
+              <div v-if="props.selectable" class="v3grid__cell" @click.stop>
+                <template v-if="n.type === 'row'">
+                  <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(n.row)"
+                    @change="toggleRow(n.row)" />
+                </template>
+              </div>
 
+              <!-- coluna do expander com indent por nível -->
+              <div v-if="isGrouped" class="v3grid__cell v3grid__expander"
+                :style="{ paddingLeft: ((n.level ?? 0) * 14) + 'px' }">
+                <template v-if="n.type === 'group'">
+                  <button class="v3grid__btn" @click="toggleGroupKey(n.key)">
+                    <img :src="expanded.has(n.key) ? iconArrowDown : iconArrowRight"
+                      :alt="expanded.has(n.key) ? 'collapse' : 'expand'" class="v3grid__icon" />
+                  </button>
+                </template>
+              </div>
+
+              <!-- células de dados -->
+              <template v-for="(c, i) in mapColumns(columns)" :key="i">
+                <div v-if="n.type === 'group'" class="v3grid__cell v3grid__group">
+                  <template v-if="String(c.field) === String(n.field)">
+                    <strong>{{ n.value }}</strong>
+                    <span class="text-xs opacity-70" style="margin-left:.5rem">• {{ n.aggregates.count }}</span>
+                  </template>
+                </div>
+
+                <div v-else-if="n.type === 'row'" class="v3grid__cell" :class="pinClass(i)" :style="pinStyle(i)"
+                  :tabindex="0" :data-focus="focusRow === r && focusCol === i" @click="$emit('rowClick', n.row)">
+                  <slot name="cell" :column="c" :row="n.row" :value="(n.row as any)[c.field as any]">
+                    {{ c.format ? c.format((n.row as any)[c.field as any], n.row as any) : (n.row as any)[c.field as
+                    any]
+                    }}
+                  </slot>
+                </div>
+
+                <div v-else-if="n.type === 'footer' && (props.showGroupFooters ?? true)"
+                  class="v3grid__cell v3grid__groupfooter">
+                  <span v-if="aggTextForCell(String(c.field), n.aggregates)">
+                    {{ aggTextForCell(String(c.field), n.aggregates) }}
+                  </span>
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- CAMINHO NORMAL -->
+          <template v-else>
+            <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
+              :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
+              :style="{ gridTemplateColumns: bodyTemplate(columns) }"
+              @keydown="onKeydown($event, visibleRows.length, columns.length)" tabindex="0">
+              <div v-if="props.selectable" class="v3grid__cell" @click.stop>
+                <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
+              </div>
+              <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell" :class="pinClass(i) "
+                :style="pinStyle(i)" :tabindex="0" :data-focus="focusRow === r && focusCol === i"
+                @click="$emit('rowClick', row)">
+                <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
+                  {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
+                </slot>
+              </div>
+            </div>
+          </template>
+        </template>
+      </div>
+
+    </div><!-- /v3grid__scroll -->
     <!-- FOOTER / PAGING -->
     <div v-if="(props.showFooter ?? true)" class="v3grid__cell"
       style="display:flex;gap:.75rem;justify-content:space-between;align-items:center;padding:0.5rem 0.75rem;">
       <div class="text-sm">
         {{ msgs.total }}: {{ total }} • {{ msgs.page }} {{ page }}<span v-if="!props.virtual"> / {{ totalPages()
-        }}</span>
+          }}</span>
         <template v-if="isGrouped">
           • <button class="v3grid__btn__group" @click="expandAll">expand all</button>
           <button class="v3grid__btn__group" @click="collapseAll">collapse all</button>
@@ -359,6 +369,70 @@ const columns = computed<ColumnDef[]>(() => (props.columns ?? []) as ColumnDef[]
 const { order, onDragStart, onDragOver, onDrop, mapColumns, ensureOrder } = useColumnReorder(() => columns.value)
 const { widths, onMouseDown: onResizeDown, ensureWidths } = useColumnResize(() => columns.value)
 onMounted(() => { ensureOrder(); ensureWidths() })
+
+type PinSide = 'left' | 'right' | null
+type PinMeta = { side: PinSide; left?: number; right?: number }
+
+const pinMeta = computed<PinMeta[]>(() => {
+  // colunas na ordem atual
+  const ordered = mapColumns(columns.value)
+  // largura efetiva por índice
+  const w = ordered.map((c, idx) => (widths.value[idx] ?? c.width ?? 0) as number)
+
+  // IMPORTANTÍSSIMO: seletores/expander no início ocupam espaço à esquerda do grid real
+  const leftBase = (props.selectable ? 52 : 0) + (isGrouped.value ? 28 : 0)
+
+  // side por coluna
+  const side: PinSide[] = ordered.map(c =>
+    (c.pinned === true || c.pinned === 'left') ? 'left'
+      : (c.pinned === 'right' ? 'right' : null)
+  )
+
+  // offsets left (acumulando da esquerda)
+  let accLeft = leftBase
+  const leftOffsets: (number | undefined)[] = Array(ordered.length).fill(undefined)
+  side.forEach((s, i) => {
+    if (s === 'left') {
+      leftOffsets[i] = accLeft
+      accLeft += (w[i] || 0)
+    }
+  })
+
+  // offsets right (acumulando da direita)
+  let accRight = 0
+  const rightOffsets: (number | undefined)[] = Array(ordered.length).fill(undefined)
+  for (let i = ordered.length - 1; i >= 0; i--) {
+    if (side[i] === 'right') {
+      rightOffsets[i] = accRight
+      accRight += (w[i] || 0)
+    }
+  }
+
+  return side.map((s, i) => s === 'left'
+    ? { side: 'left', left: leftOffsets[i] }
+    : s === 'right'
+      ? { side: 'right', right: rightOffsets[i] }
+      : { side: null })
+})
+
+function pinClass(i: number) {
+  const meta = pinMeta.value[i]
+  if (!meta.side) return {}
+
+  return {
+    'v3grid__cell--pinned': true,
+    // sombras opcionais quando houver scroll (habilite com props.pinnedShadows)
+    'v3grid__cell--shadow-left': props.pinnedShadows && meta.side === 'left' && canScrollLeft.value,
+    'v3grid__cell--shadow-right': props.pinnedShadows && meta.side === 'right' && canScrollRight.value,
+  }
+}
+
+function pinStyle(i: number) {
+  const meta = pinMeta.value[i]
+  if (!meta.side) return undefined
+  if (meta.side === 'left') return { left: (meta.left || 0) + 'px' }
+  if (meta.side === 'right') return { right: (meta.right || 0) + 'px' }
+}
 
 /** DATA PIPELINE */
 const filtered = computed(() => props.serverSide ? (props.rows as any[]) : applyFilter(props.rows as any[], filters.value))
@@ -502,6 +576,21 @@ const anyFilterable = computed(() => {
   const cols = columns.value as ColumnDef[]
   return cols?.some(c => c?.filterable)
 })
+
+const hScrollEl = ref<HTMLElement | null>(null)
+const hScrollLeft = ref(0)
+const canScrollLeft = ref(false)
+const canScrollRight = ref(false)
+
+function onHScroll() { updateHScrollState() }
+function updateHScrollState() {
+  const el = hScrollEl.value
+  if (!el) return
+  hScrollLeft.value = el.scrollLeft
+  canScrollLeft.value  = el.scrollLeft > 0
+  canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+}
+onMounted(() => { updateHScrollState() })
 
 const { focusRow, focusCol, onKeydown } = useKeyboardNav()
 

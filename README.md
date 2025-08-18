@@ -6,7 +6,7 @@ A modern data grid for **Vue 3**, styled to play nicely with **Tailwind**. Ships
 
 ## layout
 - `packages/pantanal-grid` — the **@pantanal/grid** library package
-- `playground` — Vite app with example pages: `/basic`, `/i18n/en`, `/i18n/es`, `/virtual`, `/server`
+- `playground` — Vite app with example pages: `/basic`, `/i18n/en`, `/i18n/es`, `/virtual`, `/server`, `/grouping`, `/table-only`, `/pagination`, `/locked`
 
 ## Core features
 - Sorting (asc/desc) and per-column **filter row**
@@ -17,6 +17,7 @@ A modern data grid for **Vue 3**, styled to play nicely with **Tailwind**. Ships
 - **Virtual scroll** for large datasets
 - **i18n** (pt / en / es) with overridable `messages`
 - Optional **state persistence** (sort/page/pageSize/filters/order/widths) via `persistStateKey`
+- **Pinned/Locked columns** (left/right) com scroll horizontal; cabeçalho/filtro/células “pinned” ficam sticky; **footer não rola** horizontalmente
 
 ## Requirements
 - **Node.js** >= 18
@@ -274,6 +275,14 @@ watchEffect(async () => {
 - `/i18n/en` and `/i18n/es` — internationalization
 - `/virtual` — virtual scroll (thousands of rows)
 - `/server` — server-side pagination with DummyJSON
+- `/basic` — core features + persistence
+- `/i18n/en` and `/i18n/es` — internationalization
+- `/virtual` — virtual scroll (thousands of rows)
+- `/server` — server-side pagination with DummyJSON
+- `/grouping` — grouping & aggregations
+- `/table-only` — force table layout (no cards)
+- `/pagination` — pagination variants
+- `/locked` — pinned/locked columns + horizontal scroll
 
 ## Contributing
 PRs welcome! Please run `yarn test` before pushing. The playground uses **vue-router**: one page per demo.
