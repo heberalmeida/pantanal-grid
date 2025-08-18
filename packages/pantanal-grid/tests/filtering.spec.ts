@@ -1,17 +1,28 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
+import { nextTick } from 'vue'
 import Grid from '../src/components/Grid.vue'
+import type { ColumnDef } from '../src/types'
+
+type Row = { id: number; name: string }
 
 describe('PantanalGrid filtering', () => {
-  const rows = [{ id:1, name:'Alpha' }, { id:2, name:'Beta' }, { id:3, name:'Gamma' }]
-  const columns = [{ field:'id', title:'ID', filterable:true }, { field:'name', title:'Name', filterable:true }] as any
+  const rows: Row[] = [{ id:1, name:'Alpha' }, { id:2, name:'Beta' }, { id:3, name:'Gamma' }]
+  const columns: ColumnDef<Row>[] = [
+    { field:'id', title:'ID', filterable:true, width: 100 },
+    { field:'name', title:'Name', filterable:true, width: 160 },
+  ]
 
-  it('filters with contains operator', async () => {
-    const wrapper = mount(Grid as any, { props: { rows, columns } })
+  it('filters with contains operator and reduces visible rows', async () => {
+    const wrapper = mount(Grid, { props: { rows, columns, responsive: 'table' } })
     const inputs = wrapper.findAll('input.v3grid__input')
-    await inputs[1].setValue('a') // filtrar por nome contendo 'a'
-    // como o pipeline é reativo, deve reduzir o total renderizado
+
+    // filtra por "mm" => deve sobrar apenas "Gamma"
+    await inputs[1].setValue('mm')
+    await nextTick()
+
     const bodyRows = wrapper.findAll('.v3grid__row')
-    expect(bodyRows.length).toBeGreaterThan(0)
+    expect(bodyRows.length).toBe(1)
+    expect(bodyRows[0].text()).toMatch(/Gamma/)
   })
 })

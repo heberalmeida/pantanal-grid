@@ -11,6 +11,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/grouping', component: () => import('./pages/GroupingPage.vue') },
   { path:'/table-only', component: ()=>import('./pages/TableOnlyPage.vue') },
   { path:'/pagination', component: ()=>import('./pages/PaginationShowcase.vue') },
+  { path: '/locked', component: () => import('./pages/LockedColumnsPage.vue') },
 ]
 
 export const router = createRouter({
