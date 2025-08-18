@@ -187,7 +187,7 @@
                   :tabindex="0" :data-focus="focusRow === r && focusCol === i" @click="$emit('rowClick', n.row)">
                   <slot name="cell" :column="c" :row="n.row" :value="(n.row as any)[c.field as any]">
                     {{ c.format ? c.format((n.row as any)[c.field as any], n.row as any) : (n.row as any)[c.field as
-                    any]
+                      any]
                     }}
                   </slot>
                 </div>
@@ -211,7 +211,7 @@
               <div v-if="props.selectable" class="v3grid__cell" @click.stop>
                 <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
               </div>
-              <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell" :class="pinClass(i) "
+              <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell" :class="pinClass(i)"
                 :style="pinStyle(i)" :tabindex="0" :data-focus="focusRow === r && focusCol === i"
                 @click="$emit('rowClick', row)">
                 <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
@@ -229,7 +229,7 @@
       style="display:flex;gap:.75rem;justify-content:space-between;align-items:center;padding:0.5rem 0.75rem;">
       <div class="text-sm">
         {{ msgs.total }}: {{ total }} • {{ msgs.page }} {{ page }}<span v-if="!props.virtual"> / {{ totalPages()
-          }}</span>
+        }}</span>
         <template v-if="isGrouped">
           • <button class="v3grid__btn__group" @click="expandAll">expand all</button>
           <button class="v3grid__btn__group" @click="collapseAll">collapse all</button>
@@ -247,7 +247,7 @@
         <GridPagination :page="page" :pageSize="pageSize" :total="total" :variant="props.paginationVariant ?? 'simple'"
           :showText="props.paginationShowText ?? true" :showIcons="props.paginationShowIcons ?? true"
           :showTotal="props.paginationShowTotal ?? true" :maxPages="props.paginationMaxPages ?? 5"
-          :locale="props.locale" @update:page="(p: number) => page = p"
+          :locale="props.locale" :messages="props.messages" @update:page="(p: number) => page = p"
           @update:pageSize="(s: number) => pageSize = s" />
       </div>
     </div>
@@ -263,7 +263,7 @@ import { useColumnReorder } from '../composables/reorder'
 import { useKeyboardNav } from '../composables/keyboard'
 import { useVirtual } from '../composables/virtual'
 import { usePersist } from '../composables/persist'
-import { defaultMsgs } from '../i18n/messages'
+import { getMessages } from '../i18n/messages'
 import { buildGroupTree, flattenTree, type GroupDescriptor } from '../composables/group'
 import GridPagination from './Pagination.vue'
 
@@ -315,7 +315,7 @@ const props = withDefaults(defineProps<GridProps>(), {
 const emit = defineEmits<GridEmits>()
 
 /** i18n */
-const msgs = computed(() => ({ ...defaultMsgs[props.locale!], ...(props.messages ?? {}) }))
+const msgs = computed(() => getMessages(String(props.locale ?? 'pt'), props.messages))
 
 /** RESPONSIVO / CARD MODE */
 const isCardMode = computed<boolean>(() => {
@@ -434,10 +434,22 @@ function pinStyle(i: number) {
   if (meta.side === 'right') return { right: (meta.right || 0) + 'px' }
 }
 
-/** DATA PIPELINE */
-const filtered = computed(() => props.serverSide ? (props.rows as any[]) : applyFilter(props.rows as any[], filters.value))
-const sorted = computed(() => props.serverSide ? filtered.value : applySort(filtered.value, sortState.value))
+/** DATA PIPELINE  DataProvider */
+const remoteRows = ref<any[]>([])
+const remoteTotal = ref<number | null>(null)
+const abortCtl = ref<AbortController | null>(null)
 
+const effectiveRows = computed<any[]>(() => {
+  return props.dataProvider ? remoteRows.value : (props.rows as any[])
+})
+
+const isServerLike = computed(() => !!props.dataProvider || !!props.serverSide)
+const filtered = computed(() =>
+  isServerLike.value ? effectiveRows.value : applyFilter(effectiveRows.value, filters.value)
+)
+const sorted = computed(() =>
+  isServerLike.value ? filtered.value : applySort(filtered.value, sortState.value)
+)
 const isGrouped = computed(() => (groupState.value?.length ?? 0) > 0)
 const groupedTree = computed(() =>
   !isGrouped.value ? [] : buildGroupTree(sorted.value as any[], groupState.value!, props.aggregates ?? {})
@@ -446,10 +458,15 @@ const flatNodes = computed(() =>
   !isGrouped.value ? [] : flattenTree(groupedTree.value as any[], expanded.value, props.showGroupFooters ?? true)
 )
 
-const total = computed(() =>
-  isGrouped.value ? flatNodes.value.length
-    : (props.serverSide && typeof props.total === 'number' ? props.total : sorted.value.length)
-)
+const total = computed(() => {
+  if (isGrouped.value) return flatNodes.value.length
+  if (isServerLike.value) {
+    if (typeof props.total === 'number') return props.total
+    if (typeof remoteTotal.value === 'number') return remoteTotal.value
+    return sorted.value.length
+  }
+  return sorted.value.length
+})
 
 /** VIRTUAL vs padrão */
 const allRowsRef = () => sorted.value
@@ -587,11 +604,38 @@ function updateHScrollState() {
   const el = hScrollEl.value
   if (!el) return
   hScrollLeft.value = el.scrollLeft
-  canScrollLeft.value  = el.scrollLeft > 0
+  canScrollLeft.value = el.scrollLeft > 0
   canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
 }
 onMounted(() => { updateHScrollState() })
+async function refresh() {
+  if (!props.dataProvider) return
+  abortCtl.value?.abort()
+  const ctl = new AbortController()
+  abortCtl.value = ctl
+  emit('loading', true)
+  try {
+    const { rows, total } = await props.dataProvider({
+      page: page.value,
+      pageSize: pageSize.value,
+      sort: sortState.value,
+      filter: filters.value,
+      signal: ctl.signal,
+    })
+    remoteRows.value = rows || []
+    remoteTotal.value = typeof total === 'number' ? total : rows?.length ?? 0
+  } finally {
+    emit('loading', false)
+  }
+}
 
+onMounted(() => {
+  if (props.dataProvider && (props.autoBind ?? true)) refresh()
+})
+
+watch([page, pageSize, sortState, filters], () => {
+  if (props.dataProvider && (props.autoBind ?? true)) refresh()
+})
 const { focusRow, focusCol, onKeydown } = useKeyboardNav()
 
 const persist = usePersist(props.persistStateKey)

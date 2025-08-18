@@ -12,7 +12,7 @@ export interface FilterDescriptor {
   value: unknown
 }
 
-export type Locale = 'pt' | 'en' | 'es'
+export type Locale = 'pt' | 'en' | 'es' | (string & {})
 
 export interface Messages {
   total: string
@@ -79,22 +79,24 @@ export interface GridProps<T = Row> {
   aggregates?: Record<string, AggregateName[]>
   showGroupFooters?: boolean
 
-  responsive?: ResponsiveMode          
-  cardBreakpoint?: number              
-  showFiltersInCards?: boolean         
+  responsive?: ResponsiveMode
+  cardBreakpoint?: number
+  showFiltersInCards?: boolean
 
-  showFooter?: boolean                 
-  paginationVariant?: PaginationVariant   
-  paginationShowText?: boolean            
-  paginationShowIcons?: boolean           
-  paginationShowTotal?: boolean           
-  paginationMaxPages?: number   
-  
+  showFooter?: boolean
+  paginationVariant?: PaginationVariant
+  paginationShowText?: boolean
+  paginationShowIcons?: boolean
+  paginationShowTotal?: boolean
+  paginationMaxPages?: number
+
   showFilterRow?: boolean
 
   pinnedShadows?: boolean
-}
 
+  dataProvider?: DataProvider<T>
+  autoBind?: boolean
+}
 export interface GridEmits {
   (e: 'update:sort', value: SortDescriptor[]): void
   (e: 'update:page', value: number): void
@@ -106,8 +108,24 @@ export interface GridEmits {
   (e: 'columnResize', value: { field: string; width: number }): void
   (e: 'columnReorder', value: { from: number; to: number }): void
   (e: 'toggleGroup', key: string, open: boolean): void
+  (e: 'loading', value: boolean): void
 }
 
 export type AggregateName = 'sum' | 'avg' | 'min' | 'max' | 'count'
 
 export interface GroupDescriptor { field: string; dir?: 'asc' | 'desc' }
+
+export interface DataProviderArgs<T = Row> {
+  page: number
+  pageSize: number
+  sort: SortDescriptor[]
+  filter: FilterDescriptor[]
+  signal?: AbortSignal
+}
+
+export interface DataProviderResult<T = Row> {
+  rows: T[]
+  total?: number
+}
+
+export type DataProvider<T = Row> = (args: DataProviderArgs<T>) => Promise<DataProviderResult<T>>

@@ -1,5 +1,11 @@
 # @pantanal/grid
 
+## 1.0.12
+
+### Patch Changes
+
+- lang option
+
 ## 1.0.11
 
 ### Patch Changes

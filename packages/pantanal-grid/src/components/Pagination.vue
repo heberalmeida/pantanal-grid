@@ -146,8 +146,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { defaultMsgs } from '../i18n/messages'
-import type { Locale } from '../types'
+import type { Locale, Messages } from '../types'
+import { getMessages } from '../i18n/messages'
 
 type Variant = 'simple' | 'pages' | 'edges'
 
@@ -159,7 +159,8 @@ const props = withDefaults(defineProps<{
   variant?: Variant
   showTotal?: boolean
   maxPages?: number
-  locale?: Locale
+  locale?: Locale | string
+  messages?: Partial<Messages>
   showText?: boolean
   showIcons?: boolean
 
@@ -186,11 +187,20 @@ const emit = defineEmits<{
   (e:'update:pageSize', v:number): void
 }>()
 
-const M = computed(() => defaultMsgs[props.locale!])
+const M = computed(() => getMessages(String(props.locale), props.messages))
 
-const totalPages = computed(() => Math.max(1, Math.ceil((props.total || 0) / Math.max(1, props.pageSize))))
-function go(p: number) { emit('update:page', Math.min(totalPages.value, Math.max(1, p))) }
-function changeSize(v: string) { emit('update:pageSize', Number(v)) }
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil((props.total || 0) / Math.max(1, props.pageSize)))
+)
+
+function go(p: number) {
+  const next = Math.min(totalPages.value, Math.max(1, p))
+  if (next !== props.page) emit('update:page', next)
+}
+function changeSize(v: string) {
+  const n = Number(v)
+  if (!Number.isNaN(n) && n > 0) emit('update:pageSize', n)
+}
 
 const pages = computed(() => {
   const max = Math.max(1, props.maxPages!)

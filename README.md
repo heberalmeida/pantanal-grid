@@ -265,6 +265,63 @@ watchEffect(async () => {
 - `selectionChange`, `rowClick`
 - `columnResize`, `columnReorder`
 
+### Advanced i18n (runtime locales + per-page overrides)
+
+You can **register new locales at runtime** and still override labels per page/component.
+
+```ts
+// main.ts (or any early entry file)
+import { registerLocale } from '@pantanal/grid'
+
+registerLocale('de', {
+  total: 'Gesamt',
+  page: 'Seite',
+  rowsPerPage: 'Zeilen pro Seite',
+  previous: 'Zurück',
+  next: 'Weiter',
+  filterPlaceholder: 'Filtern',
+})
+```
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type SortDescriptor, type FilterDescriptor } from '@pantanal/grid'
+
+type Row = { id: number; name: string; price: number }
+const rows = ref<Row[]>(Array.from({ length: 30 }, (_, i) => ({
+  id: i + 1, name: `Artikel ${i + 1}`, price: +(Math.random() * 50).toFixed(2)
+})))
+
+const columns = [
+  { field:'id', title:'ID', width:80, sortable:true, filterable:true },
+  { field:'name', title:'Name', sortable:true, filterable:true },
+  { field:'price', title:'Preis', sortable:true, format:(v:number)=>`€ ${v.toFixed(2)}` },
+]
+
+const sort = ref<SortDescriptor[]>([])
+const filter = ref<FilterDescriptor[]>([])
+const page = ref(1)
+const pageSize = ref(10)
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns as any"
+    key-field="id"
+    v-model:sort="sort"
+    v-model:filter="filter"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    locale="de"
+    :messages="{ next: 'Weiter »', previous: '« Zurück' }"
+  />
+</template>
+```
+
+
+
 ## Scripts
 - `yarn dev` — run playground
 - `yarn build` — build the library

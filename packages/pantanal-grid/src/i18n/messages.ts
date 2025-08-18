@@ -1,7 +1,7 @@
 import type { Locale, Messages } from '../types'
 
-export const defaultMsgs: Record<Locale, Messages> = {
-  pt: {
+const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
+   pt: {
     total: 'Total',
     page: 'Página',
     rowsPerPage: 'Linhas por página',
@@ -37,4 +37,23 @@ export const defaultMsgs: Record<Locale, Messages> = {
     collapseAll: 'colapsar todo', 
     subtotal: 'Subtotal'
   },
+ }
+
+const runtimeMsgs: Record<string, Partial<Messages>> = {}
+
+export function registerLocale(locale: string, messages: Partial<Messages>) {
+  runtimeMsgs[locale] = { ...(runtimeMsgs[locale] || {}), ...messages }
 }
+
+export function getMessages(locale: string, overrides?: Partial<Messages>): Messages {
+  const base = builtInMsgs['en']
+  const maybeBuiltIn = (builtInMsgs as any)[locale] as Messages | undefined
+  return {
+    ...base,
+    ...(maybeBuiltIn || {}),
+    ...(runtimeMsgs[locale] || {}),
+    ...(overrides || {}),
+  }
+}
+
+export const defaultMsgs = builtInMsgs

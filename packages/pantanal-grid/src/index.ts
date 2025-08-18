@@ -6,3 +6,4 @@ export { default as GridPagination } from './components/Pagination.vue'
 export { default as Pagination } from './components/Pagination.vue'
 
 export * from './types'
+export { registerLocale, getMessages } from './i18n/messages'
