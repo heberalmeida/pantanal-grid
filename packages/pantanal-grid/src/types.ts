@@ -115,7 +115,7 @@ export type AggregateName = 'sum' | 'avg' | 'min' | 'max' | 'count'
 
 export interface GroupDescriptor { field: string; dir?: 'asc' | 'desc' }
 
-export interface DataProviderArgs<T = Row> {
+export interface DataProviderArgs {
   page: number
   pageSize: number
   sort: SortDescriptor[]
@@ -128,4 +128,4 @@ export interface DataProviderResult<T = Row> {
   total?: number
 }
 
-export type DataProvider<T = Row> = (args: DataProviderArgs<T>) => Promise<DataProviderResult<T>>
+export type DataProvider<T = Row> = (args: DataProviderArgs) => Promise<DataProviderResult<T>>

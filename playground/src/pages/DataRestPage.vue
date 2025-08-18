@@ -21,9 +21,9 @@ const filter = ref<FilterDescriptor[]>([])
 const page = ref(1)
 const pageSize = ref(10)
 
-const dataProvider: DataProvider<Product> = async (args: DataProviderArgs<Product>) => {
+const dataProvider: DataProvider<Product> = async (args: DataProviderArgs) => {
   const { page, pageSize, filter, signal } = args
-  const title = String(filter.find(f => f.field === 'title')?.value ?? '')
+  const title = String(filter.find((f: FilterDescriptor) => f.field === 'title')?.value ?? '')
   const base = title ? 'https://dummyjson.com/products/search' : 'https://dummyjson.com/products'
   const url = new URL(base)
   url.searchParams.set('limit', String(pageSize))

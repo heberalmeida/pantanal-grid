@@ -1,4 +1,4 @@
-import type { Locale, Messages } from '../types'
+import type { Messages } from '../types'
 
 const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
    pt: {
