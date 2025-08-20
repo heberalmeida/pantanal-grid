@@ -617,13 +617,24 @@ watch(filters, v => emit('update:filter', v))
 function headerTemplate(cols: any[]) {
   ensureOrder(); ensureWidths()
   const ordered = mapColumns(cols)
-  const widthsList = ordered.map((c, idx) =>
-    widths.value[idx] ? `${widths.value[idx]}px` : (c.width ? `${c.width}px` : 'minmax(0,1fr)'))
+  const unlocked = ordered.filter(c => !c.locked)
+
+  const widthsList = unlocked.map((c, idx) => {
+    const colIdx = ordered.findIndex(o => o.field === c.field)
+    const w = widths.value[colIdx] ?? c.width ?? 120
+    return `${w}px`
+  })
+
   const sel = props.selectable ? ['52px'] : []
   const exp = isGrouped.value ? ['28px'] : []
+
   return [...sel, ...exp, ...widthsList].join(' ')
 }
-function bodyTemplate(cols: any[]) { return headerTemplate(cols) }
+
+function bodyTemplate(cols: any[]) {
+  return headerTemplate(cols)
+}
+
 
 function toggleGroupKey(key: string) {
   const s = new Set(expanded.value)
@@ -716,7 +727,9 @@ const lockedRightTemplate = computed(() =>
 )
 
 const unlockedCols = computed(() =>
-  orderedCols.value.filter(c => !c.locked)
+  orderedCols.value
+    .map((c, i) => ({ ...c, _idx: i })) 
+    .filter(c => !c.locked)
 )
 const footerEl = ref<HTMLElement | null>(null)
 const footerH = ref(0)
