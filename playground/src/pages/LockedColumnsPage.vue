@@ -125,7 +125,7 @@ const columnsLocked = [
   { field: 'department', title: 'Depto', width: 180 },
   { field: 'salary', title: 'Salário', width: 160, format: (v: any) => `R$ ${Number(v).toLocaleString('pt-BR')}` },
   { field: 'createdAt', title: 'Criado em', width: 160 },
-  { field: 'score', title: 'Score', width: 140, pinned: 'right' },
+  { field: 'score', title: 'Score', width: 140 },
   { field: 'status', title: 'Status', width: 140 },
 ]
 
