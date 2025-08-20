@@ -39,6 +39,7 @@ export interface ColumnDef<T = Row> {
   format?: (value: any, row: T) => string
   cell?: (ctx: { value: any; row: T; rowIndex: number }) => any
   pinned?: boolean | 'left' | 'right'
+  locked?: boolean | 'left' | 'right'
 }
 
 export type PaginationVariant = 'simple' | 'pages' | 'edges'

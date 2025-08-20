@@ -1,8 +1,10 @@
 <template>
   <div class="v3grid" :class="{ 'v3grid--cards': isCardMode, 'v3grid--striped': !!props.striped }"
-    :dir="props.rtl ? 'rtl' : undefined" ref="rootEl">
+    :dir="props.rtl ? 'rtl' : undefined" ref="rootEl"
+    :style="{ '--row-h': props.rowHeight + 'px', '--filter-h': props.rowHeight + 'px', '--footer-h': footerH + 'px' }">
     <!-- HSCROLL WRAPPER -->
-    <div class="v3grid__scroll" ref="hScrollEl" @scroll="onHScroll">
+    <div class="v3grid__scroll" ref="hScrollEl" @scroll="onHScroll"
+      :style="{ marginLeft: lockedLeftWidth + 'px', marginRight: lockedRightWidth + 'px' }">
       <!-- HEADER -->
       <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
         <div v-if="props.selectable" class="v3grid__cell">
@@ -12,8 +14,8 @@
 
         <div v-if="isGrouped" class="v3grid__cell"></div>
 
-        <template v-for="(c, i) in mapColumns(columns)" :key="i">
-          <div class="v3grid__cell v3grid__headercell" :class="pinClass(i)" :style="pinStyle(i)" draggable="true"
+        <template v-for="(c, i) in unlockedCols" :key="i">
+          <div class="v3grid__cell v3grid__headercell" :class="[pinClass(i)]" :style="[pinStyle(i)]" draggable="true"
             @dragstart="props.enableColumnReorder && onDragStart(i, $event)"
             @dragover="props.enableColumnReorder && onDragOver($event)"
             @drop="props.enableColumnReorder && (onDrop(i), $emit('columnReorder', { from: 0, to: i }))"
@@ -35,8 +37,8 @@
         class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
         <div v-if="props.selectable" class="v3grid__cell"></div>
         <div v-if="isGrouped" class="v3grid__cell"></div>
-        <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell--header" :class="pinClass(i)"
-          :style="pinStyle(i)">
+        <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__cell--header" :class="[pinClass(i)]"
+          :style="[pinStyle(i)]">
 
           <input v-if="c.filterable" class="v3grid__input" type="text"
             :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
@@ -54,8 +56,8 @@
           <div v-if="props.selectable" class="v3grid__cell" @click.stop>
             <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
           </div>
-          <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell" :class="pinClass(i)"
-            :style="pinStyle(i)" :tabindex="0" :data-focus="focusRow === r && focusCol === i"
+          <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__cell" :class="[pinClass(i)]"
+            :style="[pinStyle(i)]" :tabindex="0" :data-focus="focusRow === r && focusCol === i"
             @click="$emit('rowClick', row)">
             <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
               {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
@@ -96,7 +98,7 @@
                     </div>
                   </div>
                   <div class="v3grid__cardbody">
-                    <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__carditem">
+                    <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__carditem">
                       <div class="v3grid__cardlabel">{{ c.title ?? String(c.field) }}</div>
                       <div class="v3grid__cardvalue">
                         <slot name="cell" :column="c" :row="n.row" :value="(n.row as any)[c.field as any]">
@@ -133,7 +135,7 @@
                   </div>
                 </div>
                 <div class="v3grid__cardbody">
-                  <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__carditem">
+                  <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__carditem">
                     <div class="v3grid__cardlabel">{{ c.title ?? String(c.field) }}</div>
                     <div class="v3grid__cardvalue">
                       <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
@@ -175,7 +177,7 @@
               </div>
 
               <!-- células de dados -->
-              <template v-for="(c, i) in mapColumns(columns)" :key="i">
+              <template v-for="(c, i) in unlockedCols" :key="i">
                 <div v-if="n.type === 'group'" class="v3grid__cell v3grid__group">
                   <template v-if="String(c.field) === String(n.field)">
                     <strong>{{ n.value }}</strong>
@@ -183,7 +185,7 @@
                   </template>
                 </div>
 
-                <div v-else-if="n.type === 'row'" class="v3grid__cell" :class="pinClass(i)" :style="pinStyle(i)"
+                <div v-else-if="n.type === 'row'" class="v3grid__cell" :class="[pinClass(i)]" :style="[pinStyle(i)]"
                   :tabindex="0" :data-focus="focusRow === r && focusCol === i" @click="$emit('rowClick', n.row)">
                   <slot name="cell" :column="c" :row="n.row" :value="(n.row as any)[c.field as any]">
                     {{ c.format ? c.format((n.row as any)[c.field as any], n.row as any) : (n.row as any)[c.field as
@@ -211,8 +213,8 @@
               <div v-if="props.selectable" class="v3grid__cell" @click.stop>
                 <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
               </div>
-              <div v-for="(c, i) in mapColumns(columns)" :key="i" class="v3grid__cell" :class="pinClass(i)"
-                :style="pinStyle(i)" :tabindex="0" :data-focus="focusRow === r && focusCol === i"
+              <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__cell" :class="[pinClass(i)]"
+                :style="[pinStyle(i)]" :tabindex="0" :data-focus="focusRow === r && focusCol === i"
                 @click="$emit('rowClick', row)">
                 <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
                   {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
@@ -224,8 +226,78 @@
       </div>
 
     </div><!-- /v3grid__scroll -->
+    <!-- BLOCO FIXO: COLUNAS LOCKED LEFT -->
+    <!-- BLOCO FIXO: LEFT -->
+    <div class="v3grid__locked-left"
+      :style="{ width: lockedLeftWidth + 'px', gridTemplateColumns: lockedLeftTemplate }">
+
+      <!-- Cabeçalho (agora com gridTemplateColumns) -->
+      <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: lockedLeftTemplate }">
+        <div v-for="(c, i) in lockedLeftCols" :key="'h-left-' + i" class="v3grid__cell v3grid__headercell"
+          @click="toggleSort(c)">
+          <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
+            {{ c.title ?? String(c.field) }}
+            <img v-if="sortIconData(c)" :src="sortIconData(c)!.src" :alt="sortIconData(c)!.alt" class="v3grid__icon" />
+          </span>
+        </div>
+
+      </div>
+
+      <div v-if="props.showFilterRow && anyFilterable && (!isCardMode || props.showFiltersInCards)"
+        class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: lockedLeftTemplate }">
+        <div v-for="(c, i) in lockedLeftCols" :key="'f-left-' + i" class="v3grid__cell--header">
+          <input v-if="c.filterable" class="v3grid__input" type="text"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
+            @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
+        </div>
+      </div>
+
+      <!-- Linhas sincronizadas -->
+      <div v-for="(row, r) in visibleRows" :key="'l-left-' + r" class="v3grid__row"
+        :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
+        :style="{ gridTemplateColumns: lockedLeftTemplate }">
+        <div v-for="(c, i) in lockedLeftCols" :key="'c-left-' + i" class="v3grid__cell">
+          <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field]">
+            {{ (row as any)[c.field] }}
+          </slot>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BLOCO FIXO: COLUNAS LOCKED RIGHT -->
+    <div class="v3grid__locked-right"
+      :style="{ width: lockedRightWidth + 'px', gridTemplateColumns: lockedRightTemplate }">
+
+      <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: lockedRightTemplate }">
+        <div v-for="(c, i) in lockedRightCols" :key="'h-right-' + i" class="v3grid__cell v3grid__headercell">
+          {{ c.title ?? String(c.field) }}
+        </div>
+      </div>
+
+      <div v-if="props.showFilterRow && anyFilterable && (!isCardMode || props.showFiltersInCards)"
+        class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: lockedRightTemplate }">
+        <div v-for="(c, i) in lockedRightCols" :key="'f-right-' + i" class="v3grid__cell--header">
+          <input v-if="c.filterable" class="v3grid__input" type="text"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
+            @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
+        </div>
+      </div>
+      <!-- linhas -->
+      <div v-for="(row, r) in visibleRows" :key="'l-right-' + r" class="v3grid__row"
+        :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
+        :style="{ gridTemplateColumns: lockedRightTemplate }">
+        <div v-for="(c, i) in lockedRightCols" :key="'c-right-' + i" class="v3grid__cell">
+          <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field]">
+            {{ (row as any)[c.field] }}
+          </slot>
+        </div>
+      </div>
+
+    </div>
+
     <!-- FOOTER / PAGING -->
-    <div v-if="(props.showFooter ?? true)" class="v3grid__cell"
+    <div v-if="(props.showFooter ?? true)" class="v3grid__footer" ref="footerEl"
       style="display:flex;gap:.75rem;justify-content:space-between;align-items:center;padding:0.5rem 0.75rem;">
       <div class="text-sm">
         {{ msgs.total }}: {{ total }} • {{ msgs.page }} {{ page }}<span v-if="!props.virtual"> / {{ totalPages()
@@ -264,6 +336,7 @@ import { useKeyboardNav } from '../composables/keyboard'
 import { useVirtual } from '../composables/virtual'
 import { usePersist } from '../composables/persist'
 import { getMessages } from '../i18n/messages'
+import { useColumnLocked } from '../composables/locked'
 import { buildGroupTree, flattenTree, type GroupDescriptor } from '../composables/group'
 import GridPagination from './Pagination.vue'
 
@@ -372,6 +445,8 @@ onMounted(() => { ensureOrder(); ensureWidths() })
 
 type PinSide = 'left' | 'right' | null
 type PinMeta = { side: PinSide; left?: number; right?: number }
+
+const { lockedMeta, lockedClass, lockedStyle } = useColumnLocked(() => mapColumns(columns.value), widths)
 
 const pinMeta = computed<PinMeta[]>(() => {
   // colunas na ordem atual
@@ -607,6 +682,54 @@ function updateHScrollState() {
   canScrollLeft.value = el.scrollLeft > 0
   canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
 }
+
+const orderedCols = computed(() => mapColumns(columns.value))
+
+const lockedLeftCols = computed(() =>
+  orderedCols.value.map((c, i) => ({ ...c, _idx: i }))
+    .filter(c => c.locked === true || c.locked === 'left')
+)
+
+const lockedRightCols = computed(() =>
+  orderedCols.value.map((c, i) => ({ ...c, _idx: i }))
+    .filter(c => c.locked === 'right')
+)
+
+const lockedLeftWidth = computed(() =>
+  lockedLeftCols.value.reduce((sum, c) =>
+    sum + (widths.value[c._idx] ?? c.width ?? 120), 0)
+)
+
+const lockedRightWidth = computed(() =>
+  lockedRightCols.value.reduce((sum, c) =>
+    sum + (widths.value[c._idx] ?? c.width ?? 120), 0)
+)
+
+const lockedLeftTemplate = computed(() =>
+  lockedLeftCols.value.map(c =>
+    (widths.value[c._idx] ?? c.width ?? 120) + 'px').join(' ')
+)
+
+const lockedRightTemplate = computed(() =>
+  lockedRightCols.value.map(c =>
+    (widths.value[c._idx] ?? c.width ?? 120) + 'px').join(' ')
+)
+
+const unlockedCols = computed(() =>
+  orderedCols.value.filter(c => !c.locked)
+)
+const footerEl = ref<HTMLElement | null>(null)
+const footerH = ref(0)
+
+onMounted(() => {
+  const update = () => { footerH.value = (props.showFooter ?? true) ? (footerEl.value?.offsetHeight ?? 0) : 0 }
+  update()
+  if (footerEl.value) {
+    const ro = new ResizeObserver(() => update())
+    ro.observe(footerEl.value)
+  }
+})
+
 onMounted(() => { updateHScrollState() })
 async function refresh() {
   if (!props.dataProvider) return

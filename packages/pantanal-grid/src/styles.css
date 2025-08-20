@@ -6,6 +6,7 @@
   overflow: hidden;
   --row-h: 44px;
   width: 100%;
+  --filter-h: var(--row-h);
 }
 .v3grid__head { 
   background: var(--grid-header, #f8fafc);
@@ -15,15 +16,15 @@
 .v3grid__row { height: var(--row-h); display: grid; align-items: center; }
 .v3grid__cell { padding: 0.5rem 0.75rem; border-right: 1px solid var(--grid-border, #e5e7eb); }
 .v3grid__cell:last-child { border-right: none; }
-.v3grid__filters { background: var(--grid-header, #f8fafc); border-bottom: 1px solid var(--grid-border, #e5e7eb); }
-.v3grid__input { width: 100%; border: 1px solid var(--grid-border, #e5e7eb); border-radius: 0.375rem; padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+.v3grid__filters { height: var(--filter-h); background: var(--grid-header, #f8fafc); border-bottom: 1px solid var(--grid-border, #e5e7eb); }
+.v3grid__input { width: 100%; border: 1px solid var(--grid-border, #e5e7eb); border-radius: 0.375rem; padding: 0.25rem 0.5rem; font-size: 0.875rem;height: calc(var(--filter-h) - 1rem);line-height: 1.25rem;outline-offset: 0; }
 .v3grid__checkbox { width: 1rem; height: 1rem; accent-color: var(--grid-accent, #18a058); }
 .v3grid__resizer {
   position: absolute; top: 0; bottom: 0; right: -3px;
   width: 6px; cursor: col-resize; user-select: none;
 }
-.v3grid__headercell { position: relative; display:flex; align-items:center; gap:.5rem; background-color: #f3f4f6; }
-.v3grid__cell--header { padding: 0.5rem 0.75rem; border-right: 1px solid var(--grid-border, #e5e7eb);background-color: #f3f4f6; }
+.v3grid__headercell { height: var(--row-h); position: relative; display:flex; align-items:center; gap:.5rem; background-color: #f3f4f6; }
+.v3grid__cell--header { height: 100%;display: flex;align-items: center;gap: .5rem;padding: 0.5rem 0.75rem; border-right: 1px solid var(--grid-border, #e5e7eb);background-color: #f3f4f6; }
 .v3grid__cell[data-focus="true"]{outline:2px solid var(--grid-accent,#18a058);outline-offset:-2px}
 .v3grid__cell--header[data-focus="true"]{outline:2px solid var(--grid-accent,#18a058);outline-offset:-2px;background-color: #f3f4f6}
 .v3grid__group { background: rgba(0,0,0,.03); font-weight: 600; }
@@ -215,3 +216,27 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.v3grid { position: relative; overflow: hidden; }
+
+.v3grid__locked-left,
+.v3grid__locked-right {
+  position: absolute;
+  top: 0;
+  bottom: var(--footer-h, 0px);
+  z-index: 4; 
+  background: var(--grid-bg, #fff);
+  overflow: hidden;
+  display: block;
+}
+
+.v3grid__locked-left  { left: 0;  border-right: 1px solid var(--grid-border, #e5e7eb); }
+.v3grid__locked-right { right: 0; border-left:  1px solid var(--grid-border, #e5e7eb); }
+
+/* header dos locked fixa no topo do próprio bloco (se a página rolar) */
+.v3grid__locked-left .v3grid__head,
+.v3grid__locked-right .v3grid__head {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
