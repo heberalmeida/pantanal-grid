@@ -27,7 +27,7 @@
             </span>
 
             <span v-if="props.enableColumnResize && (c.resizable ?? true)" class="v3grid__resizer"
-              @mousedown="(e: any) => { onResizeDown(e, i); $emit('columnResize', { field: String(c.field), width: widths[i] || c.width || 0 }) }"></span>
+              @mousedown="(e: any) => { onResizeDown(e, i); $emit('columnResize', { field: String(c.field), width: effW(i, c) }) }"></span>
           </div>
         </template>
       </div>
@@ -37,9 +37,7 @@
         class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
         <div v-if="props.selectable" class="v3grid__cell"></div>
         <div v-if="isGrouped" class="v3grid__cell"></div>
-        <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__cell--header" :class="[pinClass(i)]"
-          :style="[pinStyle(i)]">
-
+        <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__cell v3grid__cell--header" :class="[pinClass(i)]" :style="[pinStyle(i)]">
           <input v-if="c.filterable" class="v3grid__input" type="text"
             :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
             @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
@@ -245,7 +243,7 @@
 
       <div v-if="props.showFilterRow && anyFilterable && (!isCardMode || props.showFiltersInCards)"
         class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: lockedLeftTemplate }">
-        <div v-for="(c, i) in lockedLeftCols" :key="'f-left-' + i" class="v3grid__cell--header">
+        <div v-for="(c, i) in lockedLeftCols" :key="'f-left-' + i" class="v3grid__cell v3grid__cell--header">
           <input v-if="c.filterable" class="v3grid__input" type="text"
             :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
             @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
@@ -277,7 +275,7 @@
 
       <div v-if="props.showFilterRow && anyFilterable && (!isCardMode || props.showFiltersInCards)"
         class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: lockedRightTemplate }">
-        <div v-for="(c, i) in lockedRightCols" :key="'f-right-' + i" class="v3grid__cell--header">
+        <div v-for="(c, i) in lockedRightCols" :key="'f-right-' + i" class="v3grid__cell v3grid__cell--header">
           <input v-if="c.filterable" class="v3grid__input" type="text"
             :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
             @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
@@ -336,7 +334,6 @@ import { useKeyboardNav } from '../composables/keyboard'
 import { useVirtual } from '../composables/virtual'
 import { usePersist } from '../composables/persist'
 import { getMessages } from '../i18n/messages'
-import { useColumnLocked } from '../composables/locked'
 import { buildGroupTree, flattenTree, type GroupDescriptor } from '../composables/group'
 import GridPagination from './Pagination.vue'
 
@@ -446,13 +443,11 @@ onMounted(() => { ensureOrder(); ensureWidths() })
 type PinSide = 'left' | 'right' | null
 type PinMeta = { side: PinSide; left?: number; right?: number }
 
-const { lockedMeta, lockedClass, lockedStyle } = useColumnLocked(() => mapColumns(columns.value), widths)
-
 const pinMeta = computed<PinMeta[]>(() => {
   // colunas na ordem atual
   const ordered = mapColumns(columns.value)
   // largura efetiva por índice
-  const w = ordered.map((c, idx) => (widths.value[idx] ?? c.width ?? 0) as number)
+  const w = ordered.map((c, idx) => effW(idx, c, 0))
 
   // IMPORTANTÍSSIMO: seletores/expander no início ocupam espaço à esquerda do grid real
   const leftBase = (props.selectable ? 52 : 0) + (isGrouped.value ? 28 : 0)
@@ -616,25 +611,36 @@ watch(filters, v => emit('update:filter', v))
 /** UI helpers */
 function headerTemplate(cols: any[]) {
   ensureOrder(); ensureWidths()
+
   const ordered = mapColumns(cols)
+  const hasPinnedOrLocked = ordered.some(c => c.locked || c.pinned)
+
   const unlocked = ordered.filter(c => !c.locked)
 
-  const widthsList = unlocked.map((c, idx) => {
-    const colIdx = ordered.findIndex(o => o.field === c.field)
-    const w = widths.value[colIdx] ?? c.width ?? 120
-    return `${w}px`
+  const tracksUnlocked = unlocked.map((c) => {
+    const idx = ordered.findIndex(o => o.field === c.field)
+
+    if (!hasPinnedOrLocked && (c.width == null)) {
+      return 'minmax(0px, 1fr)'
+    }
+
+    return `${effW(idx, c)}px`
   })
 
   const sel = props.selectable ? ['52px'] : []
   const exp = isGrouped.value ? ['28px'] : []
 
-  return [...sel, ...exp, ...widthsList].join(' ')
+  return [...sel, ...exp, ...tracksUnlocked].join(' ')
 }
 
 function bodyTemplate(cols: any[]) {
   return headerTemplate(cols)
 }
 
+function effW(idx: number, col: any, fallback = 120): number {
+  const raw = widths.value[idx];
+  return (raw == null || raw <= 0) ? (col.width ?? fallback) : raw;
+}
 
 function toggleGroupKey(key: string) {
   const s = new Set(expanded.value)
@@ -708,22 +714,22 @@ const lockedRightCols = computed(() =>
 
 const lockedLeftWidth = computed(() =>
   lockedLeftCols.value.reduce((sum, c) =>
-    sum + (widths.value[c._idx] ?? c.width ?? 120), 0)
+    sum + effW(c._idx, c), 0)
 )
 
 const lockedRightWidth = computed(() =>
   lockedRightCols.value.reduce((sum, c) =>
-    sum + (widths.value[c._idx] ?? c.width ?? 120), 0)
+    sum + effW(c._idx, c), 0)
 )
 
 const lockedLeftTemplate = computed(() =>
   lockedLeftCols.value.map(c =>
-    (widths.value[c._idx] ?? c.width ?? 120) + 'px').join(' ')
+    effW(c._idx, c) + 'px').join(' ')
 )
 
 const lockedRightTemplate = computed(() =>
   lockedRightCols.value.map(c =>
-    (widths.value[c._idx] ?? c.width ?? 120) + 'px').join(' ')
+    effW(c._idx, c) + 'px').join(' ')
 )
 
 const unlockedCols = computed(() =>
@@ -783,7 +789,11 @@ onMounted(() => {
   if (loaded.pageSize) pageSize.value = loaded.pageSize
   if (!props.serverSide && loaded.filters) filters.value = loaded.filters
   if (loaded.order) order.value = loaded.order
-  if (loaded.widths) widths.value = loaded.widths
+  if (loaded.widths) {
+   widths.value = loaded.widths.map((x: number | undefined) =>
+     (x != null && x > 0) ? x : undefined
+   ) as any
+}
 })
 watch([sortState, page, pageSize, filters, order, widths], () => {
   persist.save({

@@ -1,5 +1,11 @@
 # @pantanal/grid
 
+## 1.0.15
+
+### Patch Changes
+
+- fix columns
+
 ## 1.0.14
 
 ### Patch Changes
