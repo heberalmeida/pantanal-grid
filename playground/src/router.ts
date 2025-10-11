@@ -24,8 +24,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/gallery', component: () => import('./pages/ImageGalleryPage.vue') },
 ]
 
-
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory('/pantanal-grid/'),
   routes,
 })
