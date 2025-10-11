@@ -97,7 +97,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { PantanalGrid } from '@pantanal/grid'
+import { PantanalGrid, type ColumnDef, type Row as GridRow } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
 import exampleSource from './ResponsiveCardsPage.vue?raw'
 
@@ -107,7 +107,7 @@ const responsiveMode = ref<ResponsiveMode>('auto')
 const cardBreakpoint = ref(768)
 const containerWidth = ref(940)
 
-const rows = computed(() =>
+const rows = computed<GridRow[]>(() =>
   Array.from({ length: 20 }, (_, i) => ({
     id: i + 1,
     name: ['Wireless Headphones', 'Smart Lamp', 'Notebook 14"', 'Mechanical Keyboard', 'Noise Cancelling Buds'][i % 5],
@@ -115,17 +115,17 @@ const rows = computed(() =>
     status: ['In stock', 'In production', 'In transit', 'Made to order'][i % 4],
     price: 199 + i * 12,
     updatedAt: new Date(Date.now() - i * 86400000).toLocaleDateString('en-US')
-  }))
+  })) as GridRow[]
 )
 
 const columns = [
-  { field: 'id', title: '#', width: 70, pinned: 'left' },
+  { field: 'id', title: '#', width: 70, pinned: 'left' as const },
   { field: 'name', title: 'Product', filterable: true, sortable: true },
   { field: 'brand', title: 'Brand', filterable: true },
   { field: 'status', title: 'Status', filterable: true },
   { field: 'price', title: 'Price', sortable: true, format: (v: number) => `$ ${v.toFixed(2)}` },
   { field: 'updatedAt', title: 'Updated at', width: 160 }
-]
+ ] as ColumnDef<GridRow>[]
 
 const codeSnippet = exampleSource
 </script>
