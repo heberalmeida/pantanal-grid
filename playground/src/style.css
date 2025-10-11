@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* tema padrão (a lib usa estas vars também) */
 :root {
   color-scheme: light;
   --grid-bg: #ffffff;
@@ -14,11 +13,11 @@
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --grid-bg: #0f172a;
-  --grid-border: #1e293b;
-  --grid-text: #e2e8f0;
-  --grid-header: #101936;
-  --grid-accent: #22d3ee;
+  --grid-bg: #0b1120;
+  --grid-border: rgba(148, 163, 184, 0.25);
+  --grid-text: #f9fafb;
+  --grid-header: #111827;
+  --grid-accent: #38bdf8;
 }
 
 [data-theme="forest"] {
@@ -32,9 +31,9 @@
 
 [data-theme="midnight"] {
   color-scheme: dark;
-  --grid-bg: #0f172a;
-  --grid-border: #3730a3;
-  --grid-text: #e0e7ff;
+  --grid-bg: #0b1120;
+  --grid-border: rgba(148, 163, 184, 0.25);
+  --grid-text: #f9fafb;
   --grid-header: #111827;
   --grid-accent: #7c3aed;
 }
@@ -44,48 +43,181 @@ body {
   background-color: transparent;
 }
 
-/* dark theme tweaks so grid headers remain legible */
-[data-theme="dark"] .v3grid__head .v3grid__headercell {
+[data-theme="dark"],
+[data-theme="midnight"] {
+  color-scheme: dark;
+  --grid-bg: #0b1120;
+  --grid-text: #f9fafb;
+  --grid-border: rgba(148, 163, 184, 0.25);
+  --grid-header: #111827;
+  --grid-accent: #38bdf8;
+}
+
+[data-theme="dark"] body,
+[data-theme="midnight"] body {
+  color: #f1f5f9;
+  background-color: #0b1120;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="midnight"] h1,
+[data-theme="midnight"] h2,
+[data-theme="midnight"] h3 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] p,
+[data-theme="midnight"] p,
+[data-theme="dark"] span,
+[data-theme="midnight"] span {
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] header,
+[data-theme="midnight"] header {
+  background-color: #0f172a !important;
+  color: #f8fafc;
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] aside,
+[data-theme="midnight"] aside {
+  background-color: #111827 !important;
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] article,
+[data-theme="midnight"] article {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
   color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] article h3,
+[data-theme="midnight"] article h3 {
+  color: #f9fafb;
+}
+
+[data-theme="dark"] article p,
+[data-theme="midnight"] article p {
+  color: rgba(226, 232, 240, 0.9);
+}
+
+[data-theme="dark"] .bg-cyan-50\/70,
+[data-theme="midnight"] .bg-cyan-50\/70 {
+  background-color: rgba(21, 94, 117, 0.25) !important;
+  color: #e0f2fe !important;
+  border-color: rgba(34, 211, 238, 0.5) !important;
+}
+
+[data-theme="dark"] .bg-white\/90,
+[data-theme="midnight"] .bg-white\/90 {
+  background-color: rgba(30, 41, 59, 0.98) !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .v3grid__cell,
+[data-theme="midnight"] .v3grid__cell {
+  background-color: rgba(17, 24, 39, 0.95) !important;
+  color: #f9fafb !important;
+  border-color: rgba(71, 85, 105, 0.55);
+}
+
+[data-theme="dark"] .code-block,
+[data-theme="midnight"] .code-block {
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+[data-theme="dark"] .border-slate-200\/80,
+[data-theme="midnight"] .border-slate-200\/80 {
+  border-color: rgba(148, 163, 184, 0.3) !important;
+}
+
+[data-theme="dark"] a:hover,
+[data-theme="midnight"] a:hover {
+  color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .v3grid__filters,
+[data-theme="midnight"] .v3grid__filters {
   background-color: rgba(15, 23, 42, 0.8) !important;
-  border-color: rgba(71, 85, 105, 0.6) !important;
 }
 
-[data-theme="dark"] .v3grid__filters {
-  background-color: rgba(15, 23, 42, 0.7) !important;
+[data-theme="dark"] .v3grid__row,
+[data-theme="midnight"] .v3grid__row {
+  background-color: rgba(14, 23, 42, 0.92);
+  color: #f8fafc;
+  border-color: rgba(71, 85, 105, 0.5);
 }
 
-[data-theme="dark"] .v3grid__filters .v3grid__cell,
-[data-theme="dark"] .v3grid__filters .v3grid__cell--header {
-  background-color: rgba(15, 23, 42, 0.7) !important;
-  border-color: rgba(71, 85, 105, 0.55) !important;
+[data-theme="midnight"] .v3grid__row {
+  background-color: rgba(14, 18, 34, 0.95);
 }
 
-[data-theme="dark"] .v3grid__filters .v3grid__input {
-  background-color: rgba(30, 41, 59, 0.85);
-  border-color: rgba(148, 163, 184, 0.4);
+[data-theme="midnight"] .v3grid__row--alt {
+  background-color: rgba(28, 32, 64, 0.85);
+}
+
+[data-theme="dark"] .v3grid__group,
+[data-theme="midnight"] .v3grid__group,
+[data-theme="dark"] .v3grid__groupfooter,
+[data-theme="midnight"] .v3grid__groupfooter {
+  background-color: rgba(30, 41, 59, 0.75);
   color: #e2e8f0;
 }
 
-[data-theme="dark"] .v3grid__filters .v3grid__input::placeholder {
-  color: rgba(148, 163, 184, 0.75);
-}
-
-[data-theme="dark"] .v3grid__cards {
+[data-theme="dark"] .v3grid__cards,
+[data-theme="midnight"] .v3grid__cards {
   background: transparent;
 }
 
-[data-theme="dark"] .v3grid__card {
+[data-theme="dark"] .v3grid__card,
+[data-theme="midnight"] .v3grid__card {
   background: rgba(15, 23, 42, 0.88);
   border: 1px solid rgba(148, 163, 184, 0.18);
   color: #e2e8f0;
   box-shadow: 0 12px 32px -18px rgba(15, 23, 42, 0.85);
 }
 
-[data-theme="dark"] .v3grid__cardlabel {
+[data-theme="dark"] .v3grid__cardlabel,
+[data-theme="midnight"] .v3grid__cardlabel {
   color: rgba(203, 213, 225, 0.85);
 }
 
-[data-theme="dark"] .v3grid__cardvalue {
+[data-theme="dark"] .v3grid__cardvalue,
+[data-theme="midnight"] .v3grid__cardvalue {
   color: #f8fafc;
+}
+[data-theme="dark"] .v3grid__pager,
+[data-theme="midnight"] .v3grid__pager {
+  background-color: rgba(15, 23, 42, 0.9);
+  color: #f8fafc;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+[data-theme="dark"] .v3grid__pager button,
+[data-theme="midnight"] .v3grid__pager button {
+  background-color: rgba(30, 41, 59, 0.8);
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+[data-theme="dark"] .v3grid__pager button:disabled,
+[data-theme="midnight"] .v3grid__pager button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+[data-theme="dark"] .v3grid__pager select,
+[data-theme="midnight"] .v3grid__pager select {
+  background-color: rgba(30, 41, 59, 0.85);
+  color: #f8fafc;
+  border-color: rgba(148, 163, 184, 0.4);
 }

@@ -93,10 +93,10 @@ const navSections = [
     title: 'Getting started',
     items: [
       { to: '/', label: 'Overview', icon: 'house' },
+      { to: '/setup', label: 'Setup & usage', icon: 'circle-play' },
       { to: '/basic', label: 'Basic grid', icon: 'table-cells-large' },
       { to: '/table-only', label: 'Table-only layout', icon: 'table-list' },
       { to: '/cards', label: 'Responsive cards', icon: 'mobile-screen-button' },
-      { to: '/setup', label: 'Setup & usage', icon: 'circle-play' },
     ],
   },
   {
