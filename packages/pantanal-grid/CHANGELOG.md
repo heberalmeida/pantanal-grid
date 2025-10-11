@@ -1,5 +1,11 @@
 # @pantanal/grid
 
+## 1.1.0
+
+### Minor Changes
+
+- Package "pantanal-grid-playground" must depend on the current version of "@pantanal/grid": "1.0.15" vs "link:../packages/pantanal-grid"
+
 ## 1.0.15
 
 ### Patch Changes

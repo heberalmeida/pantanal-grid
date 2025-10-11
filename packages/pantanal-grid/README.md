@@ -6,17 +6,20 @@ A modern data grid for **Vue 3**, styled to play nicely with **Tailwind**. Ships
 
 ## layout
 - `packages/pantanal-grid` — the **@pantanal/grid** library package
-- `playground` — Vite app with example pages: `/basic`, `/i18n/en`, `/i18n/es`, `/virtual`, `/server`
+- `playground` — Vite app with example pages: `/basic`, `/i18n/en`, `/i18n/es`, `/virtual`, `/server`, `/grouping`, `/table-only`, `/pagination`, `/locked`
 
 ## Core features
 - Sorting (asc/desc) and per-column **filter row**
 - Selection (single/multiple) with **select-all** per page/viewport
 - Client-side **and** server-side pagination (server mode expects `:total`)
 - Column **resize** (drag) & **reorder** (drag & drop)
+  - emits `columnResize` with `{ field, width }`
+  - emits `columnReorder` with `{ from, to }` for analytics or persistence
 - **Keyboard navigation** (← → ↑ ↓) with visible focus
 - **Virtual scroll** for large datasets
 - **i18n** (pt / en / es) with overridable `messages`
 - Optional **state persistence** (sort/page/pageSize/filters/order/widths) via `persistStateKey`
+- **Pinned/Locked columns** (left/right) com scroll horizontal; cabeçalho/filtro/células “pinned” ficam sticky; **footer não rola** horizontalmente
 
 ## Requirements
 - **Node.js** >= 18
@@ -28,6 +31,11 @@ yarn
 yarn dev   # http://localhost:5173
 ```
 The playground aliases `@pantanal/grid` to the local source and uses Tailwind.
+
+### Run the unit tests
+```bash
+yarn test  # runs vitest workspace for @pantanal/grid
+```
 
 ## Install (in your app)
 ```bash
@@ -72,6 +80,82 @@ const columns = [
   :row-height="44"
 />
 ```
+
+## Grouping & Aggregations
+
+Pantanal Grid supports **multi-level grouping** with optional **aggregations** and **expand/collapse**.  
+This works fully on the client. For server-side grouping, pre-aggregate on your API and feed the grid already grouped.
+
+### Quick start
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type GroupDescriptor } from '@pantanal/grid'
+import '@pantanal/grid/styles.css'
+
+const rows = [
+  { id: 1, title: 'Airpods',  brand: 'Apple',  category: 'mobile-accessories', price: 129.99 },
+  { id: 2, title: 'CK One',   brand: 'Calvin Klein', category: 'fragrances', price: 49.99 },
+  // ...
+]
+
+const columns = [
+  { field:'id', title:'ID', width:80 },
+  { field:'title', title:'Title', filterable:true },
+  { field:'brand', title:'Brand', filterable:true },
+  { field:'category', title:'Category', filterable:true },
+  // tip: format your currency/decimal columns to avoid long floating outputs
+  { field:'price', title:'Price', sortable:true, format:(v:number)=>`$ ${v.toFixed(2)}` }
+]
+
+// multi-level grouping: Category -> Brand
+const group: GroupDescriptor[] = [
+  { field:'category', dir:'asc' },
+  { field:'brand',    dir:'asc' }
+]
+
+// per-field aggregation names: 'sum' | 'avg' | 'min' | 'max' | 'count'
+const aggregates = {
+  price: ['sum','avg'],
+  id:    ['count']
+} as const
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :group="group"
+    :aggregates="aggregates"
+    :showGroupFooters="true"
+    :pageSize="10"
+    :height="520"
+  />
+</template>
+```
+
+### How it renders
+- Each **group header** occupies the full row and shows its **field/value** plus the number of items.
+- A small **expander** (▶/▼) indicates collapsed/expanded state. You can expand/collapse all with helper buttons in the footer.
+- When `showGroupFooters` is true, a **group footer** appears after each group with the selected aggregations (e.g., *Sum*, *Average*).
+- Row **selection** honors grouping: the header checkbox only selects **data rows** on the current page.
+
+### Props & events
+- `group: Array<{ field: string; dir?: 'asc' | 'desc' }>` — order defines the grouping hierarchy.
+- `aggregates: Record<string, Array<'sum'|'avg'|'min'|'max'|'count'>>` — which metrics to compute per numeric field.
+- `showGroupFooters?: boolean` — show/hide footers (default: `true`).
+- Emits `toggleGroup(key: string, open: boolean)` whenever a group is expanded/collapsed.
+
+### Tips
+- For currency/decimal fields, prefer a column `format` (e.g., `toFixed(2)`) so values like `229.98000000000002` render as `$ 229.98`.
+- Client-side grouping works with **filters**, **sorting**, and **pagination**. In `serverSide` mode, perform grouping/aggregation on the server and pass preprocessed rows.
+
+## Events emitted
+- `update:page`, `update:pageSize`, `update:filter`, `update:sort` — two-way bindings for state managers.
+- `columnResize` — `{ field, width }` after a user drags a resizer.
+- `columnReorder` — `{ from, to }` when the user drops a header in a new position (0-based indices of the current view).
+- `selectionChange` — array of selected keys (for single/multi-select grids).
+- `toggleGroup(key, expanded)` — fired when grouped nodes are expanded/collapsed.
+- `loading(true|false)` — emitted around asynchronous `dataProvider` calls.
 
 ## Server-side mode (generic)
 In **serverSide** mode the grid does not sort/filter/paginate locally; it only **emits models** (`update:page`, `update:pageSize`, `update:filter`, `update:sort`). Your app performs the fetch and passes the current page `:rows` plus the remote `:total` count.
@@ -196,6 +280,63 @@ watchEffect(async () => {
 - `selectionChange`, `rowClick`
 - `columnResize`, `columnReorder`
 
+### Advanced i18n (runtime locales + per-page overrides)
+
+You can **register new locales at runtime** and still override labels per page/component.
+
+```ts
+// main.ts (or any early entry file)
+import { registerLocale } from '@pantanal/grid'
+
+registerLocale('de', {
+  total: 'Gesamt',
+  page: 'Seite',
+  rowsPerPage: 'Zeilen pro Seite',
+  previous: 'Zurück',
+  next: 'Weiter',
+  filterPlaceholder: 'Filtern',
+})
+```
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type SortDescriptor, type FilterDescriptor } from '@pantanal/grid'
+
+type Row = { id: number; name: string; price: number }
+const rows = ref<Row[]>(Array.from({ length: 30 }, (_, i) => ({
+  id: i + 1, name: `Artikel ${i + 1}`, price: +(Math.random() * 50).toFixed(2)
+})))
+
+const columns = [
+  { field:'id', title:'ID', width:80, sortable:true, filterable:true },
+  { field:'name', title:'Name', sortable:true, filterable:true },
+  { field:'price', title:'Preis', sortable:true, format:(v:number)=>`€ ${v.toFixed(2)}` },
+]
+
+const sort = ref<SortDescriptor[]>([])
+const filter = ref<FilterDescriptor[]>([])
+const page = ref(1)
+const pageSize = ref(10)
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns as any"
+    key-field="id"
+    v-model:sort="sort"
+    v-model:filter="filter"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    locale="de"
+    :messages="{ next: 'Weiter »', previous: '« Zurück' }"
+  />
+</template>
+```
+
+
+
 ## Scripts
 - `yarn dev` — run playground
 - `yarn build` — build the library
@@ -206,6 +347,14 @@ watchEffect(async () => {
 - `/i18n/en` and `/i18n/es` — internationalization
 - `/virtual` — virtual scroll (thousands of rows)
 - `/server` — server-side pagination with DummyJSON
+- `/basic` — core features + persistence
+- `/i18n/en` and `/i18n/es` — internationalization
+- `/virtual` — virtual scroll (thousands of rows)
+- `/server` — server-side pagination with DummyJSON
+- `/grouping` — grouping & aggregations
+- `/table-only` — force table layout (no cards)
+- `/pagination` — pagination variants
+- `/locked` — pinned/locked columns + horizontal scroll
 
 ## Contributing
 PRs welcome! Please run `yarn test` before pushing. The playground uses **vue-router**: one page per demo.
