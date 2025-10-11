@@ -13,6 +13,8 @@ A modern data grid for **Vue 3**, styled to play nicely with **Tailwind**. Ships
 - Selection (single/multiple) with **select-all** per page/viewport
 - Client-side **and** server-side pagination (server mode expects `:total`)
 - Column **resize** (drag) & **reorder** (drag & drop)
+  - emits `columnResize` with `{ field, width }`
+  - emits `columnReorder` with `{ from, to }` for analytics or persistence
 - **Keyboard navigation** (← → ↑ ↓) with visible focus
 - **Virtual scroll** for large datasets
 - **i18n** (pt / en / es) with overridable `messages`
@@ -29,6 +31,11 @@ yarn
 yarn dev   # http://localhost:5173
 ```
 The playground aliases `@pantanal/grid` to the local source and uses Tailwind.
+
+### Run the unit tests
+```bash
+yarn test  # runs vitest workspace for @pantanal/grid
+```
 
 ## Install (in your app)
 ```bash
@@ -141,6 +148,14 @@ const aggregates = {
 ### Tips
 - For currency/decimal fields, prefer a column `format` (e.g., `toFixed(2)`) so values like `229.98000000000002` render as `$ 229.98`.
 - Client-side grouping works with **filters**, **sorting**, and **pagination**. In `serverSide` mode, perform grouping/aggregation on the server and pass preprocessed rows.
+
+## Events emitted
+- `update:page`, `update:pageSize`, `update:filter`, `update:sort` — two-way bindings for state managers.
+- `columnResize` — `{ field, width }` after a user drags a resizer.
+- `columnReorder` — `{ from, to }` when the user drops a header in a new position (0-based indices of the current view).
+- `selectionChange` — array of selected keys (for single/multi-select grids).
+- `toggleGroup(key, expanded)` — fired when grouped nodes are expanded/collapsed.
+- `loading(true|false)` — emitted around asynchronous `dataProvider` calls.
 
 ## Server-side mode (generic)
 In **serverSide** mode the grid does not sort/filter/paginate locally; it only **emits models** (`update:page`, `update:pageSize`, `update:filter`, `update:sort`). Your app performs the fetch and passes the current page `:rows` plus the remote `:total` count.
