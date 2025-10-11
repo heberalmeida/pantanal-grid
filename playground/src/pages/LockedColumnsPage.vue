@@ -59,12 +59,15 @@
         reports with summaries.
       </p>
     </div>
+    <ExampleCode :source="codeSnippet" />
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { PantanalGrid, type SortDescriptor, type FilterDescriptor } from '@pantanal/grid'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './LockedColumnsPage.vue?raw'
 
 type Row = {
   id: number
@@ -152,4 +155,5 @@ const sort = ref<SortDescriptor[]>([{ field: 'id', dir: 'asc' }])
 const filter = ref<FilterDescriptor[]>([])
 const page = ref(1)
 const pageSize = ref(20)
+const codeSnippet = exampleSource
 </script>

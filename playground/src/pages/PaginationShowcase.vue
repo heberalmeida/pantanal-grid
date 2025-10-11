@@ -206,12 +206,15 @@
       </article>
     </div>
   </section>
+  <ExampleCode :source="codeSnippet" />
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { PantanalGrid, GridPagination } from '@pantanal/grid'
 import '@pantanal/grid/styles.css'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './PaginationShowcase.vue?raw'
 
 type Row = Record<string, any>
 
@@ -259,6 +262,8 @@ function sliceRows(source: Row[], page: number, pageSize: number) {
   const start = (page - 1) * pageSize
   return source.slice(start, start + pageSize)
 }
+
+const codeSnippet = exampleSource
 </script>
 
 <style scoped>

@@ -8,6 +8,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/i18n/es', component: () => import('./pages/I18nEsPage.vue') },
   { path: '/i18n/custom', component: () => import('./pages/I18nCustomPage.vue') },
   { path: '/cards', component: () => import('./pages/ResponsiveCardsPage.vue') },
+  { path: '/setup', component: () => import('./pages/SetupGuidePage.vue') },
   { path: '/virtual', component: () => import('./pages/VirtualPage.vue') },
   { path: '/server', component: () => import('./pages/ServerSidePage.vue') },
   { path: '/grouping', component: () => import('./pages/GroupingPage.vue') },
@@ -20,6 +21,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/persisted', component: () => import('./pages/PersistedStatePage.vue') },
   { path: '/custom-cells', component: () => import('./pages/CustomCellsPage.vue') },
   { path: '/styled-table', component: () => import('./pages/StyledTablePage.vue') },
+  { path: '/gallery', component: () => import('./pages/ImageGalleryPage.vue') },
 ]
 
 

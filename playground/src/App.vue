@@ -96,6 +96,7 @@ const navSections = [
       { to: '/basic', label: 'Basic grid', icon: 'table-cells-large' },
       { to: '/table-only', label: 'Table-only layout', icon: 'table-list' },
       { to: '/cards', label: 'Responsive cards', icon: 'mobile-screen-button' },
+      { to: '/setup', label: 'Setup & usage', icon: 'circle-play' },
     ],
   },
   {
@@ -112,6 +113,7 @@ const navSections = [
     title: 'UX & visuals',
     items: [
       { to: '/styled-table', label: 'Styled table', icon: 'palette' },
+      { to: '/gallery', label: 'Image gallery', icon: 'images' },
       { to: '/grouping', label: 'Grouping & aggregates', icon: 'layer-group' },
       { to: '/locked', label: 'Pinned columns', icon: 'table-columns' },
       { to: '/virtual', label: 'Virtual scroll', icon: 'rocket' },

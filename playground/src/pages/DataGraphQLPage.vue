@@ -8,6 +8,8 @@ import {
     type DataProviderArgs,
     type ColumnDef
 } from '@pantanal/grid'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './DataGraphQLPage.vue?raw'
 
 type Product = { productID: number; productName: string; unitPrice: number }
 
@@ -65,6 +67,8 @@ const dataProvider: DataProvider<Product> = async ({ page, pageSize, filter, sig
         throw err
     }
 }
+
+const codeSnippet = exampleSource
 </script>
 
 <template>
@@ -74,5 +78,6 @@ const dataProvider: DataProvider<Product> = async ({ page, pageSize, filter, sig
             :auto-bind="true" v-model:sort="sort" v-model:filter="filter" v-model:page="page"
             v-model:pageSize="pageSize" persist-state-key="pantanal-demo-data-graphql" :enable-column-resize="true"
             :enable-column-reorder="true" locale="en" />
+        <ExampleCode :source="codeSnippet" />
     </section>
 </template>

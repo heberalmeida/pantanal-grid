@@ -91,12 +91,15 @@
         />
       </div>
     </div>
+    <ExampleCode :source="codeSnippet" />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { PantanalGrid } from '@pantanal/grid'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './ResponsiveCardsPage.vue?raw'
 
 type ResponsiveMode = 'auto' | 'cards' | 'table'
 
@@ -123,4 +126,6 @@ const columns = [
   { field: 'price', title: 'Price', sortable: true, format: (v: number) => `$ ${v.toFixed(2)}` },
   { field: 'updatedAt', title: 'Updated at', width: 160 }
 ]
+
+const codeSnippet = exampleSource
 </script>

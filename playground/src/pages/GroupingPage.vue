@@ -1,24 +1,10 @@
-<template>
-  <div class="p-4">
-    <h2 class="text-xl font-bold mb-4">Grouping + Aggregates</h2>
-    <PantanalGrid
-      :rows="rows"
-      :columns="columns"
-      :group="group"
-      :aggregates="aggregates"
-      :showGroupFooters="true"
-      :pageSize="20"
-      :height="520"
-      locale="en"
-    />
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { PantanalGrid } from '@pantanal/grid'
 import '@pantanal/grid/styles.css'
 import type { GroupDescriptor, AggregateName } from '@pantanal/grid'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './GroupingPage.vue?raw'
 
 const rows = ref<any[]>([])
 const loading = ref(false)
@@ -43,4 +29,23 @@ onMounted(async () => {
   rows.value = data.products
   loading.value = false
 })
+
+const codeSnippet = exampleSource
 </script>
+
+<template>
+  <div class="p-4 space-y-4">
+    <h2 class="text-xl font-bold">Grouping + Aggregates</h2>
+    <PantanalGrid
+      :rows="rows"
+      :columns="columns"
+      :group="group"
+      :aggregates="aggregates"
+      :showGroupFooters="true"
+      :pageSize="20"
+      :height="520"
+      locale="en"
+    />
+    <ExampleCode :source="codeSnippet" />
+  </div>
+</template>

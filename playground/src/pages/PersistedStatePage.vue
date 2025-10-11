@@ -57,12 +57,15 @@
         </p>
       </aside>
     </div>
+    <ExampleCode :source="codeSnippet" />
   </section>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { PantanalGrid, type FilterDescriptor, type SortDescriptor } from '@pantanal/grid'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './PersistedStatePage.vue?raw'
 
 const persistKey = 'pantanal-demo-persisted'
 
@@ -91,6 +94,7 @@ const filters = ref<FilterDescriptor[]>([])
 const page = ref(1)
 const pageSize = ref(10)
 const snapshot = ref<string>('—')
+const codeSnippet = exampleSource
 
 function refreshSnapshot() {
   if (typeof window === 'undefined') return

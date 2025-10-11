@@ -66,6 +66,7 @@
             </template>
           </template>
         </PantanalGrid>
+        <ExampleCode :source="codeSnippet" class="mt-6" />
       </div>
     </div>
   </section>
@@ -74,6 +75,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { PantanalGrid } from '@pantanal/grid'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './StyledTablePage.vue?raw'
 
 const rows = computed(() => [
   { id: 1, owner: 'Laura Campos', region: 'South', status: 'Active', goal: 120000, monthly: 94000, ytd: 560000, ytdChange: 8.4 },
@@ -91,6 +94,8 @@ const columns = [
   { field: 'goal', title: 'Quarter goal', width: 140 },
   { field: 'ytd', title: 'YTD revenue', width: 160 },
 ]
+
+const codeSnippet = exampleSource
 
 function avatarColor(name: string) {
   const palette = ['#38bdf8', '#818cf8', '#f472b6', '#22d3ee', '#facc15', '#34d399']

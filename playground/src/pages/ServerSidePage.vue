@@ -14,6 +14,7 @@
       :total="total"
     />
     <p class="text-sm text-slate-600 dark:text-slate-300">Remote total: {{ total }}</p>
+    <ExampleCode :source="codeSnippet" />
   </section>
 </template>
 
@@ -21,6 +22,8 @@
 import { ref, watchEffect } from 'vue'
 import { PantanalGrid, type FilterDescriptor, type SortDescriptor } from '@pantanal/grid'
 import { fetchProducts, type Product } from '../api/dummyjson'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './ServerSidePage.vue?raw'
 
 const rows = ref<Product[]>([])
 const total = ref(0)
@@ -28,6 +31,8 @@ const page = ref(1)
 const pageSize = ref(10)
 const filter = ref<FilterDescriptor[]>([])
 const sort = ref<SortDescriptor[]>([]) 
+
+const codeSnippet = exampleSource
 
 const columns = [
   { field:'id', title:'ID', width:80 },

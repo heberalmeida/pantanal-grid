@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { PantanalGrid, registerLocale, type SortDescriptor, type FilterDescriptor } from '@pantanal/grid'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './I18nCustomPage.vue?raw'
 
 registerLocale('de', {
   total: 'Gesamt',
@@ -26,6 +28,8 @@ const sort = ref<SortDescriptor[]>([])
 const filter = ref<FilterDescriptor[]>([])
 const page = ref(1)
 const pageSize = ref(10)
+
+const codeSnippet = exampleSource
 </script>
 
 <template>
@@ -42,5 +46,6 @@ const pageSize = ref(10)
       locale="de"
       :messages="{ next: 'Weiter »', previous: '« Zurück' }"
     />
+    <ExampleCode :source="codeSnippet" />
   </section>
 </template>

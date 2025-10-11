@@ -7,6 +7,7 @@
       responsive="table"
       :height="520"
     />
+    <ExampleCode :source="codeSnippet" />
   </div>
 </template>
 
@@ -14,6 +15,8 @@
 import { PantanalGrid } from '@pantanal/grid'
 import '@pantanal/grid/styles.css'
 import { ref, onMounted } from 'vue'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './TableOnlyPage.vue?raw'
 
 const rows = ref<any[]>([])
 const columns = [
@@ -29,4 +32,6 @@ onMounted(async () => {
   const data = await res.json()
   rows.value = data.products
 })
+
+const codeSnippet = exampleSource
 </script>

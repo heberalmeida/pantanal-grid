@@ -1,23 +1,32 @@
 # Pantanal Grid — Playground
 
-Ambiente Vite + Vue 3 usado para demonstrar os recursos do **@pantanal/grid**. O playground foi redesenhado com múltiplos
-temas (Light Breeze, Carbon Night, Emerald Forest e Midnight Aurora), navegação por seções e exemplos agrupados por
-objetivo (dados, UX, customização e i18n).
+Vue 3 + Vite playground that showcases the main capabilities of **@pantanal/grid**. The UI ships with four themes
+(Light Breeze, Carbon Night, Emerald Forest, Midnight Aurora), a curated navigation and copy-pasteable demos grouped by
+scenario (data sources, UX visuals, i18n, etc.).
 
-## Rodando localmente
+## Install & start
 
 ```bash
-yarn             # instala dependências na raiz do monorepo
-yarn dev         # dentro da pasta playground (ou yarn workspace pantanal-grid-playground dev)
+yarn             # install root dependencies
+yarn workspace @pantanal/grid build              # optional: build the library
+yarn workspace pantanal-grid-playground dev      # open http://localhost:5173
 ```
 
-## Exemplos principais
+You can also run it directly from the playground folder:
 
-- **Getting started** — grid básico, tabela-only e modo cartões responsivo.
-- **Data sources** — dados locais, REST, GraphQL e modo server-side com paginação remota.
-- **UX & Visuals** — tabela estilizada, agrupamento, colunas fixas, scroll virtual, slots customizados e versões de paginação.
-- **Internationalization** — traduções prontas (pt/en/es) + labels customizados.
+```bash
+cd playground
+yarn
+yarn dev
+```
 
-Cada página usa apenas a API pública da biblioteca e pode ser copiada diretamente para o seu projeto. Use o seletor de
-temas no cabeçalho para ver o grid se adaptar às novas paletas e confira os exemplos de paginação responsiva e
-persistência de estado.
+## What's inside
+
+- **Getting started** — Basic grid, table-only layout, responsive cards and the new setup guide.
+- **Data sources** — Static data, REST, GraphQL and server-side pagination demos.
+- **UX & Visuals** — Styled table, image gallery, grouping, locked columns, virtual scroll, pagination variants and
+  custom cell slots.
+- **Internationalization** — Built-in locales (en/es) plus a fully custom locale example.
+
+Every page uses the public API of the component. Toggle between themes using the header picker, inspect the source code
+with the “View code” expanders and combine the snippets to build your own grid experiences.

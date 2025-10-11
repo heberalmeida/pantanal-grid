@@ -27,6 +27,8 @@ import {
   faPuzzlePiece,
   faLanguage,
   faFlagCheckered,
+  faImages,
+  faCirclePlay,
   faBars,
   faXmark
 } from '@fortawesome/free-solid-svg-icons'
@@ -55,6 +57,8 @@ library.add(
   faPuzzlePiece,
   faLanguage,
   faFlagCheckered,
+  faImages,
+  faCirclePlay,
   faBars,
   faXmark
 )

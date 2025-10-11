@@ -7,6 +7,8 @@ import {
   type DataProvider,
   type DataProviderArgs
 } from '@pantanal/grid'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './DataRestPage.vue?raw'
 
 type Product = { id: number; title: string; price: number }
 
@@ -36,6 +38,8 @@ const dataProvider: DataProvider<Product> = async (args: DataProviderArgs) => {
   const json = await res.json()
   return { rows: json.products, total: json.total }
 }
+
+const codeSnippet = exampleSource
 </script>
 
 <template>
@@ -56,5 +60,6 @@ const dataProvider: DataProvider<Product> = async (args: DataProviderArgs) => {
       :enable-column-reorder="true"
       locale="en"
     />
+    <ExampleCode :source="codeSnippet" />
   </section>
 </template>

@@ -80,12 +80,15 @@
         </PantanalGrid>
       </div>
     </div>
+    <ExampleCode :source="codeSnippet" />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { PantanalGrid } from '@pantanal/grid'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './CustomCellsPage.vue?raw'
 
 const rows = computed(() => [
   { id: 1, title: 'Landing page redesign', status: 'In progress', owner: 'Livia Santos', priority: 'High', progress: 62 },
@@ -179,4 +182,6 @@ function priorityBar(priority: string) {
       return 'bg-slate-400'
   }
 }
+
+const codeSnippet = exampleSource
 </script>

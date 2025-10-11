@@ -1,6 +1,28 @@
+<template>
+  <section class="space-y-3">
+    <h2 class="text-xl font-semibold">Data Binding — Local</h2>
+    <PantanalGrid
+      :rows="rows"
+      :columns="columns as any"
+      key-field="id"
+      v-model:sort="sort"
+      v-model:filter="filter"
+      v-model:page="page"
+      v-model:pageSize="pageSize"
+      persist-state-key="pantanal-demo-data-local"
+      :enable-column-resize="true"
+      :enable-column-reorder="true"
+      locale="en"
+    />
+    <ExampleCode :source="codeSnippet" />
+  </section>
+</template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
 import { PantanalGrid, type SortDescriptor, type FilterDescriptor } from '@pantanal/grid'
+import ExampleCode from '../components/ExampleCode.vue'
+import exampleSource from './DataLocalPage.vue?raw'
 
 type Row = { id: number; name: string; price: number; category: string }
 
@@ -24,23 +46,5 @@ const sort = ref<SortDescriptor[]>([])
 const filter = ref<FilterDescriptor[]>([])
 const page = ref(1)
 const pageSize = ref(20)
+const codeSnippet = exampleSource
 </script>
-
-<template>
-  <section class="space-y-3">
-    <h2 class="text-xl font-semibold">Data Binding — Local</h2>
-    <PantanalGrid
-      :rows="rows"
-      :columns="columns as any"
-      key-field="id"
-      v-model:sort="sort"
-      v-model:filter="filter"
-      v-model:page="page"
-      v-model:pageSize="pageSize"
-      persist-state-key="pantanal-demo-data-local"
-      :enable-column-resize="true"
-      :enable-column-reorder="true"
-      locale="en"
-    />
-  </section>
-</template>
