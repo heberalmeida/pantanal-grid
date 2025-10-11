@@ -7,7 +7,7 @@ type Row = { id: number; name: string; price: number; category: string }
 const rows = ref<Row[]>(
   Array.from({ length: 150 }, (_, i) => ({
     id: i + 1,
-    name: `Item ${i + 1}`,
+    name: `Product ${i + 1}`,
     price: +(Math.random() * 100).toFixed(2),
     category: ['A','B','C'][i % 3],
   }))
@@ -40,6 +40,7 @@ const pageSize = ref(20)
       persist-state-key="pantanal-demo-data-local"
       :enable-column-resize="true"
       :enable-column-reorder="true"
+      locale="en"
     />
   </section>
 </template>

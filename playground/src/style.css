@@ -3,16 +3,89 @@
 @tailwind utilities;
 
 /* tema padrão (a lib usa estas vars também) */
-:root{
-  --grid-bg:#ffffff;
-  --grid-border:#e5e7eb;
-  --grid-text:#111827;
-  --grid-header:#f3f4f6;
-  --grid-accent:#18a058;
+:root {
+  color-scheme: light;
+  --grid-bg: #ffffff;
+  --grid-border: #e2e8f0;
+  --grid-text: #0f172a;
+  --grid-header: #f8fafc;
+  --grid-accent: #0f9b8e;
 }
-[data-theme="dark"]{
-  --grid-bg:#0b1220;
-  --grid-border:#1f2937;
-  --grid-text:#e5e7eb;
-  --grid-header:#111827;
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --grid-bg: #0f172a;
+  --grid-border: #1e293b;
+  --grid-text: #e2e8f0;
+  --grid-header: #101936;
+  --grid-accent: #22d3ee;
+}
+
+[data-theme="forest"] {
+  color-scheme: light;
+  --grid-bg: #f4fff9;
+  --grid-border: #bbf7d0;
+  --grid-text: #064e3b;
+  --grid-header: #dcfce7;
+  --grid-accent: #0d9488;
+}
+
+[data-theme="midnight"] {
+  color-scheme: dark;
+  --grid-bg: #0f172a;
+  --grid-border: #3730a3;
+  --grid-text: #e0e7ff;
+  --grid-header: #111827;
+  --grid-accent: #7c3aed;
+}
+
+body {
+  @apply min-h-screen antialiased;
+  background-color: transparent;
+}
+
+/* dark theme tweaks so grid headers remain legible */
+[data-theme="dark"] .v3grid__head .v3grid__headercell {
+  color: #f8fafc !important;
+  background-color: rgba(15, 23, 42, 0.8) !important;
+  border-color: rgba(71, 85, 105, 0.6) !important;
+}
+
+[data-theme="dark"] .v3grid__filters {
+  background-color: rgba(15, 23, 42, 0.7) !important;
+}
+
+[data-theme="dark"] .v3grid__filters .v3grid__cell,
+[data-theme="dark"] .v3grid__filters .v3grid__cell--header {
+  background-color: rgba(15, 23, 42, 0.7) !important;
+  border-color: rgba(71, 85, 105, 0.55) !important;
+}
+
+[data-theme="dark"] .v3grid__filters .v3grid__input {
+  background-color: rgba(30, 41, 59, 0.85);
+  border-color: rgba(148, 163, 184, 0.4);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .v3grid__filters .v3grid__input::placeholder {
+  color: rgba(148, 163, 184, 0.75);
+}
+
+[data-theme="dark"] .v3grid__cards {
+  background: transparent;
+}
+
+[data-theme="dark"] .v3grid__card {
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  color: #e2e8f0;
+  box-shadow: 0 12px 32px -18px rgba(15, 23, 42, 0.85);
+}
+
+[data-theme="dark"] .v3grid__cardlabel {
+  color: rgba(203, 213, 225, 0.85);
+}
+
+[data-theme="dark"] .v3grid__cardvalue {
+  color: #f8fafc;
 }

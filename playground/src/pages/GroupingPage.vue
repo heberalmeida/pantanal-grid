@@ -9,6 +9,7 @@
       :showGroupFooters="true"
       :pageSize="20"
       :height="520"
+      locale="en"
     />
   </div>
 </template>

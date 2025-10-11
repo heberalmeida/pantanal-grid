@@ -13,7 +13,7 @@
       :server-side="true"
       :total="total"
     />
-    <p class="text-sm text-slate-600">Total remoto: {{ total }}</p>
+    <p class="text-sm text-slate-600 dark:text-slate-300">Remote total: {{ total }}</p>
   </section>
 </template>
 
