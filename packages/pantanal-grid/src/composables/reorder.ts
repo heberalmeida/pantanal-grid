@@ -22,16 +22,20 @@ export function useColumnReorder(columns: () => ColumnDef[]) {
     e.preventDefault()
   }
 
-  function onDrop(index: number) {
-    if (dragIndex == null) return
-    if (index === dragIndex) return
+  function onDrop(index: number): { from: number; to: number } | null {
+    if (dragIndex == null) return null
     const arr = [...order.value]
     const fromPos = arr.indexOf(dragIndex)
     const toPos = arr.indexOf(index)
+    if (fromPos === -1 || toPos === -1 || fromPos === toPos) {
+      dragIndex = null
+      return null
+    }
     const [removed] = arr.splice(fromPos, 1)
     arr.splice(toPos, 0, removed)
     order.value = arr
     dragIndex = null
+    return { from: fromPos, to: toPos }
   }
 
   function mapColumns<T>(cols: T[]) {

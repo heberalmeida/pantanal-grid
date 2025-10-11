@@ -14,11 +14,11 @@
 
         <div v-if="isGrouped" class="v3grid__cell"></div>
 
-        <template v-for="(c, i) in unlockedCols" :key="i">
-          <div class="v3grid__cell v3grid__headercell" :class="[pinClass(i)]" :style="[pinStyle(i)]" draggable="true"
-            @dragstart="props.enableColumnReorder && onDragStart(i, $event)"
+        <template v-for="c in unlockedCols" :key="c._idx">
+          <div class="v3grid__cell v3grid__headercell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]" draggable="true"
+            @dragstart="props.enableColumnReorder && onDragStart(c._orderIndex, $event)"
             @dragover="props.enableColumnReorder && onDragOver($event)"
-            @drop="props.enableColumnReorder && (onDrop(i), $emit('columnReorder', { from: 0, to: i }))"
+            @drop="props.enableColumnReorder && handleHeaderDrop(c._orderIndex)"
             @click="toggleSort(c)">
             <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
               {{ c.title ?? String(c.field) }}
@@ -27,7 +27,7 @@
             </span>
 
             <span v-if="props.enableColumnResize && (c.resizable ?? true)" class="v3grid__resizer"
-              @mousedown="(e: any) => { onResizeDown(e, i); $emit('columnResize', { field: String(c.field), width: effW(i, c) }) }"></span>
+              @mousedown="(e: any) => { onResizeDown(e, c._orderIndex); $emit('columnResize', { field: String(c.field), width: effW(c._orderIndex, c) }) }"></span>
           </div>
         </template>
       </div>
@@ -37,7 +37,7 @@
         class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
         <div v-if="props.selectable" class="v3grid__cell"></div>
         <div v-if="isGrouped" class="v3grid__cell"></div>
-        <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__cell v3grid__cell--header" :class="[pinClass(i)]" :style="[pinStyle(i)]">
+        <div v-for="c in unlockedCols" :key="c._idx" class="v3grid__cell v3grid__cell--header" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]">
           <input v-if="c.filterable" class="v3grid__input" type="text"
             :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
             @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
@@ -54,8 +54,8 @@
           <div v-if="props.selectable" class="v3grid__cell" @click.stop>
             <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
           </div>
-          <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__cell" :class="[pinClass(i)]"
-            :style="[pinStyle(i)]" :tabindex="0" :data-focus="focusRow === r && focusCol === i"
+          <div v-for="c in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
+            :style="[pinStyle(c._idx)]" :tabindex="0" :data-focus="focusRow === r && focusCol === c._idx"
             @click="$emit('rowClick', row)">
             <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
               {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
@@ -96,7 +96,7 @@
                     </div>
                   </div>
                   <div class="v3grid__cardbody">
-                    <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__carditem">
+                    <div v-for="c in unlockedCols" :key="c._idx" class="v3grid__carditem">
                       <div class="v3grid__cardlabel">{{ c.title ?? String(c.field) }}</div>
                       <div class="v3grid__cardvalue">
                         <slot name="cell" :column="c" :row="n.row" :value="(n.row as any)[c.field as any]">
@@ -133,7 +133,7 @@
                   </div>
                 </div>
                 <div class="v3grid__cardbody">
-                  <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__carditem">
+                  <div v-for="c in unlockedCols" :key="c._idx" class="v3grid__carditem">
                     <div class="v3grid__cardlabel">{{ c.title ?? String(c.field) }}</div>
                     <div class="v3grid__cardvalue">
                       <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
@@ -175,7 +175,7 @@
               </div>
 
               <!-- células de dados -->
-              <template v-for="(c, i) in unlockedCols" :key="i">
+              <template v-for="c in unlockedCols" :key="c._idx">
                 <div v-if="n.type === 'group'" class="v3grid__cell v3grid__group">
                   <template v-if="String(c.field) === String(n.field)">
                     <strong>{{ n.value }}</strong>
@@ -183,8 +183,8 @@
                   </template>
                 </div>
 
-                <div v-else-if="n.type === 'row'" class="v3grid__cell" :class="[pinClass(i)]" :style="[pinStyle(i)]"
-                  :tabindex="0" :data-focus="focusRow === r && focusCol === i" @click="$emit('rowClick', n.row)">
+                <div v-else-if="n.type === 'row'" class="v3grid__cell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]"
+                  :tabindex="0" :data-focus="focusRow === r && focusCol === c._idx" @click="$emit('rowClick', n.row)">
                   <slot name="cell" :column="c" :row="n.row" :value="(n.row as any)[c.field as any]">
                     {{ c.format ? c.format((n.row as any)[c.field as any], n.row as any) : (n.row as any)[c.field as
                       any]
@@ -211,8 +211,8 @@
               <div v-if="props.selectable" class="v3grid__cell" @click.stop>
                 <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
               </div>
-              <div v-for="(c, i) in unlockedCols" :key="i" class="v3grid__cell" :class="[pinClass(i)]"
-                :style="[pinStyle(i)]" :tabindex="0" :data-focus="focusRow === r && focusCol === i"
+              <div v-for="c in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
+                :style="[pinStyle(c._idx)]" :tabindex="0" :data-focus="focusRow === r && focusCol === c._idx"
                 @click="$emit('rowClick', row)">
                 <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
                   {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
@@ -325,7 +325,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { ColumnDef, FilterDescriptor, GridEmits, GridProps, SortDescriptor } from '../types'
 import { applyFilter, applySort, paginate } from '../composables/data'
 import { useColumnResize } from '../composables/resize'
@@ -344,13 +344,16 @@ const iconOrderDown = new URL('../assets/order-down.svg', import.meta.url).href
 
 const rootEl = ref<HTMLElement | null>(null)
 const hostWidth = ref(0)
+let rootObserver: ResizeObserver | null = null
 
 onMounted(() => {
   if (!rootEl.value) return
+  rootObserver?.disconnect()
   const ro = new ResizeObserver((entries) => {
     const r = entries[0]?.contentRect
     hostWidth.value = r?.width ?? 0
   })
+  rootObserver = ro
   ro.observe(rootEl.value)
 })
 
@@ -440,6 +443,11 @@ const { order, onDragStart, onDragOver, onDrop, mapColumns, ensureOrder } = useC
 const { widths, onMouseDown: onResizeDown, ensureWidths } = useColumnResize(() => columns.value)
 onMounted(() => { ensureOrder(); ensureWidths() })
 
+function handleHeaderDrop(idx: number) {
+  const result = onDrop(idx)
+  if (result) emit('columnReorder', result)
+}
+
 type PinSide = 'left' | 'right' | null
 type PinMeta = { side: PinSide; left?: number; right?: number }
 
@@ -447,7 +455,10 @@ const pinMeta = computed<PinMeta[]>(() => {
   // colunas na ordem atual
   const ordered = mapColumns(columns.value)
   // largura efetiva por índice
-  const w = ordered.map((c, idx) => effW(idx, c, 0))
+  const w = ordered.map((c, idx) => {
+    const orderIdx = order.value[idx] ?? idx
+    return effW(orderIdx, c, 0)
+  })
 
   // IMPORTANTÍSSIMO: seletores/expander no início ocupam espaço à esquerda do grid real
   const leftBase = (props.selectable ? 52 : 0) + (isGrouped.value ? 28 : 0)
@@ -619,12 +630,13 @@ function headerTemplate(cols: any[]) {
 
   const tracksUnlocked = unlocked.map((c) => {
     const idx = ordered.findIndex(o => o.field === c.field)
+    const orderIdx = order.value[idx] ?? idx
 
     if (!hasPinnedOrLocked && (c.width == null)) {
       return 'minmax(0px, 1fr)'
     }
 
-    return `${effW(idx, c)}px`
+    return `${effW(orderIdx, c)}px`
   })
 
   const sel = props.selectable ? ['52px'] : []
@@ -662,10 +674,21 @@ function sortIconData(c: any) {
 }
 function toggleSort(col: any) {
   if (!col.sortable) return
-  const cur = sortState.value.find(s => s.field === String(col.field))
-  if (!cur) sortState.value = [{ field: String(col.field), dir: 'asc' }]
-  else if (cur.dir === 'asc') cur.dir = 'desc'
-  else sortState.value = sortState.value.filter(s => s.field !== cur.field)
+  const field = String(col.field)
+  const idx = sortState.value.findIndex(s => s.field === field)
+  if (idx === -1) {
+    sortState.value = [{ field, dir: 'asc' }]
+    return
+  }
+
+  const current = sortState.value[idx]
+  if (current.dir === 'asc') {
+    sortState.value = sortState.value.map((descriptor, i) =>
+      i === idx ? { ...descriptor, dir: 'desc' } : descriptor
+    )
+  } else {
+    sortState.value = sortState.value.filter(s => s.field !== field)
+  }
 }
 function setFilterValue(field: string, v: string) {
   const others = filters.value.filter(f => f.field !== field)
@@ -703,48 +726,51 @@ function updateHScrollState() {
 const orderedCols = computed(() => mapColumns(columns.value))
 
 const lockedLeftCols = computed(() =>
-  orderedCols.value.map((c, i) => ({ ...c, _idx: i }))
+  orderedCols.value.map((c, i) => ({ ...c, _idx: i, _orderIndex: order.value[i] ?? i }))
     .filter(c => c.locked === true || c.locked === 'left')
 )
 
 const lockedRightCols = computed(() =>
-  orderedCols.value.map((c, i) => ({ ...c, _idx: i }))
+  orderedCols.value.map((c, i) => ({ ...c, _idx: i, _orderIndex: order.value[i] ?? i }))
     .filter(c => c.locked === 'right')
 )
 
 const lockedLeftWidth = computed(() =>
   lockedLeftCols.value.reduce((sum, c) =>
-    sum + effW(c._idx, c), 0)
+    sum + effW(c._orderIndex, c), 0)
 )
 
 const lockedRightWidth = computed(() =>
   lockedRightCols.value.reduce((sum, c) =>
-    sum + effW(c._idx, c), 0)
+    sum + effW(c._orderIndex, c), 0)
 )
 
 const lockedLeftTemplate = computed(() =>
   lockedLeftCols.value.map(c =>
-    effW(c._idx, c) + 'px').join(' ')
+    effW(c._orderIndex, c) + 'px').join(' ')
 )
 
 const lockedRightTemplate = computed(() =>
   lockedRightCols.value.map(c =>
-    effW(c._idx, c) + 'px').join(' ')
+    effW(c._orderIndex, c) + 'px').join(' ')
 )
 
 const unlockedCols = computed(() =>
   orderedCols.value
-    .map((c, i) => ({ ...c, _idx: i })) 
+    .map((c, i) => ({ ...c, _idx: i, _orderIndex: order.value[i] ?? i })) 
     .filter(c => !c.locked)
 )
 const footerEl = ref<HTMLElement | null>(null)
 const footerH = ref(0)
+let footerObserver: ResizeObserver | null = null
 
 onMounted(() => {
   const update = () => { footerH.value = (props.showFooter ?? true) ? (footerEl.value?.offsetHeight ?? 0) : 0 }
   update()
+  footerObserver?.disconnect()
   if (footerEl.value) {
     const ro = new ResizeObserver(() => update())
+    footerObserver = ro
     ro.observe(footerEl.value)
   }
 })
@@ -804,5 +830,11 @@ watch([sortState, page, pageSize, filters, order, widths], () => {
     order: order.value,
     widths: widths.value
   } as any)
+})
+
+onBeforeUnmount(() => {
+  rootObserver?.disconnect()
+  footerObserver?.disconnect()
+  abortCtl.value?.abort()
 })
 </script>

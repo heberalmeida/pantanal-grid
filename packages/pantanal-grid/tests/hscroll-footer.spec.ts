@@ -15,11 +15,11 @@ describe('PantanalGrid horizontal scroll wrapper and footer placement', () => {
   it('renders .v3grid__scroll wrapper and keeps footer outside it', async () => {
     const wrapper = mount(Grid, { props: { rows, columns, responsive:'table', showFooter:true } })
     const scroll = wrapper.find('.v3grid__scroll')
-    const footer = wrapper.findAll('.v3grid > .v3grid__cell').at(-1)
+    const footer = wrapper.find('.v3grid__footer')
 
     expect(scroll.exists()).toBe(true)
-    expect(footer?.exists()).toBe(true)
+    expect(footer.exists()).toBe(true)
     // Footer não deve estar dentro do scroll
-    expect(scroll.element.contains(footer!.element)).toBe(false)
+    expect(scroll.element.contains(footer.element)).toBe(false)
   })
 })

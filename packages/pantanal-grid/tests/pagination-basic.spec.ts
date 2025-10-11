@@ -18,15 +18,15 @@ describe('PantanalGrid pagination basic', () => {
     })
 
     // Footer existe
-    const footer = wrapper.findAll('.v3grid > .v3grid__cell').at(-1)
-    expect(footer?.exists()).toBe(true)
+    const footer = wrapper.find('.v3grid__footer')
+    expect(footer.exists()).toBe(true)
 
     // Label em PT-BR + select com 4 opções
-    const label = footer!.find('label.text-sm')
+    const label = footer.find('label.text-sm')
     expect(label.exists()).toBe(true)
     expect(label.text()).toMatch(/Linhas por página/i)
 
-    const select = footer!.find('select.v3grid__input')
+    const select = footer.find('select.v3grid__input')
     expect(select.exists()).toBe(true)
     const options = select.findAll('option')
     expect(options.length).toBe(4)
