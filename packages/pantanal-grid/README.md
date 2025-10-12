@@ -193,14 +193,20 @@ import { PantanalGrid, PantanalColumn } from '@pantanal/grid'
 
 <PantanalGrid :rows="rows" auto-height>
   <PantanalColumn field="product" title="Product" :width="220" />
-  <PantanalColumn field="status" title="Status" slot="status" />
+  <PantanalColumn field="status" title="Status" :template="renderStatus" />
   <PantanalColumn field="price" title="Price" :format="currency" :width="140" />
-
-  <template #status="{ value }">
-    <StatusBadge :status="value" />
-  </template>
 </PantanalGrid>
 ```
+
+```ts
+import { h } from 'vue'
+
+function renderStatus({ value }) {
+  return h('span', { class: 'status-badge' }, value)
+}
+```
+
+You can also forward shared renderers by returning a function, e.g. `:template="({ row }) => renderShared(row)"`.
 
 As soon as at least one `<PantanalColumn>` is present, the grid ignores the `columns` prop and relies entirely on the declarative definitions. Both styles can coexist across different grids—pick the approach that feels more natural for each view.
 

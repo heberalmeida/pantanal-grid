@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { h } from 'vue'
+import { h, nextTick } from 'vue'
 import Grid from '../src/components/Grid.vue'
 import Column from '../src/components/Column.vue'
 
@@ -22,5 +22,22 @@ describe('PantanalGrid declarative columns', () => {
     expect(headers).toHaveLength(2)
     expect(headers[0].text()).toContain('ID')
     expect(headers[1].text()).toContain('Name')
+  })
+
+  it('renders using template prop when provided', async () => {
+    const rows = [{ id: 1, name: 'Alpha' }]
+
+    const wrapper = mount(Grid, {
+      props: { rows },
+      slots: {
+        default: () => [
+          h(Column, { field: 'name', title: 'Name', template: ({ row }: any) => [h('strong', `TEMPLATE:${row.name}`)] }),
+        ],
+      },
+    })
+
+    await nextTick()
+    await nextTick()
+    expect(wrapper.html()).toContain('TEMPLATE:Alpha')
   })
 })

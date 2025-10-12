@@ -73,6 +73,10 @@
               :rowIndex="(start ?? 0) + r"
               :columnIndex="i"
             />
+            <TemplateRenderer v-else-if="c.template"
+              :template="c.template!"
+              :payload="{ column: c, row, value: columnValue(row, c, (start ?? 0) + r), rowIndex: (start ?? 0) + r, columnIndex: i }"
+            />
             <slot v-else name="cell"
               :column="c"
               :row="row"
@@ -136,6 +140,10 @@
                           :rowIndex="(start ?? 0) + r"
                           :columnIndex="i"
                         />
+                        <TemplateRenderer v-else-if="c.template"
+                          :template="c.template!"
+                          :payload="{ column: c, row: n.row, value: columnValue(n.row, c, (start ?? 0) + r), rowIndex: (start ?? 0) + r, columnIndex: i }"
+                        />
                         <slot v-else name="cell" :column="c" :row="n.row" :value="columnValue(n.row, c, (start ?? 0) + r)"
                           :rowIndex="(start ?? 0) + r" :columnIndex="i">
                           {{ c.format ? c.format(columnValue(n.row, c, (start ?? 0) + r), n.row as any) : columnValue(n.row, c, (start ?? 0) + r) }}
@@ -189,6 +197,10 @@
                         :value="columnValue(row, c, (start ?? 0) + r)"
                         :rowIndex="(start ?? 0) + r"
                         :columnIndex="i"
+                      />
+                      <TemplateRenderer v-else-if="c.template"
+                        :template="c.template!"
+                        :payload="{ column: c, row, value: columnValue(row, c, (start ?? 0) + r), rowIndex: (start ?? 0) + r, columnIndex: i }"
                       />
                       <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, (start ?? 0) + r)"
                         :rowIndex="(start ?? 0) + r" :columnIndex="i">
@@ -255,6 +267,10 @@
                     :rowIndex="r"
                     :columnIndex="i"
                   />
+                  <TemplateRenderer v-else-if="c.template"
+                    :template="c.template!"
+                    :payload="{ column: c, row: n.row, value: columnValue(n.row, c, r), rowIndex: r, columnIndex: i }"
+                  />
                   <slot v-else name="cell" :column="c" :row="n.row" :value="columnValue(n.row, c, r)"
                     :rowIndex="r" :columnIndex="i">
                     {{ c.format ? c.format(columnValue(n.row, c, r), n.row as any) : columnValue(n.row, c, r) }}
@@ -298,6 +314,10 @@
                   :value="columnValue(row, c, r)"
                   :rowIndex="r"
                   :columnIndex="i"
+                />
+                <TemplateRenderer v-else-if="c.template"
+                  :template="c.template!"
+                  :payload="{ column: c, row, value: columnValue(row, c, r), rowIndex: r, columnIndex: i }"
                 />
                 <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, r)"
                   :rowIndex="r" :columnIndex="i">
@@ -357,6 +377,10 @@
             :rowIndex="r"
             :columnIndex="i"
           />
+          <TemplateRenderer v-else-if="c.template"
+            :template="c.template!"
+            :payload="{ column: c, row, value: columnValue(row, c, r), rowIndex: r, columnIndex: i }"
+          />
           <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, r)"
             :rowIndex="r" :columnIndex="i">
             {{ columnValue(row, c, r) }}
@@ -405,6 +429,10 @@
             :rowIndex="r"
             :columnIndex="i"
           />
+          <TemplateRenderer v-else-if="c.template"
+            :template="c.template!"
+            :payload="{ column: c, row, value: columnValue(row, c, r), rowIndex: r, columnIndex: i }"
+          />
           <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, r)"
             :rowIndex="r" :columnIndex="i">
             {{ columnValue(row, c, r) }}
@@ -445,9 +473,9 @@
 </template>
 
 <script setup lang="ts">
-import { Fragment, computed, isVNode, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
-import type { CSSProperties, VNode, VNodeArrayChildren } from 'vue'
-import type { ColumnDef, FilterDescriptor, GridEmits, GridProps, SortDescriptor } from '../types'
+import { Fragment, computed, defineComponent, h, isVNode, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
+import type { CSSProperties, PropType, Slot, VNode, VNodeArrayChildren } from 'vue'
+import type { ColumnDef, ColumnTemplateContext, ColumnTemplateFn, FilterDescriptor, GridEmits, GridProps, SortDescriptor } from '../types'
 import { applyFilter, applySort, paginate } from '../composables/data'
 import { useColumnResize } from '../composables/resize'
 import { useColumnReorder } from '../composables/reorder'
@@ -513,6 +541,24 @@ const props = withDefaults(defineProps<GridProps>(), {
 const emit = defineEmits<GridEmits>()
 const slots = useSlots()
 
+const TemplateRenderer = defineComponent({
+  name: 'PantanalGridTemplateRenderer',
+  props: {
+    template: { type: Function as PropType<ColumnTemplateFn>, required: true },
+    payload: { type: Object as PropType<ColumnTemplateContext<any>>, required: true },
+  },
+  setup(props) {
+    return () => {
+      if (!props.template) return null
+      const result = props.template(props.payload)
+      if (typeof result === 'string') {
+        return h('span', { innerHTML: result })
+      }
+      return result
+    }
+  }
+})
+
 function collectSlotColumns(children: VNodeArrayChildren | VNode | undefined, acc: ColumnDef[]): void {
   if (!children) return
   if (Array.isArray(children)) {
@@ -525,9 +571,23 @@ function collectSlotColumns(children: VNodeArrayChildren | VNode | undefined, ac
     return
   }
   if (children.type === PantanalColumn) {
-    const rawProps = (children.props ?? {}) as Record<string, unknown>
-    const { key, ref: _ref, ...rest } = rawProps
-    const column = { ...rest } as Partial<ColumnDef>
+    const vnodeProps = (children.props ?? {}) as Record<string, unknown>
+    const instanceProps = (children.component?.props ?? {}) as Record<string, unknown>
+    const rawProps = { ...instanceProps, ...vnodeProps }
+    const column: Partial<ColumnDef> = {}
+    Object.entries(rawProps).forEach(([prop, value]) => {
+      if (prop === 'key' || prop === 'ref') return
+      ;(column as any)[prop] = value
+    })
+    const tpl = rawProps.template
+    if (typeof tpl === 'function') {
+      column.template = tpl as ColumnTemplateFn
+    } else if (typeof tpl === 'string') {
+      const candidate = slots[tpl as keyof typeof slots]
+      if (candidate) {
+        column.template = (ctx) => candidate(ctx)
+      }
+    }
     if (column.field == null) return
     acc.push(column as ColumnDef)
   }

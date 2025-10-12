@@ -15,7 +15,7 @@
       :striped="true"
       :responsive="'table'"
       locale="en"
-      class="rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/60"
+      class="rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/60 gallery-grid"
     >
       <template #cell="{ column, value, row }">
         <template v-if="column.field === 'image'">
@@ -24,7 +24,7 @@
               :src="value"
               :alt="`Photo of ${row.name}`"
               loading="lazy"
-              class="h-16 w-16 rounded-xl object-cover shadow"
+              class="gallery-thumb"
             />
             <figcaption class="text-sm font-medium text-slate-700 dark:text-slate-200">
               {{ row.name }}
@@ -95,3 +95,29 @@ const columns = [
 
 const codeSnippet = exampleSource
 </script>
+
+<style scoped>
+.gallery-grid :deep(.v3grid__body .v3grid__cell) {
+  padding-block: 1rem;
+}
+
+.gallery-grid :deep(.v3grid__body .v3grid__row) {
+  align-items: stretch;
+}
+
+.gallery-grid :deep(.v3grid__body figure) {
+  min-height: 96px;
+}
+
+.gallery-thumb {
+  height: 96px;
+  width: 96px;
+  border-radius: 0.75rem;
+  object-fit: cover;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+}
+
+.gallery-grid :deep(.v3grid__body .v3grid__cell figcaption) {
+  line-height: 1.4;
+}
+</style>

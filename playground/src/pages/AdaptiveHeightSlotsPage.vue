@@ -39,43 +39,15 @@
         locale="en"
       >
         <PantanalColumn field="order" title="Order" :width="220" :filterable="true" />
-        <PantanalColumn field="status" title="Status" slot="status" :width="140" :filterable="true" />
-        <PantanalColumn field="assignee" title="Owner" slot="assignee" :width="220" :filterable="true" />
+        <PantanalColumn field="status" title="Status" :template="renderStatus as ColumnTemplateFn" :width="140" :filterable="true" />
+        <PantanalColumn field="assignee" title="Owner" :template="renderAssignee as ColumnTemplateFn" :width="220" :filterable="true" />
         <PantanalColumn
           field="eta"
           title="ETA"
           :width="140"
           :format="formatDate"
         />
-        <PantanalColumn field="progress" title="Progress" slot="progress" :width="180" />
-
-        <template #status="{ value }">
-          <span class="status-chip" :class="statusClass(value)">
-            <span class="status-dot" :class="statusDot(value)"></span>
-            {{ value }}
-          </span>
-        </template>
-
-        <template #assignee="{ row }">
-          <span class="assignee">
-            <span class="assignee-avatar" :style="{ background: avatarColor(row.assignee) }">
-              {{ initials(row.assignee) }}
-            </span>
-            <span>
-              <span class="assignee-name">{{ row.assignee }}</span>
-              <span class="assignee-role">{{ row.role }}</span>
-            </span>
-          </span>
-        </template>
-
-        <template #progress="{ value }">
-          <div class="progress-wrap">
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: Math.min(100, value) + '%' }"></div>
-            </div>
-            <span class="progress-label">{{ value }}%</span>
-          </div>
-        </template>
+        <PantanalColumn field="progress" title="Progress" :template="renderProgress as ColumnTemplateFn" :width="180" />
       </PantanalGrid>
     </div>
 
@@ -85,7 +57,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { PantanalColumn, PantanalGrid } from '@pantanal/grid'
+import { PantanalColumn, PantanalGrid, type ColumnTemplateContext, type ColumnTemplateFn } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
 import exampleSource from './AdaptiveHeightSlotsPage.vue?raw'
 
@@ -109,41 +81,85 @@ const visibleCount = ref<typeof rowOptions[number]>(6)
 
 const rows = computed(() => baseRows.slice(0, visibleCount.value))
 
+type OrderRow = typeof baseRows[number]
+
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+const renderStatus = ((ctx?: ColumnTemplateContext<OrderRow>) => {
+  const value = String(ctx?.value ?? '')
+  return `
+    <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${statusClass(value)}">
+      <span class="h-2 w-2 rounded-full ${statusDot(value)}"></span>
+      ${value}
+    </span>
+  `
+}) as ColumnTemplateFn
+
+const renderAssignee = ((ctx?: ColumnTemplateContext<OrderRow>) => {
+  const row = ctx?.row ?? baseRows[0]
+  if (!row) return ''
+  const avatar = avatarColor(row.assignee)
+  const initialsText = initials(row.assignee)
+  return `
+    <span class="flex items-center gap-3">
+      <span class="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white shadow" style="background:${avatar}">
+        ${initialsText}
+      </span>
+      <span>
+        <span class="block text-sm font-semibold text-slate-700 dark:text-slate-100">${row.assignee}</span>
+        <span class="block text-xs text-slate-400 dark:text-slate-300">${row.role}</span>
+      </span>
+    </span>
+  `
+}) as ColumnTemplateFn
+
+const renderProgress = ((ctx?: ColumnTemplateContext<OrderRow>) => {
+  const raw = ctx?.value
+  const numeric = typeof raw === 'number' ? raw : Number(raw ?? 0)
+  const width = Math.min(100, Math.max(0, isNaN(numeric) ? 0 : numeric))
+  return `
+    <div class="flex items-center gap-3 w-52">
+      <div class="flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-800">
+        <div class="h-2 rounded-full bg-gradient-to-r from-cyan-400 to-sky-500 transition-all" style="width:${width}%"></div>
+      </div>
+      <span class="text-xs font-semibold text-slate-600 dark:text-slate-200">${width}%</span>
+    </div>
+  `
+}) as ColumnTemplateFn
+
 function statusClass(status: string) {
   switch (status) {
     case 'Delivered':
-      return 'status-chip--delivered'
+      return 'bg-emerald-500/15 text-emerald-600 border border-emerald-400/40'
     case 'In transit':
-      return 'status-chip--transit'
+      return 'bg-sky-500/15 text-sky-600 border border-sky-400/40'
     case 'Scheduled':
-      return 'status-chip--scheduled'
+      return 'bg-indigo-500/15 text-indigo-600 border border-indigo-400/40'
     case 'Awaiting pickup':
-      return 'status-chip--awaiting'
+      return 'bg-amber-500/15 text-amber-600 border border-amber-400/40'
     case 'Delayed':
-      return 'status-chip--delayed'
+      return 'bg-rose-500/15 text-rose-600 border border-rose-400/40'
     default:
-      return 'status-chip--default'
+      return 'bg-slate-200/70 text-slate-600 border border-slate-300'
   }
 }
 
 function statusDot(status: string) {
   switch (status) {
     case 'Delivered':
-      return 'bg-emerald-500'
+      return 'bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.18)]'
     case 'In transit':
-      return 'bg-sky-500'
+      return 'bg-sky-500 shadow-[0_0_0_4px_rgba(14,165,233,0.18)]'
     case 'Scheduled':
-      return 'bg-indigo-500'
+      return 'bg-indigo-500 shadow-[0_0_0_4px_rgba(99,102,241,0.18)]'
     case 'Awaiting pickup':
-      return 'bg-amber-500'
+      return 'bg-amber-500 shadow-[0_0_0_4px_rgba(251,191,36,0.22)]'
     case 'Delayed':
-      return 'bg-rose-500'
+      return 'bg-rose-500 shadow-[0_0_0_4px_rgba(244,63,94,0.22)]'
     default:
-      return 'bg-slate-400'
+      return 'bg-slate-400 shadow-[0_0_0_4px_rgba(148,163,184,0.25)]'
   }
 }
 
@@ -159,82 +175,3 @@ function initials(name: string) {
 
 const codeSnippet = exampleSource
 </script>
-
-<style scoped>
-.status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  border-radius: 9999px;
-  padding: 0.35rem 0.85rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-.status-dot {
-  display: inline-flex;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 9999px;
-  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
-}
-.status-chip--delivered { background: rgba(16, 185, 129, 0.16); color: #047857; }
-.status-chip--transit   { background: rgba(56, 189, 248, 0.16); color: #0369a1; }
-.status-chip--scheduled { background: rgba(129, 140, 248, 0.16); color: #4338ca; }
-.status-chip--awaiting  { background: rgba(251, 191, 36, 0.18); color: #b45309; }
-.status-chip--delayed   { background: rgba(248, 113, 113, 0.18); color: #b91c1c; }
-.status-chip--default   { background: rgba(148, 163, 184, 0.18); color: #475569; }
-
-.assignee {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.assignee-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 9999px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
-}
-.assignee-name {
-  display: block;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-.assignee-role {
-  display: block;
-  font-size: 0.75rem;
-  opacity: 0.65;
-}
-
-.progress-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  width: 12rem;
-}
-.progress-bar {
-  flex: 1;
-  height: 0.5rem;
-  border-radius: 9999px;
-  background: rgba(148, 163, 184, 0.3);
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, #0ea5e9, #6366f1);
-  transition: width 0.2s ease-out;
-}
-.progress-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-</style>

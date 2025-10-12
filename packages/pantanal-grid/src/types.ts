@@ -27,6 +27,19 @@ export interface Messages {
   subtotal: string
 }
 
+import type { Slot, VNodeChild } from 'vue'
+
+export interface ColumnTemplateContext<T = Row> {
+  column: ColumnDef<T>
+  row: T
+  value: any
+  rowIndex: number
+  columnIndex: number
+}
+
+export type ColumnTemplateResult = VNodeChild | string | null | undefined
+export type ColumnTemplateFn<T = Row> = (ctx?: ColumnTemplateContext<T>) => ColumnTemplateResult
+
 export interface ColumnDef<T = Row> {
   field: keyof T | string
   title?: string
@@ -41,6 +54,7 @@ export interface ColumnDef<T = Row> {
   pinned?: boolean | 'left' | 'right'
   locked?: boolean | 'left' | 'right'
   slot?: string
+  template?: ColumnTemplateFn<T>
 }
 
 export type PaginationVariant = 'simple' | 'pages' | 'edges'
