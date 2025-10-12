@@ -474,7 +474,7 @@
 
 <script setup lang="ts">
 import { Fragment, computed, defineComponent, h, isVNode, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
-import type { CSSProperties, PropType, Slot, VNode, VNodeArrayChildren } from 'vue'
+import type { CSSProperties, PropType, VNode, VNodeArrayChildren } from 'vue'
 import type { ColumnDef, ColumnTemplateContext, ColumnTemplateFn, FilterDescriptor, GridEmits, GridProps, SortDescriptor } from '../types'
 import { applyFilter, applySort, paginate } from '../composables/data'
 import { useColumnResize } from '../composables/resize'
@@ -585,7 +585,7 @@ function collectSlotColumns(children: VNodeArrayChildren | VNode | undefined, ac
     } else if (typeof tpl === 'string') {
       const candidate = slots[tpl as keyof typeof slots]
       if (candidate) {
-        column.template = (ctx) => candidate(ctx)
+        column.template = ((ctx) => candidate(ctx as any)) as ColumnTemplateFn
       }
     }
     if (column.field == null) return

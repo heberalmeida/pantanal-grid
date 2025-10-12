@@ -27,7 +27,7 @@ export interface Messages {
   subtotal: string
 }
 
-import type { Slot, VNodeChild } from 'vue'
+import type { VNodeChild } from 'vue'
 
 export interface ColumnTemplateContext<T = Row> {
   column: ColumnDef<T>
