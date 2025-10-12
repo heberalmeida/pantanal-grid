@@ -54,11 +54,32 @@
           <div v-if="props.selectable" class="v3grid__cell" @click.stop>
             <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
           </div>
-          <div v-for="c in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
+          <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
             :style="[pinStyle(c._idx)]" :tabindex="0" :data-focus="focusRow === r && focusCol === c._idx"
             @click="$emit('rowClick', row)">
-            <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
-              {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
+            <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+              :name="columnSlotPrimary(c)"
+              :column="c"
+              :row="row"
+              :value="columnValue(row, c, (start ?? 0) + r)"
+              :rowIndex="(start ?? 0) + r"
+              :columnIndex="i"
+            />
+            <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
+              :name="columnSlotSecondary(c)"
+              :column="c"
+              :row="row"
+              :value="columnValue(row, c, (start ?? 0) + r)"
+              :rowIndex="(start ?? 0) + r"
+              :columnIndex="i"
+            />
+            <slot v-else name="cell"
+              :column="c"
+              :row="row"
+              :value="columnValue(row, c, (start ?? 0) + r)"
+              :rowIndex="(start ?? 0) + r"
+              :columnIndex="i">
+              {{ c.format ? c.format(columnValue(row, c, (start ?? 0) + r), row as any) : columnValue(row, c, (start ?? 0) + r) }}
             </slot>
           </div>
         </div>
@@ -66,7 +87,7 @@
       </div>
 
       <!-- BODY (NÃO VIRTUAL) -->
-      <div v-else>
+      <div v-else class="v3grid__body" :style="nonVirtualBodyStyle">
 
         <!-- ====== MODO CARDS ====== -->
         <template v-if="isCardMode">
@@ -96,11 +117,28 @@
                     </div>
                   </div>
                   <div class="v3grid__cardbody">
-                    <div v-for="c in unlockedCols" :key="c._idx" class="v3grid__carditem">
+                    <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__carditem">
                       <div class="v3grid__cardlabel">{{ c.title ?? String(c.field) }}</div>
                       <div class="v3grid__cardvalue">
-                        <slot name="cell" :column="c" :row="n.row" :value="(n.row as any)[c.field as any]">
-                          {{ c.format ? c.format((n.row as any)[c.field as any], n.row as any) : (n.row as any)[c.field as any] }}
+                        <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+                          :name="columnSlotPrimary(c)"
+                          :column="c"
+                          :row="n.row"
+                          :value="columnValue(n.row, c, (start ?? 0) + r)"
+                          :rowIndex="(start ?? 0) + r"
+                          :columnIndex="i"
+                        />
+                        <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
+                          :name="columnSlotSecondary(c)"
+                          :column="c"
+                          :row="n.row"
+                          :value="columnValue(n.row, c, (start ?? 0) + r)"
+                          :rowIndex="(start ?? 0) + r"
+                          :columnIndex="i"
+                        />
+                        <slot v-else name="cell" :column="c" :row="n.row" :value="columnValue(n.row, c, (start ?? 0) + r)"
+                          :rowIndex="(start ?? 0) + r" :columnIndex="i">
+                          {{ c.format ? c.format(columnValue(n.row, c, (start ?? 0) + r), n.row as any) : columnValue(n.row, c, (start ?? 0) + r) }}
                         </slot>
                       </div>
                     </div>
@@ -133,12 +171,28 @@
                   </div>
                 </div>
                 <div class="v3grid__cardbody">
-                  <div v-for="c in unlockedCols" :key="c._idx" class="v3grid__carditem">
+                  <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__carditem">
                     <div class="v3grid__cardlabel">{{ c.title ?? String(c.field) }}</div>
                     <div class="v3grid__cardvalue">
-                      <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
-                        {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any]
-                        }}
+                      <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+                        :name="columnSlotPrimary(c)"
+                        :column="c"
+                        :row="row"
+                        :value="columnValue(row, c, (start ?? 0) + r)"
+                        :rowIndex="(start ?? 0) + r"
+                        :columnIndex="i"
+                      />
+                      <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
+                        :name="columnSlotSecondary(c)"
+                        :column="c"
+                        :row="row"
+                        :value="columnValue(row, c, (start ?? 0) + r)"
+                        :rowIndex="(start ?? 0) + r"
+                        :columnIndex="i"
+                      />
+                      <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, (start ?? 0) + r)"
+                        :rowIndex="(start ?? 0) + r" :columnIndex="i">
+                        {{ c.format ? c.format(columnValue(row, c, (start ?? 0) + r), row as any) : columnValue(row, c, (start ?? 0) + r) }}
                       </slot>
                     </div>
                   </div>
@@ -175,7 +229,7 @@
               </div>
 
               <!-- células de dados -->
-              <template v-for="c in unlockedCols" :key="c._idx">
+              <template v-for="(c, i) in unlockedCols" :key="c._idx">
                 <div v-if="n.type === 'group'" class="v3grid__cell v3grid__group">
                   <template v-if="String(c.field) === String(n.field)">
                     <strong>{{ n.value }}</strong>
@@ -185,10 +239,25 @@
 
                 <div v-else-if="n.type === 'row'" class="v3grid__cell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]"
                   :tabindex="0" :data-focus="focusRow === r && focusCol === c._idx" @click="$emit('rowClick', n.row)">
-                  <slot name="cell" :column="c" :row="n.row" :value="(n.row as any)[c.field as any]">
-                    {{ c.format ? c.format((n.row as any)[c.field as any], n.row as any) : (n.row as any)[c.field as
-                      any]
-                    }}
+                  <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+                    :name="columnSlotPrimary(c)"
+                    :column="c"
+                    :row="n.row"
+                    :value="columnValue(n.row, c, r)"
+                    :rowIndex="r"
+                    :columnIndex="i"
+                  />
+                  <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
+                    :name="columnSlotSecondary(c)"
+                    :column="c"
+                    :row="n.row"
+                    :value="columnValue(n.row, c, r)"
+                    :rowIndex="r"
+                    :columnIndex="i"
+                  />
+                  <slot v-else name="cell" :column="c" :row="n.row" :value="columnValue(n.row, c, r)"
+                    :rowIndex="r" :columnIndex="i">
+                    {{ c.format ? c.format(columnValue(n.row, c, r), n.row as any) : columnValue(n.row, c, r) }}
                   </slot>
                 </div>
 
@@ -211,11 +280,28 @@
               <div v-if="props.selectable" class="v3grid__cell" @click.stop>
                 <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
               </div>
-              <div v-for="c in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
+              <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
                 :style="[pinStyle(c._idx)]" :tabindex="0" :data-focus="focusRow === r && focusCol === c._idx"
                 @click="$emit('rowClick', row)">
-                <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field as any]">
-                  {{ c.format ? c.format((row as any)[c.field as any], row as any) : (row as any)[c.field as any] }}
+                <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+                  :name="columnSlotPrimary(c)"
+                  :column="c"
+                  :row="row"
+                  :value="columnValue(row, c, r)"
+                  :rowIndex="r"
+                  :columnIndex="i"
+                />
+                <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
+                  :name="columnSlotSecondary(c)"
+                  :column="c"
+                  :row="row"
+                  :value="columnValue(row, c, r)"
+                  :rowIndex="r"
+                  :columnIndex="i"
+                />
+                <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, r)"
+                  :rowIndex="r" :columnIndex="i">
+                  {{ c.format ? c.format(columnValue(row, c, r), row as any) : columnValue(row, c, r) }}
                 </slot>
               </div>
             </div>
@@ -255,8 +341,25 @@
         :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
         :style="{ gridTemplateColumns: lockedLeftTemplate }">
         <div v-for="(c, i) in lockedLeftCols" :key="'c-left-' + i" class="v3grid__cell">
-          <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field]">
-            {{ (row as any)[c.field] }}
+          <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+            :name="columnSlotPrimary(c)"
+            :column="c"
+            :row="row"
+            :value="columnValue(row, c, r)"
+            :rowIndex="r"
+            :columnIndex="i"
+          />
+          <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
+            :name="columnSlotSecondary(c)"
+            :column="c"
+            :row="row"
+            :value="columnValue(row, c, r)"
+            :rowIndex="r"
+            :columnIndex="i"
+          />
+          <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, r)"
+            :rowIndex="r" :columnIndex="i">
+            {{ columnValue(row, c, r) }}
           </slot>
         </div>
       </div>
@@ -286,8 +389,25 @@
         :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
         :style="{ gridTemplateColumns: lockedRightTemplate }">
         <div v-for="(c, i) in lockedRightCols" :key="'c-right-' + i" class="v3grid__cell">
-          <slot name="cell" :column="c" :row="row" :value="(row as any)[c.field]">
-            {{ (row as any)[c.field] }}
+          <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+            :name="columnSlotPrimary(c)"
+            :column="c"
+            :row="row"
+            :value="columnValue(row, c, r)"
+            :rowIndex="r"
+            :columnIndex="i"
+          />
+          <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
+            :name="columnSlotSecondary(c)"
+            :column="c"
+            :row="row"
+            :value="columnValue(row, c, r)"
+            :rowIndex="r"
+            :columnIndex="i"
+          />
+          <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, r)"
+            :rowIndex="r" :columnIndex="i">
+            {{ columnValue(row, c, r) }}
           </slot>
         </div>
       </div>
@@ -326,6 +446,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import type { CSSProperties } from 'vue'
 import type { ColumnDef, FilterDescriptor, GridEmits, GridProps, SortDescriptor } from '../types'
 import { applyFilter, applySort, paginate } from '../composables/data'
 import { useColumnResize } from '../composables/resize'
@@ -368,6 +489,7 @@ const props = withDefaults(defineProps<GridProps>(), {
   virtual: false,
   height: 420,
   rowHeight: 44,
+  autoHeight: false,
   enableColumnResize: true,
   enableColumnReorder: true,
   serverSide: false,
@@ -384,6 +506,7 @@ const props = withDefaults(defineProps<GridProps>(), {
   paginationShowTotal: true,
   paginationMaxPages: 5,
   showFilterRow: true,
+  maxBodyHeight: undefined,
 })
 const emit = defineEmits<GridEmits>()
 
@@ -515,6 +638,42 @@ function pinStyle(i: number) {
   if (meta.side === 'right') return { right: (meta.right || 0) + 'px' }
 }
 
+function columnValue(row: unknown, column: ColumnDef, rowIndex = -1) {
+  if (!column) return undefined
+  const record = (row ?? {}) as Record<string, unknown>
+  const field = column.field
+  const raw = field != null ? (record as any)[field as any] : undefined
+  if (typeof column.cell === 'function') {
+    return column.cell({ value: raw, row: row as any, rowIndex })
+  }
+  return raw
+}
+
+function columnSlotCandidates(column: ColumnDef): string[] {
+  const names: string[] = []
+  const addVariant = (name?: string | number) => {
+    if (name == null) return
+    const raw = String(name).trim()
+    if (!raw) return
+    const hasPrefix = raw.startsWith('col-')
+    const primary = hasPrefix ? raw : `col-${raw}`
+    const secondary = hasPrefix ? raw.slice(4) : raw
+    if (primary && !names.includes(primary)) names.push(primary)
+    if (secondary && !names.includes(secondary)) names.push(secondary)
+  }
+  addVariant(column.slot)
+  addVariant(column.field)
+  return names
+}
+
+function columnSlotPrimary(column: ColumnDef) {
+  return columnSlotCandidates(column)[0] ?? null
+}
+
+function columnSlotSecondary(column: ColumnDef) {
+  return columnSlotCandidates(column)[1] ?? null
+}
+
 /** DATA PIPELINE  DataProvider */
 const remoteRows = ref<any[]>([])
 const remoteTotal = ref<number | null>(null)
@@ -557,6 +716,50 @@ const visibleRows = computed(() => {
   if (props.virtual) return slice.value
   if (isGrouped.value) return paginate(flatNodes.value as any[], page.value, pageSize.value)
   return props.serverSide ? sorted.value : paginate(sorted.value, page.value, pageSize.value)
+})
+
+const autoHeightEnabled = computed(() => !!props.autoHeight && !props.virtual)
+const autoHeightRowCount = computed(() => {
+  if (!autoHeightEnabled.value) return 0
+  const list = visibleRows.value
+  return Array.isArray(list) ? list.length : 0
+})
+const autoHeightPixels = computed<number | null>(() => {
+  if (!autoHeightEnabled.value) return null
+  if (isCardMode.value) return null
+  const rowHeight = props.rowHeight ?? 44
+  const count = Math.max(autoHeightRowCount.value, 1)
+  return count * rowHeight
+})
+
+const nonVirtualBodyStyle = computed<CSSProperties>(() => {
+  if (props.virtual) return {}
+
+  const style: CSSProperties = {}
+  const limit = typeof props.maxBodyHeight === 'number' ? Math.max(props.maxBodyHeight, 0) : undefined
+  const shouldAuto = autoHeightEnabled.value && !isCardMode.value
+  const bodyHeight = autoHeightPixels.value ?? null
+
+  if (shouldAuto && bodyHeight != null) {
+    const effective = Math.max(bodyHeight, 0)
+    if (typeof limit === 'number' && limit > 0) {
+      style.maxHeight = `${limit}px`
+      style.height = `${Math.min(effective, limit)}px`
+      style.overflowY = effective > limit ? 'auto' : 'visible'
+    } else {
+      style.height = `${effective}px`
+      style.overflowY = 'visible'
+    }
+  } else if (typeof limit === 'number' && limit > 0) {
+    style.maxHeight = `${limit}px`
+    style.overflowY = 'auto'
+  }
+
+  if (!('overflowY' in style) && shouldAuto) {
+    style.overflowY = 'visible'
+  }
+
+  return style
 })
 
 /** ---- helpers de agregados ---- */

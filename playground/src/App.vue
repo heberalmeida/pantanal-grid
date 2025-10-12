@@ -116,6 +116,7 @@ const navSections = [
       { to: '/gallery', label: 'Image gallery', icon: 'images' },
       { to: '/grouping', label: 'Grouping & aggregates', icon: 'layer-group' },
       { to: '/locked', label: 'Pinned columns', icon: 'table-columns' },
+      { to: '/adaptive-height', label: 'Adaptive height & slots', icon: 'arrows-up-down-left-right' },
       { to: '/virtual', label: 'Virtual scroll', icon: 'rocket' },
       { to: '/pagination', label: 'Pagination variants', icon: 'ellipsis' },
       { to: '/custom-cells', label: 'Custom cells & slots', icon: 'puzzle-piece' },

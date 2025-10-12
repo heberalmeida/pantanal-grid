@@ -40,6 +40,7 @@ export interface ColumnDef<T = Row> {
   cell?: (ctx: { value: any; row: T; rowIndex: number }) => any
   pinned?: boolean | 'left' | 'right'
   locked?: boolean | 'left' | 'right'
+  slot?: string
 }
 
 export type PaginationVariant = 'simple' | 'pages' | 'edges'
@@ -69,6 +70,8 @@ export interface GridProps<T = Row> {
   virtual?: boolean
   height?: number
   rowHeight?: number
+  autoHeight?: boolean
+  maxBodyHeight?: number
 
   enableColumnResize?: boolean
   enableColumnReorder?: boolean

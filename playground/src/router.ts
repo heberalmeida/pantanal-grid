@@ -15,6 +15,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/table-only', component: () => import('./pages/TableOnlyPage.vue') },
   { path: '/pagination', component: () => import('./pages/PaginationShowcase.vue') },
   { path: '/locked', component: () => import('./pages/LockedColumnsPage.vue') },
+  { path: '/adaptive-height', component: () => import('./pages/AdaptiveHeightSlotsPage.vue') },
   { path: '/data/local', component: () => import('./pages/DataLocalPage.vue') },
   { path: '/data/rest', component: () => import('./pages/DataRestPage.vue') },
   { path: '/data/graphql', component: () => import('./pages/DataGraphQLPage.vue') },

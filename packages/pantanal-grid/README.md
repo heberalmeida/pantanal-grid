@@ -99,6 +99,8 @@ const columns: ColumnDef[] = [
 - Column resize and reorder (drag & drop)
 - Keyboard navigation (arrow keys + focus outline)
 - Virtual scroll for large datasets
+- Adaptive body height via `autoHeight`/`maxBodyHeight`
+- Column-specific slots via `column.slot`
 - Pinned and locked columns (left/right) with optional sticky shadows
 - Persisted state (sort, filter, page, order, widths) via `persistStateKey`
 - Internationalization (en, es, pt) with pluggable messages
@@ -136,6 +138,47 @@ Enable `:virtual="true"` to render only the visible portion of the grid. Control
   :row-height="44"
 />
 ```
+
+## Flexible height
+
+When virtualization is disabled you can let the grid compute its body height automatically:
+
+```vue
+<PantanalGrid
+  :rows="items"
+  :columns="columns"
+  auto-height
+  :max-body-height="480"
+/>
+```
+
+`autoHeight` multiplies the number of visible rows by `rowHeight` and stretches the body accordingly. Provide `maxBodyHeight` to cap the growth and re-enable vertical scrolling when the content exceeds that limit. The virtual mode keeps precedence—if `virtual` is `true`, the grid will honor the fixed `height` instead of auto-sizing.
+
+## Column slots
+
+Each column can point to its own slot without resorting to long `v-if` chains inside `#cell`:
+
+```vue
+const columns = [
+  { field: 'status', title: 'Status', width: 140, slot: 'status' },
+  { field: 'owner', title: 'Owner', width: 220, slot: 'ownerCard' },
+  { field: 'goal', title: 'Goal', width: 120 },
+]
+```
+
+```vue
+<PantanalGrid :rows="rows" :columns="columns">
+  <template #status="{ value }">
+    <StatusBadge :status="value" />
+  </template>
+
+  <template #ownerCard="{ row }">
+    <OwnerAvatar :name="row.owner" :region="row.region" />
+  </template>
+</PantanalGrid>
+```
+
+For each column the grid tries both `#col-{slot}` and `#{slot}` (for example, `#col-status` and `#status`). The payload matches the generic `#cell` slot: `value`, `row`, `column`, `rowIndex` and `columnIndex`. The default `#cell` continues to work as a fallback when no named slot is provided.
 
 ---
 
