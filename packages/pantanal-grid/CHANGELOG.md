@@ -1,5 +1,11 @@
 # @pantanal/grid
 
+## 1.1.2
+
+### Patch Changes
+
+- column
+
 ## 1.1.1
 
 ### Patch Changes
