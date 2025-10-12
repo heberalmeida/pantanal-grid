@@ -182,6 +182,30 @@ For each column the grid tries both `#col-{slot}` and `#{slot}` (for example, `#
 
 ---
 
+## Declarative columns
+
+Prefer a template-driven API? Declare columns as children and the grid will build the configuration for you:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, PantanalColumn } from '@pantanal/grid'
+</script>
+
+<PantanalGrid :rows="rows" auto-height>
+  <PantanalColumn field="product" title="Product" :width="220" />
+  <PantanalColumn field="status" title="Status" slot="status" />
+  <PantanalColumn field="price" title="Price" :format="currency" :width="140" />
+
+  <template #status="{ value }">
+    <StatusBadge :status="value" />
+  </template>
+</PantanalGrid>
+```
+
+As soon as at least one `<PantanalColumn>` is present, the grid ignores the `columns` prop and relies entirely on the declarative definitions. Both styles can coexist across different grids—pick the approach that feels more natural for each view.
+
+---
+
 ## Grouping & aggregations
 
 Pantanal Grid supports multi-level grouping with optional aggregations and group footers. The following example groups products by category and brand while calculating counts and sums:

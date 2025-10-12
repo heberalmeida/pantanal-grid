@@ -30,7 +30,6 @@
     <div class="rounded-3xl border border-slate-200/70 bg-white/90 p-5 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/40">
       <PantanalGrid
         :rows="rows"
-        :columns="columns"
         key-field="id"
         auto-height
         :max-body-height="360"
@@ -39,6 +38,17 @@
         :show-filter-row="false"
         locale="en"
       >
+        <PantanalColumn field="order" title="Order" :width="220" :filterable="true" />
+        <PantanalColumn field="status" title="Status" slot="status" :width="140" :filterable="true" />
+        <PantanalColumn field="assignee" title="Owner" slot="assignee" :width="220" :filterable="true" />
+        <PantanalColumn
+          field="eta"
+          title="ETA"
+          :width="140"
+          :format="formatDate"
+        />
+        <PantanalColumn field="progress" title="Progress" slot="progress" :width="180" />
+
         <template #status="{ value }">
           <span class="status-chip" :class="statusClass(value)">
             <span class="status-dot" :class="statusDot(value)"></span>
@@ -75,7 +85,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { PantanalGrid } from '@pantanal/grid'
+import { PantanalColumn, PantanalGrid } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
 import exampleSource from './AdaptiveHeightSlotsPage.vue?raw'
 
@@ -99,13 +109,9 @@ const visibleCount = ref<typeof rowOptions[number]>(6)
 
 const rows = computed(() => baseRows.slice(0, visibleCount.value))
 
-const columns = [
-  { field: 'order', title: 'Order', width: 220, filterable: true },
-  { field: 'status', title: 'Status', width: 140, slot: 'status', filterable: true },
-  { field: 'assignee', title: 'Owner', width: 220, slot: 'assignee', filterable: true },
-  { field: 'eta', title: 'ETA', width: 140, format: (value: string) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) },
-  { field: 'progress', title: 'Progress', width: 160, slot: 'progress' },
-]
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
 
 function statusClass(status: string) {
   switch (status) {

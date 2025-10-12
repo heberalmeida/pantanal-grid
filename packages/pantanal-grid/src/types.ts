@@ -49,7 +49,7 @@ export type ResponsiveMode = 'auto' | 'table' | 'cards'
 
 export interface GridProps<T = Row> {
   rows: T[]
-  columns: ColumnDef<T>[]
+  columns?: ColumnDef<T>[]
   keyField?: keyof T | string
   rtl?: boolean
   density?: 'default' | 'compact'

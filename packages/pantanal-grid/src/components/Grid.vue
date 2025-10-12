@@ -445,8 +445,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import type { CSSProperties } from 'vue'
+import { Fragment, computed, isVNode, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
+import type { CSSProperties, VNode, VNodeArrayChildren } from 'vue'
 import type { ColumnDef, FilterDescriptor, GridEmits, GridProps, SortDescriptor } from '../types'
 import { applyFilter, applySort, paginate } from '../composables/data'
 import { useColumnResize } from '../composables/resize'
@@ -457,6 +457,7 @@ import { usePersist } from '../composables/persist'
 import { getMessages } from '../i18n/messages'
 import { buildGroupTree, flattenTree, type GroupDescriptor } from '../composables/group'
 import GridPagination from './Pagination.vue'
+import PantanalColumn from './Column.vue'
 
 const iconArrowRight = new URL('../assets/arrow-right.svg', import.meta.url).href
 const iconArrowDown = new URL('../assets/arrow-down.svg', import.meta.url).href
@@ -481,6 +482,7 @@ onMounted(() => {
 type DataRow = Record<string, unknown>
 
 const props = withDefaults(defineProps<GridProps>(), {
+  columns: () => [],
   keyField: 'id',
   page: 1,
   pageSize: 20,
@@ -509,6 +511,27 @@ const props = withDefaults(defineProps<GridProps>(), {
   maxBodyHeight: undefined,
 })
 const emit = defineEmits<GridEmits>()
+const slots = useSlots()
+
+function collectSlotColumns(children: VNodeArrayChildren | VNode | undefined, acc: ColumnDef[]): void {
+  if (!children) return
+  if (Array.isArray(children)) {
+    children.forEach(child => collectSlotColumns(child as any, acc))
+    return
+  }
+  if (!isVNode(children)) return
+  if (children.type === Fragment) {
+    collectSlotColumns(children.children as any, acc)
+    return
+  }
+  if (children.type === PantanalColumn) {
+    const rawProps = (children.props ?? {}) as Record<string, unknown>
+    const { key, ref: _ref, ...rest } = rawProps
+    const column = { ...rest } as Partial<ColumnDef>
+    if (column.field == null) return
+    acc.push(column as ColumnDef)
+  }
+}
 
 /** i18n */
 const msgs = computed(() => getMessages(String(props.locale ?? 'pt'), props.messages))
@@ -561,7 +584,17 @@ function toggleAllVisible(current: Array<Record<string, unknown>>) {
 }
 
 /** COLUMNS (reorder/resize) */
-const columns = computed<ColumnDef[]>(() => (props.columns ?? []) as ColumnDef[])
+const slotColumnDefs = computed<ColumnDef[]>(() => {
+  const acc: ColumnDef[] = []
+  const defaultSlot = slots.default as unknown as (() => VNodeArrayChildren | undefined) | undefined
+  const children = defaultSlot ? defaultSlot() : undefined
+  collectSlotColumns(children as any, acc)
+  return acc
+})
+const columns = computed<ColumnDef[]>(() => {
+  if (slotColumnDefs.value.length > 0) return slotColumnDefs.value
+  return (props.columns ?? []) as ColumnDef[]
+})
 const { order, onDragStart, onDragOver, onDrop, mapColumns, ensureOrder } = useColumnReorder(() => columns.value)
 const { widths, onMouseDown: onResizeDown, ensureWidths } = useColumnResize(() => columns.value)
 onMounted(() => { ensureOrder(); ensureWidths() })
