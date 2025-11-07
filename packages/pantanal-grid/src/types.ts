@@ -510,3 +510,52 @@ export interface SchedulerDataSourceInstance extends DataSourceInstance {
   remove(event: SchedulerEvent | number | string): void
   update(event: SchedulerEvent): void
 }
+
+// TreeListDataSource Types
+export interface TreeListNode {
+  id: number | string
+  parentId?: number | string | null
+  expanded?: boolean
+  [key: string]: any
+}
+
+export interface TreeListFieldConfig {
+  field?: string
+  type?: 'string' | 'number' | 'boolean' | 'date'
+  nullable?: boolean
+  defaultValue?: any
+  validation?: {
+    required?: boolean
+    min?: number
+    max?: number
+    [key: string]: any
+  }
+  parse?: (value: any) => any
+}
+
+export interface TreeListDataSourceSchemaModel {
+  id?: TreeListFieldConfig | string
+  parentId?: TreeListFieldConfig | string
+  expanded?: boolean | string | ((item: any) => boolean)
+  fields?: Record<string, TreeListFieldConfig>
+  [key: string]: any
+}
+
+export interface TreeListDataSourceSchema extends DataSourceSchema {
+  model?: TreeListDataSourceSchemaModel
+}
+
+export interface TreeListDataSourceProps<T extends TreeListNode = TreeListNode> extends Omit<DataSourceProps<T>, 'schema'> {
+  schema?: TreeListDataSourceSchema
+}
+
+export interface TreeListDataSourceInstance extends DataSourceInstance {
+  data(): TreeListNode[]
+  add(node: Partial<TreeListNode>): void
+  remove(node: TreeListNode | number | string): void
+  update(node: TreeListNode): void
+  rootNodes(): TreeListNode[]
+  getNode(id: number | string): TreeListNode | null
+  expand(node: TreeListNode | number | string): void
+  collapse(node: TreeListNode | number | string): void
+}

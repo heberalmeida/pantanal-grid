@@ -1981,6 +1981,323 @@ const schema: SchedulerDataSourceSchema = {
 
 ---
 
+## TreeListDataSource Component
+
+The `PantanalTreeListDataSource` component extends the `PantanalDataSource` component and provides specialized support for TreeList data structures. It includes field mapping, hierarchical support with parent-child relationships, and expand/collapse functionality.
+
+### TreeListNode Interface
+
+```typescript
+interface TreeListNode {
+  id: number | string
+  parentId?: number | string | null
+  expanded?: boolean
+  [key: string]: any
+}
+```
+
+### Basic Usage
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalTreeListDataSource, 
+  PantanalGrid,
+  type TreeListNode 
+} from '@pantanal/grid'
+import { ref } from 'vue'
+
+const nodes = ref<TreeListNode[]>([
+  {
+    id: 1,
+    parentId: null,
+    firstName: 'John',
+    lastName: 'Doe',
+    position: 'CEO',
+    phone: '555-0101',
+    expanded: true,
+  },
+  {
+    id: 2,
+    parentId: 1,
+    firstName: 'Jane',
+    lastName: 'Smith',
+    position: 'CFO',
+    phone: '555-0102',
+    expanded: false,
+  },
+])
+
+const data = ref<TreeListNode[]>([])
+
+function handleChange(newData: TreeListNode[]) {
+  data.value = newData
+}
+</script>
+
+<template>
+  <PantanalTreeListDataSource
+    :data="nodes"
+    @change="handleChange"
+  />
+  <PantanalGrid
+    :rows="data"
+    :columns="columns"
+    key-field="id"
+  />
+</template>
+```
+
+### Schema Configuration
+
+Configure field mapping using schema model:
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalTreeListDataSource, 
+  type TreeListDataSourceSchema 
+} from '@pantanal/grid'
+
+const data = [
+  {
+    EmployeeID: 1,
+    ReportsTo: null,
+    FirstName: 'John',
+    LastName: 'Doe',
+    Position: 'CEO',
+    Phone: '555-0101',
+    Extension: 1001,
+  },
+  {
+    EmployeeID: 2,
+    ReportsTo: 1,
+    FirstName: 'Jane',
+    LastName: 'Smith',
+    Position: 'CFO',
+    Phone: '555-0102',
+    Extension: 1002,
+  },
+]
+
+const schema: TreeListDataSourceSchema = {
+  model: {
+    id: { field: 'EmployeeID', type: 'number' },
+    parentId: { field: 'ReportsTo', type: 'number', nullable: true },
+    expanded: true,
+    fields: {
+      firstName: { field: 'FirstName', type: 'string' },
+      lastName: { field: 'LastName', type: 'string' },
+      position: { field: 'Position', type: 'string' },
+      phone: { field: 'Phone', type: 'string' },
+      extension: { field: 'Extension', type: 'number' },
+    },
+  },
+}
+</script>
+
+<template>
+  <PantanalTreeListDataSource
+    :data="data"
+    :schema="schema"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Remote TreeListDataSource
+
+Load nodes from a remote API:
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalTreeListDataSource, 
+  type TreeListDataSourceSchema,
+  type DataSourceTransport 
+} from '@pantanal/grid'
+
+const transport: DataSourceTransport = {
+  read: async (options) => {
+    const response = await fetch('/api/treelist-nodes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        page: options.page,
+        pageSize: options.pageSize,
+      }),
+    })
+    return response.json()
+  },
+}
+
+const schema: TreeListDataSourceSchema = {
+  model: {
+    id: { field: 'id', type: 'number' },
+    parentId: { field: 'parentId', type: 'number', nullable: true },
+    expanded: false,
+    fields: {
+      firstName: { field: 'firstName', type: 'string' },
+      lastName: { field: 'lastName', type: 'string' },
+      position: { field: 'position', type: 'string' },
+      phone: { field: 'phone', type: 'string' },
+    },
+  },
+  data: (response: any) => response.data || response,
+  total: (response: any) => response.total || 0,
+}
+</script>
+
+<template>
+  <PantanalTreeListDataSource
+    type="remote"
+    :transport="transport"
+    :schema="schema"
+    :server-paging="true"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Standalone Usage
+
+Use TreeListDataSource independently with programmatic access:
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalTreeListDataSource, 
+  type TreeListNode,
+  type TreeListDataSourceInstance
+} from '@pantanal/grid'
+import { ref, computed } from 'vue'
+
+const treeListDataSource = ref<TreeListDataSourceInstance | null>(null)
+const nodes = ref<TreeListNode[]>([
+  {
+    id: 1,
+    parentId: null,
+    firstName: 'Root',
+    lastName: 'Node',
+    position: 'Manager',
+    expanded: true,
+  },
+])
+
+const data = ref<TreeListNode[]>([])
+
+const rootNodes = computed(() => {
+  if (!treeListDataSource.value) return []
+  return treeListDataSource.value.rootNodes()
+})
+
+function handleChange(newData: TreeListNode[]) {
+  data.value = newData
+}
+
+function addNode() {
+  if (!treeListDataSource.value) return
+  
+  const newNode: Partial<TreeListNode> = {
+    firstName: `Node${nodes.value.length + 1}`,
+    lastName: '',
+    position: 'Employee',
+    parentId: rootNodes.value.length > 0 ? rootNodes.value[0].id : null,
+    expanded: false,
+  }
+  
+  treeListDataSource.value.add(newNode)
+}
+
+function expandNode() {
+  if (!treeListDataSource.value || rootNodes.value.length === 0) return
+  treeListDataSource.value.expand(rootNodes.value[0].id)
+}
+</script>
+
+<template>
+  <PantanalTreeListDataSource
+    ref="treeListDataSource"
+    :data="nodes"
+    @change="handleChange"
+  />
+  
+  <button @click="addNode">Add Node</button>
+  <button @click="expandNode">Expand First Root Node</button>
+  
+  <div>
+    <p>Root Nodes: {{ rootNodes.length }}</p>
+    <ul>
+      <li v-for="node in rootNodes" :key="node.id">
+        {{ node.firstName }} {{ node.lastName }} (ID: {{ node.id }}{{ node.expanded ? ', Expanded' : '' }})
+      </li>
+    </ul>
+  </div>
+</template>
+```
+
+### Props
+
+All props from `PantanalDataSource` are supported, plus:
+
+- `schema?: TreeListDataSourceSchema` - Schema configuration with model field mapping
+
+### Events
+
+All events from `PantanalDataSource` are supported:
+
+- `@change` - Fired when data changes
+- `@error` - Fired when an error occurs
+- `@requestStart` - Fired when a request starts
+- `@requestEnd` - Fired when a request ends
+- `@sync` - Fired when data is synchronized
+- `@update:data` - Fired when data is updated
+- `@update:page` - Fired when page changes
+- `@update:pageSize` - Fired when page size changes
+- `@update:sort` - Fired when sort changes
+- `@update:filter` - Fired when filter changes
+- `@update:group` - Fired when group changes
+
+### Methods
+
+- `data(): TreeListNode[]` - Returns all nodes
+- `add(node: Partial<TreeListNode>): void` - Adds a new node
+- `remove(node: TreeListNode | number | string): void` - Removes a node
+- `update(node: TreeListNode): void` - Updates a node
+- `rootNodes(): TreeListNode[]` - Returns root nodes (nodes without parent)
+- `getNode(id: number | string): TreeListNode | null` - Gets a node by id
+- `expand(node: TreeListNode | number | string): void` - Expands a node
+- `collapse(node: TreeListNode | number | string): void` - Collapses a node
+- `total(): number` - Returns total count
+- `read(): Promise<void>` - Reads data from source
+- `sync(): Promise<void>` - Synchronizes data
+- `query(options?: any): void` - Queries data with options
+
+### Schema Model Configuration
+
+The schema model supports field mapping:
+
+```typescript
+interface TreeListDataSourceSchemaModel {
+  id?: TreeListFieldConfig | string
+  parentId?: TreeListFieldConfig | string
+  expanded?: boolean | string | ((item: any) => boolean)
+  fields?: Record<string, TreeListFieldConfig>
+}
+```
+
+### Expanded Configuration
+
+The `expanded` property can be configured in several ways:
+
+- `boolean` - All nodes expanded or collapsed by default
+- `string` - Field name that contains the expanded state
+- `Function` - Function that returns whether a node should be expanded: `(item: any) => boolean`
+
+---
+
 ## Pagination Component
 
 The Pagination component can be used independently without the Grid component. Perfect for custom data displays, lists, or any paginated content.

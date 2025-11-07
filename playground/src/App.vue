@@ -111,6 +111,7 @@ const navSections = [
       { to: '/data/hierarchical-datasource', label: 'HierarchicalDataSource component', icon: 'sitemap' },
       { to: '/data/pivot-datasource', label: 'PivotDataSource component', icon: 'table-cells' },
       { to: '/data/scheduler-datasource', label: 'SchedulerDataSource component', icon: 'calendar' },
+      { to: '/data/treelist-datasource', label: 'TreeListDataSource component', icon: 'diagram-project' },
       { to: '/server', label: 'Server-side pagination', icon: 'gears' },
       { to: '/persisted', label: 'Persisted state', icon: 'floppy-disk' },
     ],
