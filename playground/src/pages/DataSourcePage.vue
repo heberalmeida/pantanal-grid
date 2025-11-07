@@ -99,7 +99,7 @@
       </PantanalDataSource>
       <div class="mb-4 space-x-2">
         <button
-          @click="refDataSource?.read()"
+          @click="handleRefRefresh"
           class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
           Refresh Data
         </button>
@@ -175,7 +175,7 @@
             </select>
           </div>
           <button
-            @click="standaloneDataSource?.read()"
+            @click="handleStandaloneRefresh"
             class="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
             Refresh
           </button>
@@ -444,11 +444,24 @@ const refData = ref<Product[]>(
 
 const refDataSource = ref<DataSourceInstance | null>(null)
 const refDataSourceData = ref<Product[]>([])
+const refTotal = ref(0)
 const refPage = ref(1)
 const refPageSize = ref(10)
 
 function handleRefChange(data: Product[]) {
   refDataSourceData.value = data
+  if (refDataSource.value) {
+    const totalCount = refDataSource.value.total()
+    if (totalCount > 0) {
+      refTotal.value = totalCount
+    }
+  }
+}
+
+async function handleRefRefresh() {
+  if (refDataSource.value) {
+    await refDataSource.value.read()
+  }
 }
 
 // Standalone DataSource
@@ -474,6 +487,15 @@ const standaloneSortField = ref('')
 
 function handleStandaloneChange(data: Product[]) {
   standaloneDisplayData.value = data
+}
+
+async function handleStandaloneRefresh() {
+  if (standaloneDataSource.value) {
+    // Force refresh by reading again
+    await standaloneDataSource.value.read()
+    // Also trigger a query to refresh the view
+    standaloneDataSource.value.query()
+  }
 }
 
 function updateStandaloneFilter() {

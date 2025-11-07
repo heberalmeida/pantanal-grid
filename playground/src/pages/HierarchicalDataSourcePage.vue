@@ -474,22 +474,37 @@ function handleStandaloneChange(data: HierarchicalNode[]) {
 }
 
 async function expandNode() {
-  if (standaloneHierarchicalDataSource.value && standaloneTreeData.value.length > 0) {
-    await standaloneHierarchicalDataSource.value.expand(standaloneTreeData.value[0])
-  }
+  if (!standaloneHierarchicalDataSource.value || standaloneTreeData.value.length === 0) return
+  
+  const firstNode = standaloneTreeData.value[0]
+  await standaloneHierarchicalDataSource.value.expand(firstNode)
+  
+  // Refresh the tree data after expansion
+  const rootNodes = standaloneHierarchicalDataSource.value.rootNodes()
+  standaloneTreeData.value = rootNodes
 }
 
-function collapseNode() {
-  if (standaloneHierarchicalDataSource.value && standaloneTreeData.value.length > 0) {
-    standaloneHierarchicalDataSource.value.collapse(standaloneTreeData.value[0])
-  }
+async function collapseNode() {
+  if (!standaloneHierarchicalDataSource.value || standaloneTreeData.value.length === 0) return
+  
+  const firstNode = standaloneTreeData.value[0]
+  standaloneHierarchicalDataSource.value.collapse(firstNode)
+  
+  // Refresh the tree data after collapse
+  const rootNodes = standaloneHierarchicalDataSource.value.rootNodes()
+  standaloneTreeData.value = rootNodes
 }
 
 async function loadChildren() {
-  if (standaloneHierarchicalDataSource.value && standaloneTreeData.value.length > 0) {
-    const children = await standaloneHierarchicalDataSource.value.loadChildren(standaloneTreeData.value[0])
-    console.log('Loaded children:', children)
-  }
+  if (!standaloneHierarchicalDataSource.value || standaloneTreeData.value.length === 0) return
+  
+  const firstNode = standaloneTreeData.value[0]
+  const children = await standaloneHierarchicalDataSource.value.loadChildren(firstNode)
+  console.log('Loaded children:', children)
+  
+  // Refresh the tree data after loading children
+  const rootNodes = standaloneHierarchicalDataSource.value.rootNodes()
+  standaloneTreeData.value = rootNodes
 }
 
 // Helper functions

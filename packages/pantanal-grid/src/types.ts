@@ -344,3 +344,105 @@ export interface HierarchicalDataSourceInstance extends DataSourceInstance {
   collapse(node: HierarchicalNode | number | string): void
   loadChildren(node: HierarchicalNode | number | string): Promise<HierarchicalNode[]>
 }
+
+// PivotDataSource Types
+export interface PivotDimension {
+  caption?: string
+  name?: string
+  [key: string]: any
+}
+
+export interface PivotMeasure {
+  field?: string
+  aggregate?: 'sum' | 'avg' | 'count' | 'min' | 'max'
+  format?: string
+  name?: string
+  type?: string
+  [key: string]: any
+}
+
+export interface PivotCube {
+  dimensions?: Record<string, PivotDimension>
+  measures?: Record<string, PivotMeasure>
+  [key: string]: any
+}
+
+export interface PivotColumn {
+  name: string
+  expand?: boolean
+  [key: string]: any
+}
+
+export interface PivotRow {
+  name: string
+  expand?: boolean
+  [key: string]: any
+}
+
+export interface PivotDataSourceSchema {
+  cube?: PivotCube
+  axes?: string | ((response: any) => any)
+  catalogs?: string | ((response: any) => any)
+  cubes?: string | ((response: any) => any)
+  data?: string | ((response: any) => any)
+  dimensions?: string | ((response: any) => any)
+  hierarchies?: string | ((response: any) => any)
+  levels?: string | ((response: any) => any)
+  measures?: string | ((response: any) => any)
+  [key: string]: any
+}
+
+export interface PivotDataSourceTransport {
+  read?: string | ((options: any) => Promise<any>)
+  discover?: string | ((options: any) => Promise<any>)
+  connection?: {
+    catalog?: string
+    cube?: string
+    [key: string]: any
+  }
+  parameterMap?: (options: any, operation: string) => any
+  [key: string]: any
+}
+
+export interface PivotDataSourceProps {
+  type?: 'xmla' | 'odata' | 'local'
+  data?: any[]
+  transport?: PivotDataSourceTransport
+  schema?: PivotDataSourceSchema
+  columns?: PivotColumn[] | string[]
+  rows?: PivotRow[] | string[]
+  measures?: string[] | PivotMeasure[]
+  autoSync?: boolean
+  [key: string]: any
+}
+
+export interface PivotCell {
+  value: any
+  formattedValue?: string
+  member?: any
+  [key: string]: any
+}
+
+export interface PivotAxis {
+  tuples: any[]
+  [key: string]: any
+}
+
+export interface PivotResult {
+  columns: PivotAxis
+  rows: PivotAxis
+  data: PivotCell[][]
+  [key: string]: any
+}
+
+export interface PivotDataSourceInstance {
+  data(): PivotResult | any[]
+  total(): number
+  read(): Promise<void>
+  sync(): Promise<void>
+  query(options?: any): void
+  axes(): { columns: PivotAxis; rows: PivotAxis } | null
+  measures(): PivotMeasure[]
+  columns(): PivotColumn[]
+  rows(): PivotRow[]
+}

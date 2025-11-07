@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends GanttDependency = GanttDependency">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import DataSource from './DataSource.vue'
 import type { 
   GanttDependency, 
@@ -322,24 +322,52 @@ const ganttDependencyDataSourceInstance: GanttDependencyDataSourceInstance = {
     return this.data() as GanttDependency[]
   },
   add(dependency: Partial<GanttDependency>) {
-    if (props.type === 'local' && props.data) {
+    if (props.type === 'local') {
+      const currentData = (props.data as GanttDependency[]) || []
       const newDependency: GanttDependency = {
-        id: dependency.id || Date.now(),
+        id: dependency.id || (Date.now() + Math.random()),
         predecessorId: dependency.predecessorId || '',
         successorId: dependency.successorId || '',
         type: dependency.type ?? 0,
         ...dependency,
       } as GanttDependency
       
-      const updatedData = [...(props.data as GanttDependency[]), newDependency]
+      const updatedData = [...currentData, newDependency]
+      // Emit update:data first
       emit('update:data', updatedData)
+      
+      // Force DataSource to update by triggering read after nextTick
+      nextTick(() => {
+        const ds = dataSourceRef.value as any
+        if (ds) {
+          // Update internal data directly to avoid watcher issues
+          ds.read()
+        }
+      })
     }
   },
   remove(dependency: GanttDependency | number | string) {
-    if (props.type === 'local' && props.data) {
+    if (props.type === 'local') {
+      const currentData = (props.data as GanttDependency[]) || []
       const id = typeof dependency === 'object' ? dependency.id : dependency
-      const updatedData = (props.data as GanttDependency[]).filter(d => d.id !== id)
+      const updatedData = currentData.filter(d => {
+        const depId = d.id
+        if (typeof depId === 'number' && typeof id === 'number') {
+          return depId !== id
+        }
+        return String(depId) !== String(id)
+      })
+      // Emit update:data first
       emit('update:data', updatedData)
+      
+      // Force DataSource to update by triggering read after nextTick
+      nextTick(() => {
+        const ds = dataSourceRef.value as any
+        if (ds) {
+          // Update internal data directly to avoid watcher issues
+          ds.read()
+        }
+      })
     }
   },
   update(dependency: GanttDependency) {

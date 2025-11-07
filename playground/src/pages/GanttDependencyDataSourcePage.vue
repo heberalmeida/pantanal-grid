@@ -118,6 +118,8 @@
         ref="standaloneGanttDependencyDataSource"
         :data="standaloneDependencies"
         @change="handleStandaloneChange"
+        @update:data="handleUpdateData"
+        :auto-sync="false"
       />
       <ExampleCode :source="standaloneCode" />
     </article>
@@ -125,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { 
   PantanalGrid, 
   PantanalGanttDependencyDataSource,
@@ -271,32 +273,73 @@ const standaloneDependencies = ref<GanttDependency[]>([
 
 const standaloneGanttDependencyDataSource = ref<GanttDependencyDataSourceInstance | null>(null)
 const standaloneData = ref<GanttDependency[]>([])
+const isUpdatingData = ref(false)
 
 function handleStandaloneChange(data: GanttDependency[]) {
-  standaloneData.value = data
-}
-
-function addDependency() {
-  if (standaloneGanttDependencyDataSource.value) {
-    const newDependency: Partial<GanttDependency> = {
-      predecessorId: standaloneDependencies.value.length + 1,
-      successorId: standaloneDependencies.value.length + 2,
-      type: 0,
-    }
-    standaloneGanttDependencyDataSource.value.add(newDependency)
-    // Update local data
-    const currentData = standaloneGanttDependencyDataSource.value.dependencies()
-    standaloneDependencies.value = currentData
+  if (!isUpdatingData.value) {
+    standaloneData.value = data
   }
 }
 
-function removeDependency() {
-  if (standaloneGanttDependencyDataSource.value && standaloneData.value.length > 0) {
-    const lastDep = standaloneData.value[standaloneData.value.length - 1]
-    standaloneGanttDependencyDataSource.value.remove(lastDep.id)
-    // Update local data
-    const currentData = standaloneGanttDependencyDataSource.value.dependencies()
-    standaloneDependencies.value = currentData
+function handleUpdateData(data: GanttDependency[]) {
+  // Always update when update:data is emitted
+  // This ensures the component stays in sync
+  standaloneDependencies.value = data
+}
+
+async function addDependency() {
+  // Generate a unique ID for the new dependency
+  const maxId = standaloneDependencies.value.length > 0 
+    ? Math.max(...standaloneDependencies.value.map(d => {
+        const id = d.id
+        return typeof id === 'number' ? id : (typeof id === 'string' ? parseInt(id) || 0 : 0)
+      }))
+    : 0
+  
+  const newDependency: GanttDependency = {
+    id: maxId + 1,
+    predecessorId: standaloneDependencies.value.length + 1,
+    successorId: standaloneDependencies.value.length + 2,
+    type: 0,
+  }
+  
+  // Update the data directly - this will trigger reactivity
+  standaloneDependencies.value = [...standaloneDependencies.value, newDependency]
+  
+  // Wait for Vue to process the update
+  await nextTick()
+  
+  // Force DataSource to refresh by calling read()
+  if (standaloneGanttDependencyDataSource.value) {
+    await standaloneGanttDependencyDataSource.value.read()
+  }
+}
+
+async function removeDependency() {
+  // Check both standaloneData and standaloneDependencies to find the last dependency
+  const dataToCheck = standaloneData.value.length > 0 ? standaloneData.value : standaloneDependencies.value
+  if (dataToCheck.length === 0) return
+  
+  const lastDep = dataToCheck[dataToCheck.length - 1]
+  if (!lastDep?.id) return
+  
+  const depId = lastDep.id
+  
+  // Update the data directly - this will trigger reactivity
+  standaloneDependencies.value = standaloneDependencies.value.filter(d => {
+    const did = d.id
+    if (typeof did === 'number' && typeof depId === 'number') {
+      return did !== depId
+    }
+    return String(did) !== String(depId)
+  })
+  
+  // Wait for Vue to process the update
+  await nextTick()
+  
+  // Force DataSource to refresh by calling read()
+  if (standaloneGanttDependencyDataSource.value) {
+    await standaloneGanttDependencyDataSource.value.read()
   }
 }
 

@@ -118,6 +118,8 @@
         ref="standaloneGanttDataSource"
         :data="standaloneTasks"
         @change="handleStandaloneChange"
+        @update:data="handleUpdateData"
+        :auto-sync="false"
       />
       <ExampleCode :source="standaloneCode" />
     </article>
@@ -125,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { 
   PantanalGrid, 
   PantanalGanttDataSource,
@@ -313,33 +315,77 @@ const standaloneTasks = ref<GanttTask[]>([
 
 const standaloneGanttDataSource = ref<GanttDataSourceInstance | null>(null)
 const standaloneData = ref<GanttTask[]>([])
+const isUpdatingData = ref(false)
 
 function handleStandaloneChange(data: GanttTask[]) {
-  standaloneData.value = data
-}
-
-function addTask() {
-  if (standaloneGanttDataSource.value) {
-    const newTask: Partial<GanttTask> = {
-      title: `Task ${standaloneTasks.value.length + 1}`,
-      start: new Date('2024-02-01'),
-      end: new Date('2024-02-10'),
-      percentComplete: 0,
-    }
-    standaloneGanttDataSource.value.add(newTask)
-    // Update local data
-    const currentData = standaloneGanttDataSource.value.tasks()
-    standaloneTasks.value = currentData
+  if (!isUpdatingData.value) {
+    standaloneData.value = data
   }
 }
 
-function removeTask() {
-  if (standaloneGanttDataSource.value && standaloneData.value.length > 0) {
-    const lastTask = standaloneData.value[standaloneData.value.length - 1]
-    standaloneGanttDataSource.value.remove(lastTask.id)
-    // Update local data
-    const currentData = standaloneGanttDataSource.value.tasks()
-    standaloneTasks.value = currentData
+function handleUpdateData(data: GanttTask[]) {
+  // Always update when update:data is emitted
+  // This ensures the component stays in sync
+  standaloneTasks.value = data
+}
+
+async function addTask() {
+  // Generate a unique ID for the new task
+  const maxId = standaloneTasks.value.length > 0 
+    ? Math.max(...standaloneTasks.value.map(t => {
+        const id = t.id
+        return typeof id === 'number' ? id : (typeof id === 'string' ? parseInt(id) || 0 : 0)
+      }))
+    : 0
+  
+  const newTask: GanttTask = {
+    id: maxId + 1,
+    title: `Task ${standaloneTasks.value.length + 1}`,
+    start: new Date('2024-02-01'),
+    end: new Date('2024-02-10'),
+    percentComplete: 0,
+    parentId: null,
+    summary: false,
+    expanded: true,
+  }
+  
+  // Update the data directly - this will trigger reactivity
+  standaloneTasks.value = [...standaloneTasks.value, newTask]
+  
+  // Wait for Vue to process the update
+  await nextTick()
+  
+  // Force DataSource to refresh by calling read()
+  if (standaloneGanttDataSource.value) {
+    await standaloneGanttDataSource.value.read()
+  }
+}
+
+async function removeTask() {
+  // Check both standaloneData and standaloneTasks to find the last task
+  const dataToCheck = standaloneData.value.length > 0 ? standaloneData.value : standaloneTasks.value
+  if (dataToCheck.length === 0) return
+  
+  const lastTask = dataToCheck[dataToCheck.length - 1]
+  if (!lastTask?.id) return
+  
+  const taskId = lastTask.id
+  
+  // Update the data directly - this will trigger reactivity
+  standaloneTasks.value = standaloneTasks.value.filter(t => {
+    const tid = t.id
+    if (typeof tid === 'number' && typeof taskId === 'number') {
+      return tid !== taskId
+    }
+    return String(tid) !== String(taskId)
+  })
+  
+  // Wait for Vue to process the update
+  await nextTick()
+  
+  // Force DataSource to refresh by calling read()
+  if (standaloneGanttDataSource.value) {
+    await standaloneGanttDataSource.value.read()
   }
 }
 

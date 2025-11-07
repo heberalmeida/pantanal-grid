@@ -1074,10 +1074,16 @@ onMounted(() => {
 onMounted(() => { updateHScrollState() })
 async function refresh() {
   if (!props.dataProvider) return
-  abortCtl.value?.abort()
+  
+  // Abort previous request if it exists
+  if (abortCtl.value) {
+    abortCtl.value.abort()
+  }
+  
   const ctl = new AbortController()
   abortCtl.value = ctl
   emit('loading', true)
+  
   try {
     const { rows, total } = await props.dataProvider({
       page: page.value,
@@ -1086,10 +1092,30 @@ async function refresh() {
       filter: filters.value,
       signal: ctl.signal,
     })
-    remoteRows.value = rows || []
-    remoteTotal.value = typeof total === 'number' ? total : rows?.length ?? 0
+    
+    // Only update if the request wasn't aborted (e.g., by a newer request)
+    if (!ctl.signal.aborted) {
+      remoteRows.value = rows || []
+      remoteTotal.value = typeof total === 'number' ? total : rows?.length ?? 0
+    }
+  } catch (error: any) {
+    // Ignore AbortError - it's expected when aborting requests
+    // This can happen when:
+    // 1. A new request is made while an old one is still pending
+    // 2. The component is unmounted while a request is pending
+    if (error?.name === 'AbortError' || error?.name === 'AbortSignal' || ctl.signal.aborted) {
+      // Silently ignore aborted requests
+      return
+    }
+    // Log other errors for debugging but don't break the UI
+    console.error('Error loading data:', error)
+    emit('error', error)
   } finally {
-    emit('loading', false)
+    // Always set loading to false, even if request was aborted
+    // Check if this is still the current request to avoid race conditions
+    if (abortCtl.value === ctl) {
+      emit('loading', false)
+    }
   }
 }
 

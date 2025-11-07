@@ -45,7 +45,22 @@ watch(() => props.pageSize, (v) => { if (v !== undefined) currentPageSize.value 
 watch(() => props.sort, (v) => { if (v) currentSort.value = v }, { deep: true })
 watch(() => props.filter, (v) => { if (v) currentFilter.value = v }, { deep: true })
 watch(() => props.group, (v) => { if (v) currentGroup.value = v }, { deep: true })
-watch(() => props.data, (v) => { if (v) internalData.value = v }, { deep: true })
+// Track previous data reference to prevent unnecessary updates
+let previousDataRef: any = null
+
+watch(() => props.data, (v) => { 
+  if (v !== undefined && v !== null) {
+    // Only update if the reference actually changed (shallow check)
+    // This prevents infinite loops when data is updated via v-model
+    if (previousDataRef !== v) {
+      previousDataRef = v
+      internalData.value = v
+    }
+  } else if (v === undefined || v === null) {
+    previousDataRef = null
+    internalData.value = []
+  }
+}, { immediate: true, flush: 'post' })
 
 // Emitir mudanças
 watch(currentPage, (v) => emit('update:page', v))
@@ -311,10 +326,18 @@ provide('datasource', dataSourceInstance)
 // Expor via ref
 defineExpose(dataSourceInstance)
 
+// Track previous paginated value to prevent recursive updates
+let previousPaginatedRef: any = null
+
 // Expor dados processados para o Grid
 watch(paginated, (value) => {
-  emit('change', value)
-}, { immediate: true, deep: true })
+  // Only emit if the value actually changed (reference check)
+  // Deep comparison would be too expensive and cause issues
+  if (previousPaginatedRef !== value) {
+    previousPaginatedRef = value
+    emit('change', value)
+  }
+}, { immediate: true, deep: false })
 
 // Auto-bind em modo remoto
 onMounted(() => {

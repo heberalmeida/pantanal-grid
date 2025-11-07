@@ -35,6 +35,7 @@ import {
   faDiagramProject,
   faLink,
   faSitemap,
+  faTableCells,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -69,6 +70,7 @@ library.add(
   faDiagramProject,
   faLink,
   faSitemap,
+  faTableCells,
 )
 
 createApp(App)

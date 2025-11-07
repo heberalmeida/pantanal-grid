@@ -1413,6 +1413,233 @@ interface HierarchicalDataSourceSchemaModel {
 
 ---
 
+## PivotDataSource Component
+
+The `PantanalPivotDataSource` component extends the `PantanalDataSource` component and provides specialized support for OLAP (Online Analytical Processing) data structures. It communicates with OLAP cubes using the XMLA protocol and supports client-side cube processing for local data.
+
+### PivotCube Interface
+
+```typescript
+interface PivotCube {
+  dimensions?: Record<string, PivotDimension>
+  measures?: Record<string, PivotMeasure>
+}
+```
+
+### Basic Usage
+
+```vue
+<script setup lang="ts">
+import { PantanalPivotDataSource, type PivotDataSourceSchema, type PivotColumn, type PivotRow } from '@pantanal/grid'
+import { ref } from 'vue'
+
+const data = [
+  { Country: 'USA', CompanyName: 'Company A', ContactTitle: 'Manager', CustomerID: 1 },
+  { Country: 'USA', CompanyName: 'Company B', ContactTitle: 'Manager', CustomerID: 2 },
+  { Country: 'UK', CompanyName: 'Company C', ContactTitle: 'Director', CustomerID: 3 },
+]
+
+const schema: PivotDataSourceSchema = {
+  cube: {
+    dimensions: {
+      Country: { caption: 'All Countries' },
+      CompanyName: { caption: 'All Companies' },
+      ContactTitle: { caption: 'All Titles' },
+    },
+    measures: {
+      'Contacts Count': { field: 'CustomerID', aggregate: 'count' },
+    },
+  },
+}
+
+const columns: PivotColumn[] = [
+  { name: 'Country', expand: true },
+]
+
+const rows: PivotRow[] = [
+  { name: 'ContactTitle' },
+]
+
+const measures = ['Contacts Count']
+</script>
+
+<template>
+  <PantanalPivotDataSource
+    type="local"
+    :data="data"
+    :schema="schema"
+    :columns="columns"
+    :rows="rows"
+    :measures="measures"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Remote PivotDataSource
+
+Load pivot data from a remote OLAP server or OData service:
+
+```vue
+<script setup lang="ts">
+import { PantanalPivotDataSource, type PivotDataSourceTransport, type PivotDataSourceSchema } from '@pantanal/grid'
+
+const transport: PivotDataSourceTransport = {
+  read: async (options: any) => {
+    const res = await fetch('https://api.example.com/pivot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        columns: options.columns,
+        rows: options.rows,
+        measures: options.measures,
+      }),
+    })
+    return res.json()
+  },
+}
+
+const schema: PivotDataSourceSchema = {
+  data: (response: any) => response,
+}
+</script>
+
+<template>
+  <PantanalPivotDataSource
+    type="odata"
+    :transport="transport"
+    :schema="schema"
+    :columns="columns"
+    :rows="rows"
+    :measures="measures"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Standalone Usage
+
+PivotDataSource can be used independently to manage pivot data programmatically:
+
+```vue
+<script setup lang="ts">
+import { PantanalPivotDataSource, type PivotDataSourceInstance } from '@pantanal/grid'
+import { ref } from 'vue'
+
+const pivotDataSource = ref<PivotDataSourceInstance | null>(null)
+
+// Update columns programmatically
+async function updateColumns() {
+  // Update columns, rows, or measures
+  await pivotDataSource.value?.query({
+    columns: [{ name: 'Product' }],
+    rows: [{ name: 'Region' }],
+  })
+}
+
+// Get axes
+function getAxes() {
+  return pivotDataSource.value?.axes()
+}
+
+// Get measures
+function getMeasures() {
+  return pivotDataSource.value?.measures()
+}
+</script>
+
+<template>
+  <PantanalPivotDataSource
+    ref="pivotDataSource"
+    type="local"
+    :data="data"
+    :schema="schema"
+    :columns="columns"
+    :rows="rows"
+    :measures="measures"
+    @change="handleChange"
+  />
+</template>
+```
+
+### PivotDataSource Props
+
+- `type` - `'xmla' | 'odata' | 'local'` - Type of data source (default: `'local'`)
+- `data` - `any[]` - Local data array (for `type='local'`)
+- `transport` - `PivotDataSourceTransport` - Transport configuration for remote data
+- `schema` - `PivotDataSourceSchema` - Schema configuration with cube definition
+- `columns` - `PivotColumn[] | string[]` - Column axis members
+- `rows` - `PivotRow[] | string[]` - Row axis members
+- `measures` - `string[] | PivotMeasure[]` - Measures configuration
+- `autoSync` - `boolean` - Automatically sync data on mount (default: `false`)
+
+### PivotDataSource Events
+
+- `change` - Fires when the pivot data changes
+- `error` - Fires when an error occurs
+- `requestStart` - Fires when a request starts
+- `requestEnd` - Fires when a request ends
+- `sync` - Fires when data is synchronized
+
+### PivotDataSource Methods
+
+- `data()` - Returns the current pivot result as `PivotResult`
+- `total()` - Returns the total number of cells
+- `read()` - Reads data from the remote source or processes local data
+- `sync()` - Synchronizes data
+- `query(options)` - Updates columns, rows, or measures and refreshes data
+- `axes()` - Returns the axes configuration (columns and rows)
+- `measures()` - Returns the measures configuration
+- `columns()` - Returns the columns configuration
+- `rows()` - Returns the rows configuration
+
+### Schema Cube Configuration
+
+The schema cube allows you to configure dimensions and measures:
+
+```typescript
+interface PivotCube {
+  dimensions?: Record<string, PivotDimension>
+  measures?: Record<string, PivotMeasure>
+}
+
+interface PivotDimension {
+  caption?: string
+  name?: string
+}
+
+interface PivotMeasure {
+  field?: string
+  aggregate?: 'sum' | 'avg' | 'count' | 'min' | 'max'
+  format?: string
+  name?: string
+}
+```
+
+#### Measure Aggregates
+
+- `sum` - Sum of values
+- `avg` - Average of values
+- `count` - Count of items
+- `min` - Minimum value
+- `max` - Maximum value
+
+### PivotColumn and PivotRow
+
+```typescript
+interface PivotColumn {
+  name: string
+  expand?: boolean
+}
+
+interface PivotRow {
+  name: string
+  expand?: boolean
+}
+```
+
+---
+
 ## Pagination Component
 
 The Pagination component can be used independently without the Grid component. Perfect for custom data displays, lists, or any paginated content.

@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends GanttTask = GanttTask">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import DataSource from './DataSource.vue'
 import type { 
   GanttTask, 
@@ -325,9 +325,10 @@ const ganttDataSourceInstance: GanttDataSourceInstance = {
     return this.data() as GanttTask[]
   },
   add(task: Partial<GanttTask>) {
-    if (props.type === 'local' && props.data) {
+    if (props.type === 'local') {
+      const currentData = (props.data as GanttTask[]) || []
       const newTask: GanttTask = {
-        id: task.id || Date.now(),
+        id: task.id || (Date.now() + Math.random()),
         parentId: task.parentId ?? null,
         start: task.start ? (task.start instanceof Date ? task.start : new Date(task.start)) : new Date(),
         end: task.end ? (task.end instanceof Date ? task.end : new Date(task.end)) : new Date(),
@@ -338,15 +339,42 @@ const ganttDataSourceInstance: GanttDataSourceInstance = {
         ...task,
       } as GanttTask
       
-      const updatedData = [...(props.data as GanttTask[]), newTask]
+      const updatedData = [...currentData, newTask]
+      // Emit update:data first
       emit('update:data', updatedData)
+      
+      // Force DataSource to update by triggering read after nextTick
+      nextTick(() => {
+        const ds = dataSourceRef.value as any
+        if (ds) {
+          // Update internal data directly to avoid watcher issues
+          ds.read()
+        }
+      })
     }
   },
   remove(task: GanttTask | number | string) {
-    if (props.type === 'local' && props.data) {
+    if (props.type === 'local') {
+      const currentData = (props.data as GanttTask[]) || []
       const id = typeof task === 'object' ? task.id : task
-      const updatedData = (props.data as GanttTask[]).filter(t => t.id !== id)
+      const updatedData = currentData.filter(t => {
+        const taskId = t.id
+        if (typeof taskId === 'number' && typeof id === 'number') {
+          return taskId !== id
+        }
+        return String(taskId) !== String(id)
+      })
+      // Emit update:data first
       emit('update:data', updatedData)
+      
+      // Force DataSource to update by triggering read after nextTick
+      nextTick(() => {
+        const ds = dataSourceRef.value as any
+        if (ds) {
+          // Update internal data directly to avoid watcher issues
+          ds.read()
+        }
+      })
     }
   },
   update(task: GanttTask) {

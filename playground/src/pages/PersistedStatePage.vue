@@ -92,7 +92,7 @@ const columns = [
 const sort = ref<SortDescriptor[]>([])
 const filters = ref<FilterDescriptor[]>([])
 const page = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(5)
 const snapshot = ref<string>('—')
 const codeSnippet = exampleSource
 
@@ -112,7 +112,7 @@ function clearState() {
   sort.value = []
   filters.value = []
   page.value = 1
-  pageSize.value = 10
+  pageSize.value = 5
   refreshSnapshot()
 }
 
