@@ -108,6 +108,7 @@ const navSections = [
       { to: '/data/datasource', label: 'DataSource component', icon: 'gears' },
       { to: '/data/gantt-datasource', label: 'GanttDataSource component', icon: 'diagram-project' },
       { to: '/data/gantt-dependency-datasource', label: 'GanttDependencyDataSource component', icon: 'link' },
+      { to: '/data/hierarchical-datasource', label: 'HierarchicalDataSource component', icon: 'sitemap' },
       { to: '/server', label: 'Server-side pagination', icon: 'gears' },
       { to: '/persisted', label: 'Persisted state', icon: 'floppy-disk' },
     ],

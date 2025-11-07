@@ -34,6 +34,7 @@ import {
   faXmark,
   faDiagramProject,
   faLink,
+  faSitemap,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -67,6 +68,7 @@ library.add(
   faXmark,
   faDiagramProject,
   faLink,
+  faSitemap,
 )
 
 createApp(App)

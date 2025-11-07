@@ -301,3 +301,46 @@ export interface GanttDependencyDataSourceInstance extends DataSourceInstance {
   remove(dependency: GanttDependency | number | string): void
   update(dependency: GanttDependency): void
 }
+
+// HierarchicalDataSource Types
+export interface HierarchicalNode {
+  id?: number | string
+  text?: string
+  [key: string]: any
+  children?: HierarchicalNode[]
+  _hasChildren?: boolean
+  _expanded?: boolean
+  _level?: number
+}
+
+export interface HierarchicalDataSourceSchemaModelChildren {
+  type?: 'local' | 'remote'
+  data?: any[]
+  transport?: DataSourceTransport
+  schema?: DataSourceSchema
+  [key: string]: any
+}
+
+export interface HierarchicalDataSourceSchemaModel {
+  id?: string
+  hasChildren?: string | boolean | ((item: any) => boolean)
+  children?: string | HierarchicalDataSourceSchemaModelChildren
+  [key: string]: any
+}
+
+export interface HierarchicalDataSourceSchema extends DataSourceSchema {
+  model?: HierarchicalDataSourceSchemaModel
+}
+
+export interface HierarchicalDataSourceProps<T = HierarchicalNode> extends DataSourceProps<T> {
+  schema?: HierarchicalDataSourceSchema
+  iconRenderer?: (node: HierarchicalNode) => any
+}
+
+export interface HierarchicalDataSourceInstance extends DataSourceInstance {
+  rootNodes(): HierarchicalNode[]
+  getNode(id: number | string): HierarchicalNode | null
+  expand(node: HierarchicalNode | number | string): Promise<void>
+  collapse(node: HierarchicalNode | number | string): void
+  loadChildren(node: HierarchicalNode | number | string): Promise<HierarchicalNode[]>
+}

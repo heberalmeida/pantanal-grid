@@ -1157,6 +1157,262 @@ interface GanttDependencyDataSourceSchema {
 
 ---
 
+## HierarchicalDataSource Component
+
+The `PantanalHierarchicalDataSource` component extends the `PantanalDataSource` component and provides specialized support for hierarchical data structures. It enables you to represent data in a tree-like structure with parent-child relationships.
+
+### HierarchicalNode Interface
+
+```typescript
+interface HierarchicalNode {
+  id?: number | string
+  text?: string
+  children?: HierarchicalNode[]
+  _hasChildren?: boolean
+  _expanded?: boolean
+  _level?: number
+  [key: string]: any
+}
+```
+
+### Basic Usage
+
+```vue
+<script setup lang="ts">
+import { PantanalHierarchicalDataSource, PantanalGrid, type HierarchicalNode } from '@pantanal/grid'
+import { ref } from 'vue'
+
+const data: HierarchicalNode[] = [
+  {
+    id: 1,
+    text: 'Category A',
+    children: [
+      {
+        id: 11,
+        text: 'Subcategory A1',
+        children: [
+          { id: 111, text: 'Item A1a' },
+          { id: 112, text: 'Item A1b' },
+        ],
+      },
+      {
+        id: 12,
+        text: 'Subcategory A2',
+      },
+    ],
+  },
+  {
+    id: 2,
+    text: 'Category B',
+    children: [
+      { id: 21, text: 'Subcategory B1' },
+    ],
+  },
+]
+
+const gridData = ref<HierarchicalNode[]>([])
+
+function handleChange(data: HierarchicalNode[]) {
+  gridData.value = flattenTree(data)
+}
+</script>
+
+<template>
+  <PantanalHierarchicalDataSource
+    :data="data"
+    @change="handleChange"
+  />
+  <PantanalGrid
+    :rows="gridData"
+    :columns="columns"
+    key-field="id"
+  />
+</template>
+```
+
+### Schema Configuration
+
+Configure the hierarchical structure using schema model:
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalHierarchicalDataSource, 
+  type HierarchicalDataSourceSchema 
+} from '@pantanal/grid'
+
+const data = [
+  {
+    id: 1,
+    name: 'Department A',
+    products: [
+      { id: 11, name: 'Product A1' },
+      { id: 12, name: 'Product A2' },
+    ],
+  },
+]
+
+const schema: HierarchicalDataSourceSchema = {
+  model: {
+    id: 'id',
+    hasChildren: 'products',  // Field that indicates children
+    children: 'products',     // Field that contains children
+  },
+}
+</script>
+
+<template>
+  <PantanalHierarchicalDataSource
+    :data="data"
+    :schema="schema"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Remote HierarchicalDataSource with Lazy Loading
+
+Load hierarchical data from a remote API with lazy loading of children:
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalHierarchicalDataSource, 
+  type HierarchicalDataSourceSchema,
+  type DataSourceTransport 
+} from '@pantanal/grid'
+
+const transport: DataSourceTransport = {
+  read: async () => {
+    const res = await fetch('https://api.example.com/categories')
+    return res.json()
+  },
+}
+
+const schema: HierarchicalDataSourceSchema = {
+  data: (response: any) => response.data || [],
+  model: {
+    id: 'id',
+    hasChildren: '_hasChildren',
+    children: {
+      type: 'remote',
+      transport: {
+        read: async (options: any) => {
+          const parentId = options.data?.parentId
+          const res = await fetch(`https://api.example.com/categories/${parentId}/children`)
+          return res.json()
+        },
+      },
+      schema: {
+        data: (response: any) => response.data || [],
+      },
+    },
+  },
+}
+</script>
+
+<template>
+  <PantanalHierarchicalDataSource
+    type="remote"
+    :transport="transport"
+    :schema="schema"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Standalone Usage
+
+HierarchicalDataSource can be used independently to manage hierarchical data programmatically:
+
+```vue
+<script setup lang="ts">
+import { PantanalHierarchicalDataSource, type HierarchicalDataSourceInstance } from '@pantanal/grid'
+import { ref } from 'vue'
+
+const hierarchicalDataSource = ref<HierarchicalDataSourceInstance | null>(null)
+const data = ref<HierarchicalNode[]>([...])
+
+// Expand a node
+async function expandNode(nodeId: number | string) {
+  await hierarchicalDataSource.value?.expand(nodeId)
+}
+
+// Collapse a node
+function collapseNode(nodeId: number | string) {
+  hierarchicalDataSource.value?.collapse(nodeId)
+}
+
+// Load children for a node
+async function loadChildren(nodeId: number | string) {
+  return await hierarchicalDataSource.value?.loadChildren(nodeId) || []
+}
+
+// Get a specific node
+function getNode(nodeId: number | string) {
+  return hierarchicalDataSource.value?.getNode(nodeId) || null
+}
+
+// Get root nodes
+function getRootNodes() {
+  return hierarchicalDataSource.value?.rootNodes() || []
+}
+</script>
+
+<template>
+  <PantanalHierarchicalDataSource
+    ref="hierarchicalDataSource"
+    :data="data"
+    @change="handleChange"
+  />
+</template>
+```
+
+### HierarchicalDataSource Props
+
+Extends all `PantanalDataSource` props, plus:
+
+- `schema` - `HierarchicalDataSourceSchema` - Schema configuration with hierarchical model
+
+### HierarchicalDataSource Events
+
+Same as `PantanalDataSource` events.
+
+### HierarchicalDataSource Methods
+
+Extends all `PantanalDataSource` methods, plus:
+
+- `rootNodes()` - Returns all root nodes as `HierarchicalNode[]`
+- `getNode(id)` - Gets a node by ID
+- `expand(node)` - Expands a node and loads its children if needed
+- `collapse(node)` - Collapses a node
+- `loadChildren(node)` - Loads children for a node (async)
+
+### Schema Model Configuration
+
+The schema model allows you to configure hierarchical structure:
+
+```typescript
+interface HierarchicalDataSourceSchemaModel {
+  id?: string                                    // Field name for node ID
+  hasChildren?: string | boolean | Function      // Indicates if node has children
+  children?: string | HierarchicalDataSourceSchemaModelChildren  // Children configuration
+}
+```
+
+#### hasChildren Options
+
+- `string` - Field name that contains children or indicates children existence
+- `boolean` - All nodes have children or none have children
+- `Function` - Function that returns whether a node has children: `(item: any) => boolean`
+
+#### children Options
+
+- `string` - Field name that contains the children array (for local data)
+- `HierarchicalDataSourceSchemaModelChildren` - Configuration object for remote children loading
+
+---
+
 ## Pagination Component
 
 The Pagination component can be used independently without the Grid component. Perfect for custom data displays, lists, or any paginated content.
