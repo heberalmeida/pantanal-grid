@@ -31,7 +31,8 @@ import {
   faImages,
   faCirclePlay,
   faBars,
-  faXmark
+  faXmark,
+  faDiagramProject
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -62,7 +63,8 @@ library.add(
   faImages,
   faCirclePlay,
   faBars,
-  faXmark
+  faXmark,
+  faDiagramProject
 )
 
 createApp(App)

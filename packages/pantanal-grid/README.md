@@ -698,6 +698,240 @@ function reset() {
 
 ---
 
+## GanttDataSource Component
+
+The `PantanalGanttDataSource` component extends the `PantanalDataSource` component and provides specialized support for Gantt task data structures. It includes automatic field mapping, date handling, and hierarchical task support.
+
+### GanttTask Interface
+
+```typescript
+interface GanttTask {
+  id: number | string
+  parentId?: number | string | null
+  orderId?: number
+  start: Date | string
+  end: Date | string
+  title: string
+  percentComplete?: number
+  summary?: boolean
+  expanded?: boolean
+  [key: string]: any
+}
+```
+
+### Basic Usage
+
+```vue
+<script setup lang="ts">
+import { PantanalGanttDataSource, PantanalGrid, type GanttTask } from '@pantanal/grid'
+import { ref } from 'vue'
+
+const tasks: GanttTask[] = [
+  {
+    id: 1,
+    title: 'Project Planning',
+    start: new Date('2024-01-01'),
+    end: new Date('2024-01-15'),
+    percentComplete: 100,
+    parentId: null,
+  },
+  {
+    id: 2,
+    title: 'Design Phase',
+    start: new Date('2024-01-16'),
+    end: new Date('2024-02-15'),
+    percentComplete: 75,
+    parentId: null,
+  },
+]
+
+const dataSourceData = ref<GanttTask[]>([])
+
+function handleChange(data: GanttTask[]) {
+  dataSourceData.value = data
+}
+</script>
+
+<template>
+  <PantanalGanttDataSource
+    :data="tasks"
+    @change="handleChange"
+  />
+  <PantanalGrid
+    :rows="dataSourceData"
+    :columns="columns"
+    key-field="id"
+  />
+</template>
+```
+
+### Model Field Mapping
+
+GanttDataSource supports field mapping from different data structures using the schema model configuration:
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalGanttDataSource, 
+  type GanttTask, 
+  type GanttDataSourceSchema 
+} from '@pantanal/grid'
+
+const tasks = [
+  {
+    ID: 1,
+    Title: 'Task 1',
+    Start: '2024-01-01',
+    End: '2024-01-10',
+    ParentID: null,
+    PercentComplete: 50,
+  },
+]
+
+const schema: GanttDataSourceSchema = {
+  model: {
+    id: 'id',
+    fields: {
+      id: { from: 'ID', type: 'number' },
+      parentId: { from: 'ParentID', type: 'number', defaultValue: null },
+      start: { from: 'Start', type: 'date' },
+      end: { from: 'End', type: 'date' },
+      title: { from: 'Title', type: 'string' },
+      percentComplete: { from: 'PercentComplete', type: 'number', defaultValue: 0 },
+      summary: { from: 'Summary', type: 'boolean', defaultValue: false },
+      expanded: { from: 'Expanded', type: 'boolean', defaultValue: true },
+    },
+  },
+}
+</script>
+
+<template>
+  <PantanalGanttDataSource
+    :data="tasks"
+    :schema="schema"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Remote GanttDataSource
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalGanttDataSource, 
+  type GanttDataSourceSchema,
+  type DataSourceTransport 
+} from '@pantanal/grid'
+
+const transport: DataSourceTransport = {
+  read: async () => {
+    const res = await fetch('https://api.example.com/gantt/tasks')
+    return res.json()
+  },
+}
+
+const schema: GanttDataSourceSchema = {
+  data: (response: any) => response.data || [],
+  total: (response: any) => response.total || 0,
+}
+</script>
+
+<template>
+  <PantanalGanttDataSource
+    type="remote"
+    :transport="transport"
+    :schema="schema"
+    :server-paging="true"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Standalone Usage
+
+GanttDataSource can be used independently to manage task data programmatically:
+
+```vue
+<script setup lang="ts">
+import { PantanalGanttDataSource, type GanttDataSourceInstance } from '@pantanal/grid'
+import { ref } from 'vue'
+
+const ganttDataSource = ref<GanttDataSourceInstance | null>(null)
+const tasks = ref<GanttTask[]>([...])
+
+function addTask() {
+  ganttDataSource.value?.add({
+    title: 'New Task',
+    start: new Date('2024-02-01'),
+    end: new Date('2024-02-10'),
+    percentComplete: 0,
+  })
+}
+
+function removeTask(id: number | string) {
+  ganttDataSource.value?.remove(id)
+}
+
+function updateTask(task: GanttTask) {
+  ganttDataSource.value?.update(task)
+}
+
+function getAllTasks() {
+  return ganttDataSource.value?.tasks() || []
+}
+</script>
+
+<template>
+  <PantanalGanttDataSource
+    ref="ganttDataSource"
+    :data="tasks"
+    @change="handleChange"
+  />
+</template>
+```
+
+### GanttDataSource Props
+
+Extends all `PantanalDataSource` props, plus:
+
+- `schema` - `GanttDataSourceSchema` - Schema configuration with model field mapping
+
+### GanttDataSource Events
+
+Same as `PantanalDataSource` events.
+
+### GanttDataSource Methods
+
+Extends all `PantanalDataSource` methods, plus:
+
+- `tasks()` - Returns all tasks as `GanttTask[]`
+- `add(task)` - Adds a new task
+- `remove(task)` - Removes a task by ID or task object
+- `update(task)` - Updates an existing task
+
+### Schema Model Configuration
+
+The schema model allows you to map fields from different data structures:
+
+```typescript
+interface GanttTaskFieldConfig {
+  from?: string           // Source field name
+  type?: 'string' | 'number' | 'boolean' | 'date'
+  defaultValue?: any
+  validation?: {
+    required?: boolean
+    min?: number
+    max?: number
+  }
+  parse?: (value: any) => any
+}
+```
+
+---
+
 ## Pagination Component
 
 The Pagination component can be used independently without the Grid component. Perfect for custom data displays, lists, or any paginated content.

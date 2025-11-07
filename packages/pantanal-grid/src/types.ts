@@ -209,3 +209,60 @@ export interface DataSourceInstance {
   sync(): Promise<void>
   query(options?: { page?: number; pageSize?: number; sort?: SortDescriptor[]; filter?: FilterDescriptor[]; group?: GroupDescriptor[] }): void
 }
+
+// GanttDataSource Types
+export interface GanttTask {
+  id: number | string
+  parentId?: number | string | null
+  orderId?: number
+  start: Date | string
+  end: Date | string
+  title: string
+  percentComplete?: number
+  summary?: boolean
+  expanded?: boolean
+  [key: string]: any
+}
+
+export interface GanttTaskFieldConfig {
+  from?: string
+  type?: 'string' | 'number' | 'boolean' | 'date'
+  defaultValue?: any
+  validation?: {
+    required?: boolean
+    min?: number
+    max?: number
+  }
+  parse?: (value: any) => any
+}
+
+export interface GanttDataSourceSchemaModel {
+  id?: GanttTaskFieldConfig | string
+  parentId?: GanttTaskFieldConfig | string
+  orderId?: GanttTaskFieldConfig | string
+  start?: GanttTaskFieldConfig | string
+  end?: GanttTaskFieldConfig | string
+  title?: GanttTaskFieldConfig | string
+  percentComplete?: GanttTaskFieldConfig | string
+  summary?: GanttTaskFieldConfig | string
+  expanded?: GanttTaskFieldConfig | string
+  [key: string]: GanttTaskFieldConfig | string | undefined
+}
+
+export interface GanttDataSourceSchema extends DataSourceSchema {
+  model?: {
+    id?: string | GanttTaskFieldConfig
+    fields?: GanttDataSourceSchemaModel
+  }
+}
+
+export interface GanttDataSourceProps<T extends GanttTask = GanttTask> extends Omit<DataSourceProps<T>, 'schema'> {
+  schema?: GanttDataSourceSchema
+}
+
+export interface GanttDataSourceInstance extends DataSourceInstance {
+  tasks(): GanttTask[]
+  add(task: Partial<GanttTask>): void
+  remove(task: GanttTask | number | string): void
+  update(task: GanttTask): void
+}
