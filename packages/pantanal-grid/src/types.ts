@@ -33,6 +33,9 @@ export interface Messages {
   edit: string
   destroy: string
   delete: string
+  filterAll: string
+  filterTrue: string
+  filterFalse: string
 }
 
 import type { VNodeChild } from 'vue'
@@ -91,6 +94,8 @@ export interface ColumnDef<T = Row> {
     date?: Record<string, string>
     boolean?: Record<string, string>
   }
+  // Custom filter options for boolean/dropdown
+  filterableOptions?: Array<{ value: any; label: string }> | (() => Array<{ value: any; label: string }>)
 }
 
 export type PaginationVariant = 'simple' | 'pages' | 'edges'

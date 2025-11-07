@@ -85,13 +85,24 @@
             @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
           <!-- Boolean/Checkbox -->
           <select 
-            v-else-if="c.filterable && (c.filterableUI === 'boolean' || c.type === 'boolean')"
+            v-else-if="c.filterable && (c.filterableUI === 'boolean' || c.filterableUI === 'dropdown' || c.type === 'boolean' || c.filterableOptions)"
             class="v3grid__input"
             :value="getFilterValue(String(c.field))"
             @change="setFilterValue(String(c.field), ($event.target as HTMLSelectElement).value)">
-            <option value="">All</option>
-            <option value="true">True</option>
-            <option value="false">False</option>
+            <template v-if="c.filterableOptions">
+              <option value="">{{ msgs.filterAll }}</option>
+              <option 
+                v-for="(opt, idx) in (typeof c.filterableOptions === 'function' ? c.filterableOptions() : c.filterableOptions)" 
+                :key="idx"
+                :value="String(opt.value)">
+                {{ opt.label }}
+              </option>
+            </template>
+            <template v-else>
+              <option value="">All</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </template>
           </select>
           <!-- Date input -->
           <input 
@@ -1154,11 +1165,34 @@ function setFilterValue(field: string, v: string) {
     if (column?.type === 'number') {
       const numValue = Number(v)
       filterValue = isNaN(numValue) ? 0 : numValue
-    } else if (column?.type === 'boolean') {
-      filterValue = v === 'true' || v === '1' || v === 'yes'
-    } else if (column?.type === 'date') {
-      filterValue = v ? new Date(v) : null
-      if (filterValue && isNaN(filterValue.getTime())) {
+    } else if (column?.type === 'boolean' || column?.filterableUI === 'boolean') {
+      // Handle custom options or boolean
+      if (column?.filterableOptions) {
+        // Find the option that matches the value
+        const options = typeof column.filterableOptions === 'function' 
+          ? column.filterableOptions() 
+          : column.filterableOptions
+        const option = options.find((opt: { value: any; label: string }) => String(opt.value) === v)
+        filterValue = option ? option.value : v
+      } else {
+        filterValue = v === 'true' || v === '1' || v === 'yes'
+      }
+    } else if (column?.filterableOptions) {
+      // Handle custom dropdown options
+      const options = typeof column.filterableOptions === 'function' 
+        ? column.filterableOptions() 
+        : column.filterableOptions
+      const option = options.find((opt: { value: any; label: string }) => String(opt.value) === v)
+      filterValue = option ? option.value : v
+    } else if (column?.type === 'date' || column?.filterableUI === 'date') {
+      // Handle date input (format: YYYY-MM-DD)
+      if (v && /^\d{4}-\d{2}-\d{2}/.test(v)) {
+        // Create date at midnight UTC to avoid timezone issues
+        filterValue = new Date(v + 'T00:00:00')
+        if (isNaN(filterValue.getTime())) {
+          filterValue = null
+        }
+      } else {
         filterValue = null
       }
     }

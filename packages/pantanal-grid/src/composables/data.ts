@@ -48,20 +48,85 @@ function matchFilter(value: any, f: FilterDescriptor): boolean {
       
       return fieldValue.includes(searchValue)
     case 'eq':
+      // Special handling for dates - compare only date part (without time)
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+        
+        if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) {
+          return false
+        }
+        
+        // Compare only date part (year, month, day)
+        return valueDate.getFullYear() === filterDate.getFullYear() &&
+               valueDate.getMonth() === filterDate.getMonth() &&
+               valueDate.getDate() === filterDate.getDate()
+      }
       return value === f.value
     case 'neq':
+      // Special handling for dates
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+        
+        if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) {
+          return true
+        }
+        
+        // Compare only date part (year, month, day)
+        return !(valueDate.getFullYear() === filterDate.getFullYear() &&
+                 valueDate.getMonth() === filterDate.getMonth() &&
+                 valueDate.getDate() === filterDate.getDate())
+      }
       return value !== f.value
     case 'gt':
       if (isNull) return false
+      // Handle dates
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+        if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) return false
+        // Compare only date part for equality, but use full time for comparison
+        const valueDateOnly = new Date(valueDate.getFullYear(), valueDate.getMonth(), valueDate.getDate())
+        const filterDateOnly = new Date(filterDate.getFullYear(), filterDate.getMonth(), filterDate.getDate())
+        return valueDateOnly.getTime() > filterDateOnly.getTime()
+      }
       return Number(value) > Number(f.value)
     case 'gte':
       if (isNull) return false
+      // Handle dates
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+        if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) return false
+        const valueDateOnly = new Date(valueDate.getFullYear(), valueDate.getMonth(), valueDate.getDate())
+        const filterDateOnly = new Date(filterDate.getFullYear(), filterDate.getMonth(), filterDate.getDate())
+        return valueDateOnly.getTime() >= filterDateOnly.getTime()
+      }
       return Number(value) >= Number(f.value)
     case 'lt':
       if (isNull) return false
+      // Handle dates
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+        if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) return false
+        const valueDateOnly = new Date(valueDate.getFullYear(), valueDate.getMonth(), valueDate.getDate())
+        const filterDateOnly = new Date(filterDate.getFullYear(), filterDate.getMonth(), filterDate.getDate())
+        return valueDateOnly.getTime() < filterDateOnly.getTime()
+      }
       return Number(value) < Number(f.value)
     case 'lte':
       if (isNull) return false
+      // Handle dates
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+        if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) return false
+        const valueDateOnly = new Date(valueDate.getFullYear(), valueDate.getMonth(), valueDate.getDate())
+        const filterDateOnly = new Date(filterDate.getFullYear(), filterDate.getMonth(), filterDate.getDate())
+        return valueDateOnly.getTime() <= filterDateOnly.getTime()
+      }
       return Number(value) <= Number(f.value)
     case 'startswith':
       if (isNull || isEmpty) return false

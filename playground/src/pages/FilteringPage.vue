@@ -108,6 +108,27 @@
       <ExampleCode :source="multiWordCode" />
     </article>
 
+    <!-- Custom Filter Options Example -->
+    <article class="space-y-4">
+      <h2 class="text-2xl font-semibold">Custom Filter Options</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-400">
+        Use custom filter options with dropdown selects. The boolean filters are automatically translated (Yes/No, Sim/Não, etc.),
+        and you can provide custom options for any column.
+      </p>
+
+      <PantanalGrid
+        :rows="customFilterRows"
+        :columns="customFilterColumns as any"
+        key-field="id"
+        :show-filter-row="true"
+        :sortable="true"
+        locale="en"
+        v-model:filter="customFilters"
+        @filter="onCustomFilter"
+      />
+      <ExampleCode :source="customFilterCode" />
+    </article>
+
     <!-- Server-side Filtering Example -->
     <article class="space-y-4">
       <h2 class="text-2xl font-semibold">Server-side Filtering</h2>
@@ -260,6 +281,64 @@ const multiWordColumns: ColumnDef[] = [
 const multiWordFilters = ref<FilterDescriptor[]>([])
 function onMultiWordFilter(data: { filter: FilterDescriptor[] }) {
   multiWordFilters.value = data.filter
+}
+
+// Custom Filter Options Example
+const customFilterRows = ref([
+  { id: 1, name: 'Product A', status: 'active', priority: 'high', category: 'electronics' },
+  { id: 2, name: 'Product B', status: 'inactive', priority: 'medium', category: 'electronics' },
+  { id: 3, name: 'Product C', status: 'active', priority: 'low', category: 'clothing' },
+  { id: 4, name: 'Product D', status: 'pending', priority: 'high', category: 'food' },
+  { id: 5, name: 'Product E', status: 'active', priority: 'medium', category: 'electronics' },
+])
+
+const customFilterColumns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80, filterable: true, sortable: true, type: 'number' },
+  { field: 'name', title: 'Name', width: 200, filterable: true, sortable: true },
+  { 
+    field: 'status', 
+    title: 'Status', 
+    width: 120, 
+    filterable: true, 
+    sortable: true,
+    filterableUI: 'dropdown',
+    filterableOptions: [
+      { value: 'active', label: 'Active' },
+      { value: 'inactive', label: 'Inactive' },
+      { value: 'pending', label: 'Pending' },
+    ]
+  },
+  { 
+    field: 'priority', 
+    title: 'Priority', 
+    width: 120, 
+    filterable: true, 
+    sortable: true,
+    filterableUI: 'dropdown',
+    filterableOptions: () => [
+      { value: 'high', label: 'High' },
+      { value: 'medium', label: 'Medium' },
+      { value: 'low', label: 'Low' },
+    ]
+  },
+  { 
+    field: 'category', 
+    title: 'Category', 
+    width: 150, 
+    filterable: true, 
+    sortable: true,
+    filterableUI: 'dropdown',
+    filterableOptions: [
+      { value: 'electronics', label: 'Electronics' },
+      { value: 'clothing', label: 'Clothing' },
+      { value: 'food', label: 'Food' },
+    ]
+  },
+]
+
+const customFilters = ref<FilterDescriptor[]>([])
+function onCustomFilter(data: { filter: FilterDescriptor[] }) {
+  customFilters.value = data.filter
 }
 
 // Server-side Filtering
@@ -471,6 +550,39 @@ const columns = [
 Multi-word search: Type "Almeida Heber" to find "Heber Moura de Almeida"
 The search matches all words regardless of order.
 -->`
+
+const customFilterCode = `<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="id"
+    :show-filter-row="true"
+    locale="en"
+    v-model:filter="filters"
+  />
+</template>
+
+<script setup>
+const columns = [
+  { 
+    field: 'status', 
+    title: 'Status', 
+    filterable: true,
+    filterableUI: 'dropdown',
+    filterableOptions: [
+      { value: 'active', label: 'Active' },
+      { value: 'inactive', label: 'Inactive' },
+      { value: 'pending', label: 'Pending' },
+    ]
+  },
+  { 
+    field: 'shipped', 
+    title: 'Shipped', 
+    filterable: true,
+    type: 'boolean'  // Automatically uses translated Yes/No
+  },
+]
+<\/script>`
 
 const serverFilterCode = `<template>
   <PantanalGrid

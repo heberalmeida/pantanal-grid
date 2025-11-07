@@ -17,7 +17,10 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     cancel: 'Cancelar',
     edit: 'Editar',
     destroy: 'Excluir',
-    delete: 'Excluir'
+    delete: 'Excluir',
+    filterAll: 'Todos',
+    filterTrue: 'Sim',
+    filterFalse: 'Não',
   },
   en: {
     total: 'Total',
@@ -35,7 +38,10 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     cancel: 'Cancel',
     edit: 'Edit',
     destroy: 'Delete',
-    delete: 'Delete'
+    delete: 'Delete',
+    filterAll: 'All',
+    filterTrue: 'Yes',
+    filterFalse: 'No',
   },
   es: {
     total: 'Total',
@@ -53,9 +59,12 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     cancel: 'Cancelar',
     edit: 'Editar',
     destroy: 'Eliminar',
-    delete: 'Eliminar'
+    delete: 'Eliminar',
+    filterAll: 'Todos',
+    filterTrue: 'Sí',
+    filterFalse: 'No',
   },
- }
+}
 
 const runtimeMsgs: Record<string, Partial<Messages>> = {}
 
