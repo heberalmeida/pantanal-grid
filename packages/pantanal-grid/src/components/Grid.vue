@@ -121,7 +121,10 @@
 
       <!-- BODY (VIRTUAL) -->
       <div v-if="props.virtual" :style="{ height: props.height + 'px', overflowY: 'auto', overflowX: 'hidden' }"
-        @scroll="onScroll" @keydown="props.navigatable && handleKeydown($event)" :tabindex="props.navigatable ? 0 : undefined">
+        @scroll="onScroll" 
+        @keydown="props.navigatable && handleKeydown($event)" 
+        @focus="props.navigatable && handleBodyFocus"
+        :tabindex="props.navigatable ? 0 : undefined">
         <div :style="{ height: topPad + 'px' }"></div>
         <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
           :class="props.striped && ((start ?? 0) + r) % 2 === 1 ? 'v3grid__row--alt' : ''"
@@ -131,11 +134,11 @@
           </div>
           <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
             :style="[pinStyle(c._idx)]" 
-            :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
-            :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
-            @click="$emit('rowClick', row)"
+            :tabindex="props.navigatable ? (isFocusedRow(r) && focusCol === c._idx ? 0 : -1) : undefined"
+            :data-focus="props.navigatable && isFocusedRow(r) && focusCol === c._idx"
+            @click="handleCellClick(row, c, r, i)"
             @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
-            @focus="props.navigatable && keyboardNav.setFocus(r, c._idx)">
+            @focus="props.navigatable && handleCellFocus(r, c._idx)">
             <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
               :name="columnSlotPrimary(c)"
               :column="c"
@@ -170,7 +173,10 @@
       </div>
 
       <!-- BODY (NÃO VIRTUAL) -->
-      <div v-else class="v3grid__body" :style="nonVirtualBodyStyle">
+      <div v-else class="v3grid__body" :style="nonVirtualBodyStyle"
+        @keydown="props.navigatable && handleKeydown($event)"
+        @focus="props.navigatable && handleBodyFocus"
+        :tabindex="props.navigatable ? 0 : undefined">
 
         <!-- ====== MODO CARDS ====== -->
         <template v-if="isCardMode">
@@ -331,9 +337,9 @@
                 <div v-else-if="n.type === 'row'" class="v3grid__cell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]"
                   :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
                   :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
-                  @click="$emit('rowClick', n.row)"
+                  @click="handleCellClick(n.row, c, r, i)"
                   @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
-                  @focus="props.navigatable && keyboardNav.setFocus(r, c._idx)">
+                  @focus="props.navigatable && handleCellFocus(r, c._idx)">
                   <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
                     :name="columnSlotPrimary(c)"
                     :column="c"
@@ -382,9 +388,9 @@
                 :style="[pinStyle(c._idx)]" 
                 :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
                 :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
-                @click="$emit('rowClick', row)"
+                @click="handleCellClick(row, c, r, i)"
                 @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
-                @focus="props.navigatable && keyboardNav.setFocus(r, c._idx)">
+                @focus="props.navigatable && handleCellFocus(r, c._idx)">
                 <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
                   :name="columnSlotPrimary(c)"
                   :column="c"
@@ -583,7 +589,7 @@
     </div>
 
     <!-- FOOTER / PAGING -->
-    <div v-if="(props.showFooter ?? true)" class="v3grid__footer" ref="footerEl"
+    <div v-if="shouldShowFooter" class="v3grid__footer" ref="footerEl"
       style="display:flex;gap:.75rem;justify-content:space-between;align-items:center;padding:0.5rem 0.75rem;">
       <div class="text-sm">
         {{ msgs.total }}: {{ total }} • {{ msgs.page }} {{ page }}<span v-if="!props.virtual"> / {{ totalPages()
@@ -595,11 +601,11 @@
       </div>
 
       <!-- NOVO: paginação com props tipadas -->
-      <div style="display:flex;align-items:center;gap:.5rem" v-if="!props.virtual">
+      <div style="display:flex;align-items:center;gap:.5rem" v-if="!props.virtual && props.pageable !== false">
         <label class="text-sm">{{ msgs.rowsPerPage }}</label>
         <select class="v3grid__input" style="width:auto" :value="pageSize"
           @change="pageSize = Number(($event.target as HTMLSelectElement).value)">
-          <option v-for="n in [10, 20, 50, 100]" :key="n" :value="n">{{ n }}</option>
+          <option v-for="n in (props.pageablePageSizes ?? [10, 20, 50, 100])" :key="n" :value="n">{{ n }}</option>
         </select>
 
         <GridPagination :page="page" :pageSize="pageSize" :total="total" :variant="props.paginationVariant ?? 'simple'"
@@ -651,6 +657,7 @@ onMounted(() => {
 type DataRow = Record<string, unknown>
 
 const props = withDefaults(defineProps<GridProps>(), {
+  rows: () => [],
   columns: () => [],
   keyField: 'id',
   page: 1,
@@ -676,6 +683,9 @@ const props = withDefaults(defineProps<GridProps>(), {
   paginationShowIcons: true,
   paginationShowTotal: true,
   paginationMaxPages: 5,
+  pageable: true,
+  pageableAlwaysVisible: true,
+  pageablePageSizes: () => [10, 20, 50, 100],
   showFilterRow: true,
   maxBodyHeight: undefined,
 })
@@ -922,10 +932,11 @@ const remoteTotal = ref<number | null>(null)
 const abortCtl = ref<AbortController | null>(null)
 
 const effectiveRows = computed<any[]>(() => {
-  return props.dataProvider ? remoteRows.value : (props.rows as any[])
+  const hasDataProvider = props.dataProvider !== undefined && typeof props.dataProvider === 'function'
+  return hasDataProvider ? remoteRows.value : (props.rows ?? [])
 })
 
-const isServerLike = computed(() => !!props.dataProvider || !!props.serverSide)
+const isServerLike = computed(() => (props.dataProvider !== undefined && typeof props.dataProvider === 'function') || !!props.serverSide)
 const filtered = computed(() =>
   isServerLike.value ? effectiveRows.value : applyFilter(effectiveRows.value, filters.value)
 )
@@ -966,7 +977,11 @@ const { onScroll, slice, topPad, bottomPad, start } =
 const visibleRows = computed(() => {
   if (props.virtual) return slice.value
   if (isGrouped.value) return paginate(flatNodes.value as any[], page.value, pageSize.value)
-  return props.serverSide ? sorted.value : paginate(sorted.value, page.value, pageSize.value)
+  // When using dataProvider, the data is already paginated on the server
+  // When using serverSide without dataProvider, the data is already paginated
+  // Only paginate locally when not using server-side features
+  const hasDataProvider = props.dataProvider !== undefined && typeof props.dataProvider === 'function'
+  return (props.serverSide || hasDataProvider) ? sorted.value : paginate(sorted.value, page.value, pageSize.value)
 })
 
 const autoHeightEnabled = computed(() => !!props.autoHeight && !props.virtual)
@@ -1260,6 +1275,15 @@ function totalPages() {
   return Math.max(1, Math.ceil(t / ps))
 }
 
+// Determine if footer should be visible based on pageableAlwaysVisible
+const shouldShowFooter = computed(() => {
+  if (!(props.showFooter ?? true)) return false
+  if (props.pageable === false) return false
+  if (props.pageableAlwaysVisible ?? true) return true
+  // If pageableAlwaysVisible is false, show footer only when total >= pageSize
+  return total.value >= pageSize.value
+})
+
 const anyFilterable = computed(() => {
   const cols = columns.value as ColumnDef[]
   return cols?.some(c => c?.filterable)
@@ -1321,7 +1345,7 @@ const footerH = ref(0)
 let footerObserver: ResizeObserver | null = null
 
 onMounted(() => {
-  const update = () => { footerH.value = (props.showFooter ?? true) ? (footerEl.value?.offsetHeight ?? 0) : 0 }
+  const update = () => { footerH.value = shouldShowFooter.value ? (footerEl.value?.offsetHeight ?? 0) : 0 }
   update()
   footerObserver?.disconnect()
   if (footerEl.value) {
@@ -1333,7 +1357,12 @@ onMounted(() => {
 
 onMounted(() => { updateHScrollState() })
 async function refresh() {
-  if (!props.dataProvider) return
+  if (props.dataProvider === undefined || typeof props.dataProvider !== 'function') {
+    console.log('refresh() - dataProvider is not a function:', typeof props.dataProvider, props.dataProvider)
+    return
+  }
+  
+  console.log('refresh() - calling dataProvider with:', { page: page.value, pageSize: pageSize.value })
   
   // Emit databinding event before loading data
   emit('databinding', {
@@ -1354,7 +1383,7 @@ async function refresh() {
   emit('loading', true)
   
   try {
-    const { rows, total } = await props.dataProvider({
+    const result = await props.dataProvider({
       page: page.value,
       pageSize: pageSize.value,
       sort: sortState.value,
@@ -1362,12 +1391,19 @@ async function refresh() {
       signal: ctl.signal,
     })
     
+    console.log('refresh() - dataProvider returned:', { rows: result.rows?.length, total: result.total })
+    
+    const { rows, total } = result
+    
     // Only update if the request wasn't aborted (e.g., by a newer request)
     if (!ctl.signal.aborted) {
       remoteRows.value = rows || []
       remoteTotal.value = typeof total === 'number' ? total : rows?.length ?? 0
+      console.log('refresh() - updated remoteRows:', remoteRows.value.length, 'remoteTotal:', remoteTotal.value)
       // Emit databound event after data is loaded
       emit('databound', remoteRows.value)
+    } else {
+      console.log('refresh() - request was aborted')
     }
   } catch (error: any) {
     // Ignore AbortError - it's expected when aborting requests
@@ -1391,9 +1427,12 @@ async function refresh() {
 }
 
 onMounted(() => {
-  if (props.dataProvider && (props.autoBind ?? true)) {
+  const hasDataProvider = props.dataProvider !== undefined && typeof props.dataProvider === 'function'
+  console.log('Grid onMounted:', { hasDataProvider, autoBind: props.autoBind ?? true, dataProviderType: typeof props.dataProvider })
+  if (hasDataProvider && (props.autoBind ?? true)) {
+    console.log('Grid onMounted - calling refresh()')
     refresh()
-  } else if (!props.dataProvider && props.rows) {
+  } else if (!hasDataProvider && props.rows) {
     // Emit databinding and databound for local data
     emit('databinding', {
       sort: sortState.value,
@@ -1409,9 +1448,10 @@ onMounted(() => {
 })
 
 watch([page, pageSize, sortState, filters, groupState], () => {
-  if (props.dataProvider && (props.autoBind ?? true)) {
+  const hasDataProvider = props.dataProvider !== undefined && typeof props.dataProvider === 'function'
+  if (hasDataProvider && (props.autoBind ?? true)) {
     refresh()
-  } else if (!props.dataProvider && props.rows) {
+  } else if (!hasDataProvider && props.rows) {
     // Emit databinding for local data when state changes
     emit('databinding', {
       sort: sortState.value,
@@ -1426,8 +1466,31 @@ watch([page, pageSize, sortState, filters, groupState], () => {
   }
 }, { deep: true })
 // Keyboard navigation
+// Count only data rows (exclude groups and footers)
+const navigableRowsCount = computed(() => {
+  return visibleRows.value.filter((row: any) => {
+    // Exclude group nodes and footer nodes
+    return !isGroupNode(row) && !isGroupFooter(row)
+  }).length
+})
+
+// Map data row index to actual visibleRows index
+function getActualRowIndex(dataRowIndex: number): number {
+  const dataRows = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+  const dataRow = dataRows[dataRowIndex]
+  if (!dataRow) return -1
+  return visibleRows.value.indexOf(dataRow)
+}
+
+// Check if a row index matches the focused data row index
+function isFocusedRow(rowIndex: number): boolean {
+  if (!props.navigatable) return false
+  const actualIndex = getActualRowIndex(focusRow.value)
+  return actualIndex === rowIndex
+}
+
 const keyboardNav = useKeyboardNav({
-  rowsCount: computed(() => visibleRows.value.length),
+  rowsCount: navigableRowsCount,
   colsCount: computed(() => unlockedCols.value.length),
   navigatable: props.navigatable ?? false,
   selectable: props.selectable,
@@ -1446,14 +1509,20 @@ const keyboardNav = useKeyboardNav({
   },
   onPageChange: (newPage: number) => {
     page.value = newPage
-    if (props.serverSide || props.dataProvider) {
+    const hasDataProvider = props.dataProvider !== undefined && typeof props.dataProvider === 'function'
+    if (props.serverSide || hasDataProvider) {
       refresh()
     }
   },
   onSelectRow: (rowIndex: number, addToSelection?: boolean) => {
     if (!props.selectable) return
-    const row = visibleRows.value[rowIndex]
-    if (!row) return
+    // Map rowIndex to actual visibleRows index (accounting for groups/footers)
+    const dataRows = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+    const dataRow = dataRows[rowIndex]
+    if (!dataRow) return
+    const actualIndex = visibleRows.value.indexOf(dataRow)
+    if (actualIndex === -1) return
+    const row = visibleRows.value[actualIndex]
     
     if (addToSelection && props.selectable === 'multiple') {
       // Toggle selection
@@ -1473,12 +1542,18 @@ const keyboardNav = useKeyboardNav({
   },
   onSelectRange: (startRow: number, endRow: number) => {
     if (!props.selectable || props.selectable !== 'multiple') return
+    // Map row indices to actual visibleRows indices (accounting for groups/footers)
+    const dataRows = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
     const s = new Set(selectedKeys.value)
     for (let i = startRow; i <= endRow; i++) {
-      const row = visibleRows.value[i]
-      if (row && !isGroupNode(row) && !isGroupFooter(row)) {
-        const k = (row as any)[keyFieldStr.value]
-        s.add(k)
+      const dataRow = dataRows[i]
+      if (dataRow) {
+        const actualIndex = visibleRows.value.indexOf(dataRow)
+        if (actualIndex !== -1) {
+          const row = visibleRows.value[actualIndex]
+          const k = (row as any)[keyFieldStr.value]
+          s.add(k)
+        }
       }
     }
     selectedKeys.value = s
@@ -1546,6 +1621,70 @@ const keyboardNav = useKeyboardNav({
 
 const { focusRow, focusCol, onKeydown: handleKeydown } = keyboardNav
 
+// Helper to map data row index to actual visibleRows index
+function getDataRowIndex(dataRowIndex: number): number {
+  const dataRows = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+  const dataRow = dataRows[dataRowIndex]
+  if (!dataRow) return -1
+  return visibleRows.value.indexOf(dataRow)
+}
+
+// Helper to get data row index from actual visibleRows index
+function getDataRowIndexFromActual(actualIndex: number): number {
+  const dataRows = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+  const actualRow = visibleRows.value[actualIndex]
+  if (!actualRow || isGroupNode(actualRow) || isGroupFooter(actualRow)) return -1
+  return dataRows.indexOf(actualRow)
+}
+
+// Keyboard navigation handlers
+function handleCellFocus(rowIndex: number, colIndex: number) {
+  if (!props.navigatable) return
+  // Convert actual rowIndex to data row index for keyboard nav
+  const dataRowIndex = getDataRowIndexFromActual(rowIndex)
+  if (dataRowIndex >= 0) {
+    keyboardNav.setFocus(dataRowIndex, colIndex)
+  }
+}
+
+function handleCellClick(row: any, column: any, rowIndex: number, colIndex: number) {
+  emit('rowClick', row)
+  if (props.navigatable) {
+    // Convert actual rowIndex to data row index for keyboard nav
+    const dataRowIndex = getDataRowIndexFromActual(rowIndex)
+    if (dataRowIndex >= 0) {
+      keyboardNav.setFocus(dataRowIndex, colIndex)
+      // Focus the cell after state update
+      nextTick(() => {
+        const focusedCell = rootEl.value?.querySelector(`[data-focus="true"]`) as HTMLElement
+        if (focusedCell) {
+          focusedCell.focus()
+        }
+      })
+    }
+  }
+}
+
+function handleBodyFocus(e: FocusEvent) {
+  if (!props.navigatable) return
+  // Always focus the first navigable cell when body receives focus
+  // Reset focus to first data row (index 0)
+  keyboardNav.setFocus(0, 0)
+  nextTick(() => {
+    const actualIndex = getActualRowIndex(0)
+    if (actualIndex >= 0) {
+      const firstCell = rootEl.value?.querySelector(`[data-focus="true"]`) as HTMLElement
+      if (firstCell) {
+        firstCell.focus()
+      } else {
+        // Fallback: find first cell with tabindex="0"
+        const fallbackCell = rootEl.value?.querySelector('.v3grid__cell[tabindex="0"]') as HTMLElement
+        fallbackCell?.focus()
+      }
+    }
+  })
+}
+
 // Editing handlers
 function handleCreate() {
   console.log('handleCreate called')
@@ -1605,7 +1744,8 @@ function handleCancel() {
 
 function findRowByKey(key: string | number): any {
   // Search in all rows, not just visible ones
-  const allRows = props.rows || []
+  const hasDataProvider = props.dataProvider !== undefined && typeof props.dataProvider === 'function'
+  const allRows = hasDataProvider ? remoteRows.value : (props.rows ?? [])
   return allRows.find((row: any) => {
     const rowKey = row[keyFieldStr.value]
     return (typeof rowKey === 'number' && typeof key === 'number' && rowKey === key) ||

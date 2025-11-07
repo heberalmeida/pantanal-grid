@@ -99,6 +99,7 @@ const navSections = [
       { to: '/editing', label: 'Editing', icon: 'pen' },
       { to: '/filtering', label: 'Filtering', icon: 'filter' },
       { to: '/keyboard-navigation', label: 'Keyboard Navigation', icon: 'keyboard' },
+      { to: '/paging', label: 'Paging', icon: 'file-lines' },
       { to: '/table-only', label: 'Table-only layout', icon: 'table-list' },
       { to: '/cards', label: 'Responsive cards', icon: 'mobile-screen-button' },
     ],

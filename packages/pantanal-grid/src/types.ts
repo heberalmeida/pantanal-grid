@@ -1,4 +1,6 @@
 
+import type { VNode, VNodeChild } from 'vue'
+
 export type Row = Record<string, unknown>
 
 export type SortDir = 'asc' | 'desc'
@@ -37,8 +39,6 @@ export interface Messages {
   filterTrue: string
   filterFalse: string
 }
-
-import type { VNodeChild } from 'vue'
 
 export interface ColumnTemplateContext<T = Row> {
   column: ColumnDef<T>
@@ -103,7 +103,7 @@ export type PaginationVariant = 'simple' | 'pages' | 'edges'
 export type ResponsiveMode = 'auto' | 'table' | 'cards'
 
 export interface GridProps<T = Row> {
-  rows: T[]
+  rows?: T[]
   columns?: ColumnDef<T>[]
   keyField?: keyof T | string
   rtl?: boolean
@@ -148,6 +148,9 @@ export interface GridProps<T = Row> {
   paginationShowIcons?: boolean
   paginationShowTotal?: boolean
   paginationMaxPages?: number
+  pageable?: boolean
+  pageableAlwaysVisible?: boolean
+  pageablePageSizes?: number[]
 
   showFilterRow?: boolean
   filterable?: boolean
