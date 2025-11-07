@@ -7,6 +7,7 @@ export { default as PantanalGanttDataSource } from './components/GanttDataSource
 export { default as PantanalGanttDependencyDataSource } from './components/GanttDependencyDataSource.vue'
 export { default as PantanalHierarchicalDataSource } from './components/HierarchicalDataSource.vue'
 export { default as PantanalPivotDataSource } from './components/PivotDataSource.vue'
+export { default as PantanalSchedulerDataSource } from './components/SchedulerDataSource.vue'
 
 export { default as GridPagination } from './components/Pagination.vue'
 export { default as Pagination } from './components/Pagination.vue'

@@ -25,6 +25,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/data/gantt-dependency-datasource', component: () => import('./pages/GanttDependencyDataSourcePage.vue') },
   { path: '/data/hierarchical-datasource', component: () => import('./pages/HierarchicalDataSourcePage.vue') },
   { path: '/data/pivot-datasource', component: () => import('./pages/PivotDataSourcePage.vue') },
+  { path: '/data/scheduler-datasource', component: () => import('./pages/SchedulerDataSourcePage.vue') },
   { path: '/persisted', component: () => import('./pages/PersistedStatePage.vue') },
   { path: '/custom-cells', component: () => import('./pages/CustomCellsPage.vue') },
   { path: '/styled-table', component: () => import('./pages/StyledTablePage.vue') },

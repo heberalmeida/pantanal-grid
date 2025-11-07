@@ -446,3 +446,67 @@ export interface PivotDataSourceInstance {
   columns(): PivotColumn[]
   rows(): PivotRow[]
 }
+
+// SchedulerDataSource Types
+export interface SchedulerEvent {
+  taskId?: number | string
+  id?: number | string
+  title: string
+  start: Date | string
+  end: Date | string
+  startTimezone?: string
+  endTimezone?: string
+  description?: string
+  recurrenceId?: number | string | null
+  recurrenceRule?: string | null
+  recurrenceException?: string | null
+  ownerId?: number | string
+  isAllDay?: boolean
+  [key: string]: any
+}
+
+export interface SchedulerEventFieldConfig {
+  from?: string
+  type?: 'string' | 'number' | 'boolean' | 'date'
+  defaultValue?: any
+  validation?: {
+    required?: boolean
+    min?: number
+    max?: number
+    [key: string]: any
+  }
+  parse?: (value: any) => any
+}
+
+export interface SchedulerDataSourceSchemaModel {
+  id?: SchedulerEventFieldConfig | string
+  taskId?: SchedulerEventFieldConfig | string
+  title?: SchedulerEventFieldConfig | string
+  start?: SchedulerEventFieldConfig | string
+  end?: SchedulerEventFieldConfig | string
+  startTimezone?: SchedulerEventFieldConfig | string
+  endTimezone?: SchedulerEventFieldConfig | string
+  description?: SchedulerEventFieldConfig | string
+  recurrenceId?: SchedulerEventFieldConfig | string
+  recurrenceRule?: SchedulerEventFieldConfig | string
+  recurrenceException?: SchedulerEventFieldConfig | string
+  ownerId?: SchedulerEventFieldConfig | string
+  isAllDay?: SchedulerEventFieldConfig | string
+  [key: string]: SchedulerEventFieldConfig | string | undefined
+}
+
+export interface SchedulerDataSourceSchema extends DataSourceSchema {
+  model?: SchedulerDataSourceSchemaModel
+  timezone?: string
+}
+
+export interface SchedulerDataSourceProps<T extends SchedulerEvent = SchedulerEvent> extends Omit<DataSourceProps<T>, 'schema'> {
+  schema?: SchedulerDataSourceSchema
+}
+
+export interface SchedulerDataSourceInstance extends DataSourceInstance {
+  events(): SchedulerEvent[]
+  add(event: Partial<SchedulerEvent>): void
+  remove(event: SchedulerEvent | number | string): void
+  update(event: SchedulerEvent): void
+}

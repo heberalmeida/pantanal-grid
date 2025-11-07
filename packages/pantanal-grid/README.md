@@ -1640,6 +1640,347 @@ interface PivotRow {
 
 ---
 
+## SchedulerDataSource Component
+
+The `PantanalSchedulerDataSource` component extends the `PantanalDataSource` component and provides specialized support for Scheduler event data structures. It includes field mapping, date handling, timezone support, and recurrence support.
+
+### SchedulerEvent Interface
+
+```typescript
+interface SchedulerEvent {
+  taskId?: number | string
+  id?: number | string
+  title: string
+  start: Date | string
+  end: Date | string
+  startTimezone?: string
+  endTimezone?: string
+  description?: string
+  recurrenceId?: number | string | null
+  recurrenceRule?: string | null
+  recurrenceException?: string | null
+  ownerId?: number | string
+  isAllDay?: boolean
+  [key: string]: any
+}
+```
+
+### Basic Usage
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalSchedulerDataSource, 
+  PantanalGrid,
+  type SchedulerEvent 
+} from '@pantanal/grid'
+import { ref } from 'vue'
+
+const events = ref<SchedulerEvent[]>([
+  {
+    taskId: 1,
+    id: 1,
+    title: 'Meeting',
+    start: new Date('2024-01-15T09:00:00'),
+    end: new Date('2024-01-15T10:00:00'),
+    ownerId: 1,
+    isAllDay: false,
+  },
+])
+
+const data = ref<SchedulerEvent[]>([])
+
+function handleChange(newData: SchedulerEvent[]) {
+  data.value = newData
+}
+</script>
+
+<template>
+  <PantanalSchedulerDataSource
+    :data="events"
+    @change="handleChange"
+  />
+  <PantanalGrid
+    :rows="data"
+    :columns="columns"
+    key-field="id"
+  />
+</template>
+```
+
+### Schema Configuration
+
+Configure field mapping using schema model:
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalSchedulerDataSource, 
+  type SchedulerDataSourceSchema 
+} from '@pantanal/grid'
+
+const data = [
+  {
+    TaskID: 1,
+    Title: 'Team Meeting',
+    Start: '2024-01-17T10:00:00',
+    End: '2024-01-17T11:00:00',
+    OwnerID: 1,
+    IsAllDay: false,
+  },
+]
+
+const schema: SchedulerDataSourceSchema = {
+  model: {
+    taskId: { from: 'TaskID', type: 'number' },
+    title: { from: 'Title', defaultValue: 'No title' },
+    start: { from: 'Start', type: 'date' },
+    end: { from: 'End', type: 'date' },
+    ownerId: { from: 'OwnerID', type: 'number', defaultValue: 1 },
+    isAllDay: { from: 'IsAllDay', type: 'boolean' },
+  },
+}
+</script>
+
+<template>
+  <PantanalSchedulerDataSource
+    :data="data"
+    :schema="schema"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Remote SchedulerDataSource
+
+Load events from a remote API:
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalSchedulerDataSource, 
+  type SchedulerDataSourceSchema,
+  type DataSourceTransport 
+} from '@pantanal/grid'
+
+const transport: DataSourceTransport = {
+  read: async (options) => {
+    const response = await fetch('/api/scheduler-events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        page: options.page,
+        pageSize: options.pageSize,
+      }),
+    })
+    return response.json()
+  },
+  create: async (options) => {
+    const response = await fetch('/api/scheduler-events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(options),
+    })
+    return response.json()
+  },
+  update: async (options) => {
+    const response = await fetch(`/api/scheduler-events/${options.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(options),
+    })
+    return response.json()
+  },
+  destroy: async (options) => {
+    const response = await fetch(`/api/scheduler-events/${options.id}`, {
+      method: 'DELETE',
+    })
+    return response.json()
+  },
+}
+
+const schema: SchedulerDataSourceSchema = {
+  model: {
+    taskId: { from: 'taskId', type: 'number' },
+    title: { from: 'title', defaultValue: 'No title' },
+    start: { from: 'start', type: 'date' },
+    end: { from: 'end', type: 'date' },
+    ownerId: { from: 'ownerId', type: 'number' },
+    isAllDay: { from: 'isAllDay', type: 'boolean' },
+  },
+  data: (response: any) => response.data || response,
+  total: (response: any) => response.total || 0,
+}
+</script>
+
+<template>
+  <PantanalSchedulerDataSource
+    type="remote"
+    :transport="transport"
+    :schema="schema"
+    :server-paging="true"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Standalone Usage
+
+Use SchedulerDataSource independently with programmatic access:
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalSchedulerDataSource, 
+  type SchedulerEvent,
+  type SchedulerDataSourceInstance
+} from '@pantanal/grid'
+import { ref } from 'vue'
+
+const schedulerDataSource = ref<SchedulerDataSourceInstance | null>(null)
+const events = ref<SchedulerEvent[]>([
+  {
+    taskId: 1,
+    id: 1,
+    title: 'Event 1',
+    start: new Date('2024-02-01T09:00:00'),
+    end: new Date('2024-02-01T10:00:00'),
+    ownerId: 1,
+    isAllDay: false,
+  },
+])
+
+const data = ref<SchedulerEvent[]>([])
+
+function handleChange(newData: SchedulerEvent[]) {
+  data.value = newData
+}
+
+function addEvent() {
+  if (!schedulerDataSource.value) return
+  
+  const newEvent: Partial<SchedulerEvent> = {
+    title: `Event ${events.value.length + 1}`,
+    start: new Date('2024-02-01T09:00:00'),
+    end: new Date('2024-02-01T10:00:00'),
+    ownerId: 1,
+    isAllDay: false,
+  }
+  
+  schedulerDataSource.value.add(newEvent)
+}
+
+function removeEvent() {
+  if (!schedulerDataSource.value || data.value.length === 0) return
+  
+  const lastEvent = data.value[data.value.length - 1]
+  const eventId = lastEvent.taskId || lastEvent.id
+  if (eventId) {
+    schedulerDataSource.value.remove(eventId)
+  }
+}
+</script>
+
+<template>
+  <PantanalSchedulerDataSource
+    ref="schedulerDataSource"
+    :data="events"
+    @change="handleChange"
+  />
+  
+  <button @click="addEvent">Add Event</button>
+  <button @click="removeEvent">Remove Last Event</button>
+  
+  <div>
+    <p>Events: {{ data.length }}</p>
+    <ul>
+      <li v-for="event in data" :key="event.id || event.taskId">
+        {{ event.title }} ({{ formatDate(event.start) }} - {{ formatDate(event.end) }})
+      </li>
+    </ul>
+  </div>
+</template>
+```
+
+### Props
+
+All props from `PantanalDataSource` are supported, plus:
+
+- `schema?: SchedulerDataSourceSchema` - Schema configuration with model field mapping and timezone
+
+### Events
+
+All events from `PantanalDataSource` are supported:
+
+- `@change` - Fired when data changes
+- `@error` - Fired when an error occurs
+- `@requestStart` - Fired when a request starts
+- `@requestEnd` - Fired when a request ends
+- `@sync` - Fired when data is synchronized
+- `@update:data` - Fired when data is updated
+- `@update:page` - Fired when page changes
+- `@update:pageSize` - Fired when page size changes
+- `@update:sort` - Fired when sort changes
+- `@update:filter` - Fired when filter changes
+- `@update:group` - Fired when group changes
+
+### Methods
+
+- `events(): SchedulerEvent[]` - Returns all events
+- `add(event: Partial<SchedulerEvent>): void` - Adds a new event
+- `remove(event: SchedulerEvent | number | string): void` - Removes an event
+- `update(event: SchedulerEvent): void` - Updates an event
+- `data(): SchedulerEvent[]` - Returns current data
+- `total(): number` - Returns total count
+- `read(): Promise<void>` - Reads data from source
+- `sync(): Promise<void>` - Synchronizes data
+- `query(options?: any): void` - Queries data with options
+
+### Schema Model Configuration
+
+The schema model supports field mapping:
+
+```typescript
+interface SchedulerDataSourceSchemaModel {
+  id?: SchedulerEventFieldConfig | string
+  taskId?: SchedulerEventFieldConfig | string
+  title?: SchedulerEventFieldConfig | string
+  start?: SchedulerEventFieldConfig | string
+  end?: SchedulerEventFieldConfig | string
+  startTimezone?: SchedulerEventFieldConfig | string
+  endTimezone?: SchedulerEventFieldConfig | string
+  description?: SchedulerEventFieldConfig | string
+  recurrenceId?: SchedulerEventFieldConfig | string
+  recurrenceRule?: SchedulerEventFieldConfig | string
+  recurrenceException?: SchedulerEventFieldConfig | string
+  ownerId?: SchedulerEventFieldConfig | string
+  isAllDay?: SchedulerEventFieldConfig | string
+  [key: string]: SchedulerEventFieldConfig | string | undefined
+}
+```
+
+### Timezone Support
+
+Set timezone in schema for proper date handling:
+
+```vue
+<script setup lang="ts">
+const schema: SchedulerDataSourceSchema = {
+  timezone: 'America/New_York',
+  model: {
+    taskId: { from: 'taskId', type: 'number' },
+    title: { from: 'title' },
+    start: { from: 'start', type: 'date' },
+    end: { from: 'end', type: 'date' },
+  },
+}
+</script>
+```
+
+---
+
 ## Pagination Component
 
 The Pagination component can be used independently without the Grid component. Perfect for custom data displays, lists, or any paginated content.
