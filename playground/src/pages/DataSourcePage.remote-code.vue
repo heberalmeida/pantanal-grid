@@ -15,7 +15,7 @@
   />
   <PantanalGrid
     :rows="dataSourceData"
-    :columns="columns"
+    :columns="columns as any"
     key-field="id"
     :total="total"
     server-side
@@ -28,9 +28,32 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { PantanalGrid, PantanalDataSource } from '@pantanal/grid'
+import { 
+  PantanalGrid, 
+  PantanalDataSource, 
+  type ColumnDef, 
+  type SortDescriptor, 
+  type FilterDescriptor,
+  type DataSourceTransport,
+  type DataSourceSchema,
+  type DataSourceInstance
+} from '@pantanal/grid'
 
-const transport = {
+type Product = {
+  id: number
+  title: string
+  price: number
+  category: string
+}
+
+const columns: ColumnDef<Product>[] = [
+  { field: 'id', title: 'ID', width: 80 },
+  { field: 'title', title: 'Title', width: 200 },
+  { field: 'price', title: 'Price', width: 100 },
+  { field: 'category', title: 'Category', width: 150 },
+]
+
+const transport: DataSourceTransport = {
   read: async (options) => {
     const url = new URL('https://api.example.com/products')
     // Configure URL with pagination, filtering, sorting
@@ -39,19 +62,20 @@ const transport = {
   },
 }
 
-const schema = {
-  data: (response) => response.products || [],
-  total: (response) => response.total || 0,
+const schema: DataSourceSchema = {
+  data: (response: any) => response.products || [],
+  total: (response: any) => response.total || 0,
 }
 
-const dataSourceData = ref([])
+const remoteDataSource = ref<DataSourceInstance | null>(null)
+const dataSourceData = ref<Product[]>([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(10)
-const sort = ref([])
-const filter = ref([])
+const sort = ref<SortDescriptor[]>([])
+const filter = ref<FilterDescriptor[]>([])
 
-function handleChange(data) {
+function handleChange(data: Product[]) {
   dataSourceData.value = data
   total.value = remoteDataSource.value?.total() || 0
 }

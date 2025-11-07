@@ -20,12 +20,34 @@
       <template #cell="{ column, value, row }">
         <template v-if="column.field === 'image'">
           <figure class="flex items-center gap-3">
-            <img
-              :src="value"
-              :alt="`Photo of ${row.name}`"
-              loading="lazy"
-              class="gallery-thumb"
-            />
+            <div class="image-container">
+              <!-- Loading skeleton -->
+              <div 
+                v-if="imageLoadingStates[row.id] !== false"
+                class="gallery-thumb gallery-thumb-loading"
+              >
+                <div class="skeleton-shimmer"></div>
+                <svg 
+                  class="skeleton-icon" 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <!-- Actual image -->
+              <img
+                :src="value"
+                :alt="`Photo of ${row.name}`"
+                loading="lazy"
+                class="gallery-thumb"
+                :class="{ 'gallery-thumb-loaded': imageLoadingStates[row.id] === false }"
+                @load="handleImageLoad(row.id)"
+                @error="handleImageError(row.id)"
+              />
+            </div>
             <figcaption class="text-sm font-medium text-slate-700 dark:text-slate-200">
               {{ row.name }}
             </figcaption>
@@ -44,6 +66,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { PantanalGrid } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
 import exampleSource from './ImageGalleryPage.vue?raw'
@@ -94,19 +117,68 @@ const columns = [
 ]
 
 const codeSnippet = exampleSource
+
+// Image loading state management
+const imageLoadingStates = ref<Record<number, boolean | undefined>>({})
+
+// Initialize images and check if already loaded (cached)
+onMounted(() => {
+  rows.forEach(row => {
+    const img = new Image()
+    img.src = row.image
+    
+    if (img.complete) {
+      // Image already loaded (cached)
+      imageLoadingStates.value[row.id] = false
+    } else {
+      // Image needs to load
+      imageLoadingStates.value[row.id] = true
+      img.onload = () => {
+        imageLoadingStates.value[row.id] = false
+      }
+      img.onerror = () => {
+        imageLoadingStates.value[row.id] = false
+      }
+    }
+  })
+})
+
+function handleImageLoad(imageId: number) {
+  imageLoadingStates.value[imageId] = false
+}
+
+function handleImageError(imageId: number) {
+  imageLoadingStates.value[imageId] = false
+  // Optionally show error state
+}
 </script>
 
 <style scoped>
+/* Better row spacing */
 .gallery-grid :deep(.v3grid__body .v3grid__cell) {
-  padding-block: 1rem;
+  padding-block: 1.5rem;
 }
 
 .gallery-grid :deep(.v3grid__body .v3grid__row) {
   align-items: stretch;
+  min-height: 80px;
+}
+
+.gallery-grid :deep(.v3grid__body .v3grid__row:not(:last-child)) {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  margin-bottom: 4px;
 }
 
 .gallery-grid :deep(.v3grid__body figure) {
   min-height: 96px;
+  display: flex;
+  align-items: center;
+}
+
+/* Image container for loading state */
+.image-container {
+  position: relative;
+  display: inline-block;
 }
 
 .gallery-thumb {
@@ -115,9 +187,93 @@ const codeSnippet = exampleSource
   border-radius: 0.75rem;
   object-fit: cover;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+  transition: opacity 0.3s ease, transform 0.2s ease;
+  background-color: #f8fafc;
+}
+
+.gallery-thumb-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.gallery-thumb-loading .skeleton-icon {
+  width: 32px;
+  height: 32px;
+  color: #cbd5e1;
+  opacity: 0.6;
+  z-index: 1;
+}
+
+.gallery-thumb-loading .skeleton-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  animation: shimmer-slide 1.5s infinite;
+}
+
+.gallery-thumb:not(.gallery-thumb-loaded) {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.gallery-thumb-loaded {
+  opacity: 1;
+  position: relative;
+}
+
+.gallery-thumb:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes shimmer-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .gallery-grid :deep(.v3grid__body .v3grid__cell figcaption) {
   line-height: 1.4;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .gallery-thumb {
+    background-color: #1e293b;
+  }
+  
+  .gallery-thumb-loading {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 200% 100%;
+  }
+  
+  .gallery-thumb-loading .skeleton-icon {
+    color: #475569;
+  }
 }
 </style>

@@ -148,7 +148,7 @@
               v-model="standaloneFilterText"
               @input="updateStandaloneFilter"
               type="text"
-              placeholder="Search by name..."
+              placeholder="Search by title..."
               class="px-3 py-1 border rounded text-sm"
             />
           </div>
@@ -159,7 +159,7 @@
               @change="updateStandaloneSort"
               class="px-3 py-1 border rounded text-sm">
               <option value="">None</option>
-              <option value="name">Name</option>
+              <option value="title">Title</option>
               <option value="price">Price</option>
               <option value="category">Category</option>
             </select>
@@ -193,7 +193,7 @@
           v-for="item in standaloneDisplayData"
           :key="item.id"
           class="p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-          <h4 class="font-semibold text-lg mb-2">{{ item.name }}</h4>
+          <h4 class="font-semibold text-lg mb-2">{{ item.title }}</h4>
           <p class="text-sm text-slate-600 dark:text-slate-400 mb-1">
             <strong>Price:</strong> ${{ item.price.toFixed(2) }}
           </p>
@@ -455,7 +455,7 @@ function handleRefChange(data: Product[]) {
 const standaloneData = ref<Product[]>(
   Array.from({ length: 30 }, (_, i) => ({
     id: i + 1,
-    name: `Product ${i + 1}`,
+    title: `Product ${i + 1}`,
     price: +(Math.random() * 500).toFixed(2),
     category: ['Electronics', 'Clothing', 'Books', 'Home', 'Sports'][i % 5],
   }))
@@ -477,9 +477,9 @@ function handleStandaloneChange(data: Product[]) {
 }
 
 function updateStandaloneFilter() {
-  const others = standaloneFilter.value.filter(f => f.field !== 'name')
+  const others = standaloneFilter.value.filter(f => f.field !== 'title')
   if (standaloneFilterText.value) {
-    standaloneFilter.value = [...others, { field: 'name', operator: 'contains', value: standaloneFilterText.value }]
+    standaloneFilter.value = [...others, { field: 'title', operator: 'contains', value: standaloneFilterText.value }]
   } else {
     standaloneFilter.value = others
   }

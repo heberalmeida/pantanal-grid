@@ -33,19 +33,26 @@
 import { ref } from 'vue'
 import { PantanalDataSource, type SortDescriptor, type FilterDescriptor } from '@pantanal/grid'
 
-const data = ref([
+type Product = {
+  id: number
+  name: string
+  price: number
+  category: string
+}
+
+const data = ref<Product[]>([
   { id: 1, name: 'Product 1', price: 99.99, category: 'Electronics' },
   { id: 2, name: 'Product 2', price: 49.99, category: 'Clothing' },
   // ... more data
 ])
 
-const displayData = ref([])
+const displayData = ref<Product[]>([])
 const page = ref(1)
 const pageSize = ref(6)
 const sort = ref<SortDescriptor[]>([])
 const filter = ref<FilterDescriptor[]>([])
 
-function handleChange(data) {
+function handleChange(data: Product[]) {
   displayData.value = data
 }
 </script>

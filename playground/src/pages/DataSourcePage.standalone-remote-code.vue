@@ -37,31 +37,42 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { PantanalDataSource, type FilterDescriptor } from '@pantanal/grid'
+import { 
+  PantanalDataSource, 
+  type FilterDescriptor,
+  type DataSourceTransport,
+  type DataSourceSchema
+} from '@pantanal/grid'
 
-const transport = {
+type Product = {
+  id: number
+  title: string
+  price: number
+}
+
+const transport: DataSourceTransport = {
   read: async (options) => {
     const url = new URL('https://api.example.com/products')
-    url.searchParams.set('page', options.data?.page || 1)
-    url.searchParams.set('pageSize', options.data?.pageSize || 10)
+    url.searchParams.set('page', String(options.data?.page || 1))
+    url.searchParams.set('pageSize', String(options.data?.pageSize || 10))
     const res = await fetch(url.toString())
     return res.json()
   },
 }
 
-const schema = {
-  data: (response) => response.products || [],
-  total: (response) => response.total || 0,
+const schema: DataSourceSchema = {
+  data: (response: any) => response.products || [],
+  total: (response: any) => response.total || 0,
 }
 
-const displayData = ref([])
+const displayData = ref<Product[]>([])
 const loading = ref(false)
 const page = ref(1)
 const pageSize = ref(6)
 const filter = ref<FilterDescriptor[]>([])
 const filterText = ref('')
 
-function handleChange(data) {
+function handleChange(data: Product[]) {
   displayData.value = data
 }
 
