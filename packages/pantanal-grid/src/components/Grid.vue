@@ -44,11 +44,15 @@
         <div v-if="isGrouped" class="v3grid__cell"></div>
 
         <template v-for="c in unlockedCols" :key="c._idx">
-          <div class="v3grid__cell v3grid__headercell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]" draggable="true"
+          <div class="v3grid__cell v3grid__headercell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]" 
+            :draggable="props.enableColumnReorder"
+            :tabindex="props.navigatable ? 0 : undefined"
+            :ref="(el) => { if (el) (el as any).__column = c }"
             @dragstart="props.enableColumnReorder && onDragStart(c._orderIndex, $event)"
             @dragover="props.enableColumnReorder && onDragOver($event)"
             @drop="props.enableColumnReorder && handleHeaderDrop(c._orderIndex)"
-            @click="toggleSort(c)">
+            @click="toggleSort(c)"
+            @keydown="props.navigatable && handleKeydown($event, undefined, c._idx)">
             <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
               {{ c.title ?? String(c.field) }}
               <img v-if="sortIconData(c)" :src="sortIconData(c)!.src" :alt="sortIconData(c)!.alt"
@@ -117,7 +121,7 @@
 
       <!-- BODY (VIRTUAL) -->
       <div v-if="props.virtual" :style="{ height: props.height + 'px', overflowY: 'auto', overflowX: 'hidden' }"
-        @scroll="onScroll" @keydown="onKeydown($event, sorted.length, columns.length)" tabindex="0">
+        @scroll="onScroll" @keydown="props.navigatable && handleKeydown($event)" :tabindex="props.navigatable ? 0 : undefined">
         <div :style="{ height: topPad + 'px' }"></div>
         <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
           :class="props.striped && ((start ?? 0) + r) % 2 === 1 ? 'v3grid__row--alt' : ''"
@@ -126,8 +130,12 @@
             <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
           </div>
           <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
-            :style="[pinStyle(c._idx)]" :tabindex="0" :data-focus="focusRow === r && focusCol === c._idx"
-            @click="$emit('rowClick', row)">
+            :style="[pinStyle(c._idx)]" 
+            :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
+            :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
+            @click="$emit('rowClick', row)"
+            @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
+            @focus="props.navigatable && keyboardNav.setFocus(r, c._idx)">
             <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
               :name="columnSlotPrimary(c)"
               :column="c"
@@ -321,7 +329,11 @@
                 </div>
 
                 <div v-else-if="n.type === 'row'" class="v3grid__cell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]"
-                  :tabindex="0" :data-focus="focusRow === r && focusCol === c._idx" @click="$emit('rowClick', n.row)">
+                  :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
+                  :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
+                  @click="$emit('rowClick', n.row)"
+                  @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
+                  @focus="props.navigatable && keyboardNav.setFocus(r, c._idx)">
                   <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
                     :name="columnSlotPrimary(c)"
                     :column="c"
@@ -362,14 +374,17 @@
           <template v-else>
             <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
               :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
-              :style="{ gridTemplateColumns: bodyTemplate(columns) }"
-              @keydown="onKeydown($event, visibleRows.length, columns.length)" tabindex="0">
+              :style="{ gridTemplateColumns: bodyTemplate(columns) }">
               <div v-if="props.selectable" class="v3grid__cell" @click.stop>
                 <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
               </div>
               <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
-                :style="[pinStyle(c._idx)]" :tabindex="0" :data-focus="focusRow === r && focusCol === c._idx"
-                @click="$emit('rowClick', row)">
+                :style="[pinStyle(c._idx)]" 
+                :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
+                :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
+                @click="$emit('rowClick', row)"
+                @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
+                @focus="props.navigatable && keyboardNav.setFocus(r, c._idx)">
                 <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
                   :name="columnSlotPrimary(c)"
                   :column="c"
@@ -609,7 +624,7 @@ import { useVirtual } from '../composables/virtual'
 import { usePersist } from '../composables/persist'
 import { useEditing } from '../composables/editing'
 import { getMessages } from '../i18n/messages'
-import { buildGroupTree, flattenTree, type GroupDescriptor } from '../composables/group'
+import { buildGroupTree, flattenTree, type GroupDescriptor, type GroupNode } from '../composables/group'
 import GridPagination from './Pagination.vue'
 import PantanalColumn from './Column.vue'
 
@@ -924,6 +939,15 @@ const groupedTree = computed(() =>
 const flatNodes = computed(() =>
   !isGrouped.value ? [] : flattenTree(groupedTree.value as any[], expanded.value, props.showGroupFooters ?? true)
 )
+
+// Helper functions for group node types
+function isGroupNode(row: any): row is GroupNode {
+  return row && typeof row === 'object' && 'type' in row && row.type === 'group'
+}
+
+function isGroupFooter(row: any): row is GroupNode {
+  return row && typeof row === 'object' && 'type' in row && row.type === 'footer'
+}
 
 const total = computed(() => {
   if (isGrouped.value) return flatNodes.value.length
@@ -1401,7 +1425,126 @@ watch([page, pageSize, sortState, filters, groupState], () => {
     })
   }
 }, { deep: true })
-const { focusRow, focusCol, onKeydown } = useKeyboardNav()
+// Keyboard navigation
+const keyboardNav = useKeyboardNav({
+  rowsCount: computed(() => visibleRows.value.length),
+  colsCount: computed(() => unlockedCols.value.length),
+  navigatable: props.navigatable ?? false,
+  selectable: props.selectable,
+  sortable: true,
+  pageable: !props.virtual && !props.serverSide,
+  reorderable: props.enableColumnReorder,
+  filterable: props.filterable,
+  currentPage: page,
+  totalPages: () => Math.ceil((props.serverSide ? (props.total ?? 0) : filtered.value.length) / pageSize.value),
+  sortState: sortState,
+  selectedKeys: selectedKeys,
+  expanded: expanded,
+  onSort: (field: string) => {
+    const col = columns.value.find(c => String(c.field) === field)
+    if (col) toggleSort(col)
+  },
+  onPageChange: (newPage: number) => {
+    page.value = newPage
+    if (props.serverSide || props.dataProvider) {
+      refresh()
+    }
+  },
+  onSelectRow: (rowIndex: number, addToSelection?: boolean) => {
+    if (!props.selectable) return
+    const row = visibleRows.value[rowIndex]
+    if (!row) return
+    
+    if (addToSelection && props.selectable === 'multiple') {
+      // Toggle selection
+      toggleRow(row)
+    } else {
+      // Single selection or replace selection
+      if (props.selectable === 'single') {
+        selectedKeys.value = new Set([(row as any)[keyFieldStr.value]])
+      } else {
+        const k = (row as any)[keyFieldStr.value]
+        const s = new Set(selectedKeys.value)
+        s.has(k) ? s.delete(k) : s.add(k)
+        selectedKeys.value = s
+      }
+      emit('selectionChange', Array.from(selectedKeys.value))
+    }
+  },
+  onSelectRange: (startRow: number, endRow: number) => {
+    if (!props.selectable || props.selectable !== 'multiple') return
+    const s = new Set(selectedKeys.value)
+    for (let i = startRow; i <= endRow; i++) {
+      const row = visibleRows.value[i]
+      if (row && !isGroupNode(row) && !isGroupFooter(row)) {
+        const k = (row as any)[keyFieldStr.value]
+        s.add(k)
+      }
+    }
+    selectedKeys.value = s
+    emit('selectionChange', Array.from(selectedKeys.value))
+  },
+  onToggleGroup: (key: string) => {
+    toggleGroupKey(key)
+  },
+  onColumnReorder: (fromIndex: number, toIndex: number) => {
+    if (!props.enableColumnReorder) return
+    const ordered = mapColumns(columns.value)
+    const fromCol = ordered[fromIndex]
+    const toCol = ordered[toIndex]
+    if (!fromCol || !toCol) return
+    
+    const fromOrderIdx = order.value.findIndex((_, i) => {
+      const col = columns.value[i]
+      return col && String(col.field) === String(fromCol.field)
+    })
+    const toOrderIdx = order.value.findIndex((_, i) => {
+      const col = columns.value[i]
+      return col && String(col.field) === String(toCol.field)
+    })
+    
+    if (fromOrderIdx !== -1 && toOrderIdx !== -1) {
+      const newOrder = [...order.value]
+      const [removed] = newOrder.splice(fromOrderIdx, 1)
+      newOrder.splice(toOrderIdx, 0, removed)
+      order.value = newOrder
+      emit('columnReorder', { from: fromOrderIdx, to: toOrderIdx })
+    }
+  },
+  onFocusFirst: () => {
+    const firstCell = rootEl.value?.querySelector('.v3grid__row .v3grid__cell[tabindex="0"]') as HTMLElement
+    firstCell?.focus()
+  },
+  onFocusLast: () => {
+    const cells = rootEl.value?.querySelectorAll('.v3grid__row .v3grid__cell[tabindex="0"]')
+    const lastCell = cells?.[cells.length - 1] as HTMLElement
+    lastCell?.focus()
+  },
+  onFocusFirstInRow: () => {
+    const row = rootEl.value?.querySelector(`.v3grid__row:nth-child(${keyboardNav.focusRow.value + 1})`) as HTMLElement
+    const firstCell = row?.querySelector('.v3grid__cell[tabindex="0"]') as HTMLElement
+    firstCell?.focus()
+  },
+  onFocusLastInRow: () => {
+    const row = rootEl.value?.querySelector(`.v3grid__row:nth-child(${keyboardNav.focusRow.value + 1})`) as HTMLElement
+    const cells = row?.querySelectorAll('.v3grid__cell[tabindex="0"]')
+    const lastCell = cells?.[cells.length - 1] as HTMLElement
+    lastCell?.focus()
+  },
+  getGroupKey: (rowIndex: number) => {
+    const row = visibleRows.value[rowIndex]
+    if (isGroupNode(row)) {
+      return row.key
+    }
+    return null
+  },
+  isGroupRow: (rowIndex: number) => {
+    const row = visibleRows.value[rowIndex]
+    return isGroupNode(row)
+  },
+})
+
+const { focusRow, focusCol, onKeydown: handleKeydown } = keyboardNav
 
 // Editing handlers
 function handleCreate() {

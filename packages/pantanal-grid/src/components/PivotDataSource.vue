@@ -14,7 +14,8 @@ import type {
   PivotMeasure,
   PivotCube,
   PivotResult,
-  PivotAxis
+  PivotAxis,
+  PivotCell
 } from '../types'
 
 const props = withDefaults(defineProps<PivotDataSourceProps>(), {

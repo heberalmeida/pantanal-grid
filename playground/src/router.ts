@@ -36,6 +36,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/gallery', component: () => import('./pages/ImageGalleryPage.vue') },
   { path: '/editing', component: () => import('./pages/EditingPage.vue') },
   { path: '/filtering', component: () => import('./pages/FilteringPage.vue') },
+  { path: '/keyboard-navigation', component: () => import('./pages/KeyboardNavigationPage.vue') },
 ]
 
 export const router = createRouter({

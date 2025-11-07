@@ -49,9 +49,9 @@ function matchFilter(value: any, f: FilterDescriptor): boolean {
       return fieldValue.includes(searchValue)
     case 'eq':
       // Special handling for dates - compare only date part (without time)
-      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
-        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
-        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value as string | number | Date))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)) ? new Date(String(f.value) + 'T00:00:00') : new Date(f.value as string | number | Date))
         
         if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) {
           return false
@@ -65,9 +65,9 @@ function matchFilter(value: any, f: FilterDescriptor): boolean {
       return value === f.value
     case 'neq':
       // Special handling for dates
-      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
-        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
-        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value as string | number | Date))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)) ? new Date(String(f.value) + 'T00:00:00') : new Date(f.value as string | number | Date))
         
         if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) {
           return true
@@ -82,9 +82,9 @@ function matchFilter(value: any, f: FilterDescriptor): boolean {
     case 'gt':
       if (isNull) return false
       // Handle dates
-      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
-        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
-        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value as string | number | Date))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)) ? new Date(String(f.value) + 'T00:00:00') : new Date(f.value as string | number | Date))
         if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) return false
         // Compare only date part for equality, but use full time for comparison
         const valueDateOnly = new Date(valueDate.getFullYear(), valueDate.getMonth(), valueDate.getDate())
@@ -95,9 +95,9 @@ function matchFilter(value: any, f: FilterDescriptor): boolean {
     case 'gte':
       if (isNull) return false
       // Handle dates
-      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
-        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
-        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value as string | number | Date))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)) ? new Date(String(f.value) + 'T00:00:00') : new Date(f.value as string | number | Date))
         if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) return false
         const valueDateOnly = new Date(valueDate.getFullYear(), valueDate.getMonth(), valueDate.getDate())
         const filterDateOnly = new Date(filterDate.getFullYear(), filterDate.getMonth(), filterDate.getDate())
@@ -107,9 +107,9 @@ function matchFilter(value: any, f: FilterDescriptor): boolean {
     case 'lt':
       if (isNull) return false
       // Handle dates
-      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
-        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
-        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value as string | number | Date))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)) ? new Date(String(f.value) + 'T00:00:00') : new Date(f.value as string | number | Date))
         if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) return false
         const valueDateOnly = new Date(valueDate.getFullYear(), valueDate.getMonth(), valueDate.getDate())
         const filterDateOnly = new Date(filterDate.getFullYear(), filterDate.getMonth(), filterDate.getDate())
@@ -119,9 +119,9 @@ function matchFilter(value: any, f: FilterDescriptor): boolean {
     case 'lte':
       if (isNull) return false
       // Handle dates
-      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value))) {
-        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value))
-        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(f.value) ? new Date(f.value + 'T00:00:00') : new Date(f.value))
+      if (value instanceof Date || f.value instanceof Date || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) || (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)))) {
+        const valueDate = value instanceof Date ? value : (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? new Date(value + 'T00:00:00') : new Date(value as string | number | Date))
+        const filterDate = f.value instanceof Date ? f.value : (typeof f.value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(String(f.value)) ? new Date(String(f.value) + 'T00:00:00') : new Date(f.value as string | number | Date))
         if (isNaN(valueDate.getTime()) || isNaN(filterDate.getTime())) return false
         const valueDateOnly = new Date(valueDate.getFullYear(), valueDate.getMonth(), valueDate.getDate())
         const filterDateOnly = new Date(filterDate.getFullYear(), filterDate.getMonth(), filterDate.getDate())

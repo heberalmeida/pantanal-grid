@@ -75,27 +75,27 @@ const emit = defineEmits<{
   (e: 'update:group', value: any[]): void
 }>()
 
-const dataSourceRef = ref<InstanceType<typeof DataSource> | null>(null)
+const dataSourceRef = ref<DataSourceInstance | null>(null)
 
 // Internal state for tree nodes
 const treeNodes = ref<TreeListNode[]>([])
 const expandedNodes = ref<Set<string | number>>(new Set())
 
 // Normalize data if local and process tree structure
-const normalizedData = computed<T[] | undefined>(() => {
+const normalizedData = computed<TreeListNode[] | undefined>(() => {
   if (!props.data || props.type !== 'local') {
-    return props.data
+    return props.data as TreeListNode[] | undefined
   }
 
   if (!props.schema?.model) {
-    return props.data.map(item => normalizeNode(item)) as T[]
+    return props.data.map(item => normalizeNode(item))
   }
 
   const modelFields = props.schema.model
   const idField = getModelField(modelFields.id, 'id')
   const parentIdField = getModelField(modelFields.parentId, 'parentId')
   
-  return props.data.map(item => mapTreeListFields(item, modelFields, idField, parentIdField)) as T[]
+  return props.data.map(item => mapTreeListFields(item, modelFields, idField, parentIdField))
 })
 
 // Normalize node to ensure TreeListNode structure
@@ -210,8 +210,6 @@ const normalizedSchema = computed<DataSourceSchema>(() => {
     data: props.schema.data,
     total: props.schema.total,
     errors: props.schema.errors,
-    aggregates: props.schema.aggregates,
-    groups: props.schema.groups,
   }
 
   // If model is defined, wrap the data function to normalize nodes
@@ -222,7 +220,14 @@ const normalizedSchema = computed<DataSourceSchema>(() => {
     const parentIdField = getModelField(modelFields.parentId, 'parentId')
 
     baseSchema.data = (response: any) => {
-      let data = originalData ? originalData(response) : response
+      let data: any
+      if (originalData && typeof originalData === 'function') {
+        data = originalData(response)
+      } else if (typeof originalData === 'string' && response && response[originalData]) {
+        data = response[originalData]
+      } else {
+        data = response
+      }
       if (!Array.isArray(data)) {
         data = data?.data || data || []
       }

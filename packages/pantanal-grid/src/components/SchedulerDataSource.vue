@@ -75,12 +75,12 @@ const emit = defineEmits<{
   (e: 'update:group', value: any[]): void
 }>()
 
-const dataSourceRef = ref<InstanceType<typeof DataSource> | null>(null)
+const dataSourceRef = ref<DataSourceInstance | null>(null)
 
 // Normalize data if local and model fields are defined
-const normalizedData = computed<T[] | undefined>(() => {
+const normalizedData = computed<SchedulerEvent[] | undefined>(() => {
   if (!props.data || props.type !== 'local') {
-    return props.data
+    return props.data as SchedulerEvent[] | undefined
   }
 
   if (!props.schema?.model) {
@@ -90,7 +90,7 @@ const normalizedData = computed<T[] | undefined>(() => {
   const modelFields = props.schema.model
   const idField = props.schema.model.taskId || props.schema.model.id || 'taskId'
   
-  return props.data.map(item => mapEventFields(item, modelFields, idField)) as T[]
+  return props.data.map(item => mapEventFields(item, modelFields, idField))
 })
 
 // Normalize event to ensure SchedulerEvent structure
@@ -190,8 +190,6 @@ const normalizedSchema = computed<DataSourceSchema>(() => {
     data: props.schema.data,
     total: props.schema.total,
     errors: props.schema.errors,
-    aggregates: props.schema.aggregates,
-    groups: props.schema.groups,
   }
 
   // If model is defined, wrap the data function to normalize events
@@ -201,7 +199,14 @@ const normalizedSchema = computed<DataSourceSchema>(() => {
     const idField = props.schema.model.taskId || props.schema.model.id || 'taskId'
 
     baseSchema.data = (response: any) => {
-      let data = originalData ? originalData(response) : response
+      let data: any
+      if (originalData && typeof originalData === 'function') {
+        data = originalData(response)
+      } else if (typeof originalData === 'string' && response && response[originalData]) {
+        data = response[originalData]
+      } else {
+        data = response
+      }
       if (!Array.isArray(data)) {
         data = data?.data || data || []
       }
@@ -224,7 +229,7 @@ const normalizedTransport = computed<DataSourceTransport | undefined>(() => {
   return {
     ...props.transport,
     // Apply timezone if specified in schema
-    parameterMap: (options: any, operation: string) => {
+    parameterMap: (options: any, operation: 'read' | 'create' | 'update' | 'destroy') => {
       let params = props.transport?.parameterMap 
         ? props.transport.parameterMap(options, operation)
         : options

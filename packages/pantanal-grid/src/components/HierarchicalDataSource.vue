@@ -74,7 +74,7 @@ const emit = defineEmits<{
   (e: 'update:group', value: any[]): void
 }>()
 
-const dataSourceRef = ref<InstanceType<typeof DataSource> | null>(null)
+const dataSourceRef = ref<DataSourceInstance | null>(null)
 
 // Internal state for hierarchical nodes
 const hierarchicalNodes = ref<HierarchicalNode[]>([])

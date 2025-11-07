@@ -2896,6 +2896,67 @@ Pagination supports multiple locales:
 
 ---
 
+## Keyboard Navigation
+
+The keyboard support of the Grid is always available when the `navigatable` prop is enabled. To apply the keyboard shortcuts, focus the Grid by clicking the example area and pressing the `Tab` key.
+
+### Header Shortcuts
+
+The following keyboard shortcuts apply to the header of the Grid:
+
+| Shortcut | Description |
+|:--- |:--- |
+| `Enter` | Sort by the column |
+| `Alt` + `Down` | Opens the filter menu |
+| `Esc` | Closes the filter menu |
+| `Tab` | (Default browser behavior) Navigates through the elements in the filter menu |
+| `Shift` + `Tab` | Same as `Tab`, but in reverse order |
+| `Ctrl` + `Left Arrow` | Reorders the column with the previous one |
+| `Ctrl` + `Right Arrow` | Reorders the column with the next one |
+
+### Body Shortcuts
+
+The following keyboard shortcuts apply to the data table of the Grid:
+
+| Shortcut | Description |
+|:--- |:--- |
+| `Arrow Keys` | Navigate over the cells |
+| `Enter` | Toggles the expand and collapse state on group row |
+| `Page Up` | Navigates to the previous page |
+| `Page Down` | Navigates to the next page |
+| `Space` | Selects the row which holds the currently highlighted cell |
+| `Ctrl` + `Space` | Selects or deselects the current row while persisting the previously selected rows (only for multiple selection mode) |
+| `Shift` + `Space` | Performs range selection. Selects all the rows between the last selected one (with `Space` or mouse-click) and the one which holds the focused cell |
+| `Shift` + `Arrow Keys` | Adds the row which holds the focused cell to the selection (only for multiple selection mode) |
+| `Ctrl` + `Home` | Focuses the first focusable element inside the body |
+| `Ctrl` + `End` | Focuses the last focusable cell in the last row |
+| `Home` | Focuses the first focusable cell in the row |
+| `End` | Focuses the last focusable cell in the row |
+
+### Basic Usage
+
+Enable keyboard navigation by setting the `navigatable` prop to `true`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :navigatable="true"
+    :selectable="'multiple'"
+    :sortable="true"
+    :pageable="true"
+    :filterable="true"
+    :enable-column-reorder="true"
+    key-field="id"
+  />
+</template>
+```
+
+The focused cell will be highlighted with a green outline. You can navigate through the grid using arrow keys, select rows with `Space`, sort columns with `Enter` in the header, and perform many other operations using keyboard shortcuts.
+
+---
+
 ## Events Summary
 
 Pantanal Grid emits the following events for integration with parent components:

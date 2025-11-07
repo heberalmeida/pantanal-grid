@@ -41,6 +41,7 @@ import {
   faWifi,
   faPen,
   faFilter,
+  faKeyboard,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -81,6 +82,7 @@ library.add(
   faWifi,
   faPen,
   faFilter,
+  faKeyboard,
 )
 
 createApp(App)

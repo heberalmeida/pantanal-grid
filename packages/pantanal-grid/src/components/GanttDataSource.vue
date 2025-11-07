@@ -73,12 +73,12 @@ const emit = defineEmits<{
   (e: 'update:group', value: any[]): void
 }>()
 
-const dataSourceRef = ref<InstanceType<typeof DataSource> | null>(null)
+const dataSourceRef = ref<DataSourceInstance | null>(null)
 
 // Normalize data if local and model fields are defined
-const normalizedData = computed<T[] | undefined>(() => {
+const normalizedData = computed<GanttTask[] | undefined>(() => {
   if (!props.data || props.type !== 'local') {
-    return props.data
+    return props.data as GanttTask[] | undefined
   }
 
   if (!props.schema?.model?.fields) {
@@ -88,7 +88,7 @@ const normalizedData = computed<T[] | undefined>(() => {
   const modelFields = props.schema.model.fields
   const idField = props.schema.model.id || 'id'
   
-  return props.data.map(item => mapTaskFields(item, modelFields, idField)) as T[]
+  return props.data.map(item => mapTaskFields(item, modelFields, idField))
 })
 
 // Normalize task to ensure GanttTask structure
@@ -227,7 +227,7 @@ const normalizedTransport = computed<DataSourceTransport | undefined>(() => {
 
   return {
     ...props.transport,
-    parameterMap: (data: any, type: string) => {
+    parameterMap: (data: any, type: 'read' | 'create' | 'update' | 'destroy') => {
       // For Gantt, transform data structure for create/update/destroy
       if (type === 'create' || type === 'update' || type === 'destroy') {
         // Gantt typically sends models array in batch mode
