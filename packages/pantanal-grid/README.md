@@ -932,6 +932,231 @@ interface GanttTaskFieldConfig {
 
 ---
 
+## GanttDependencyDataSource Component
+
+The `PantanalGanttDependencyDataSource` component extends the `PantanalDataSource` component and provides specialized support for Gantt dependency data structures. Dependencies represent relationships between tasks (predecessor and successor).
+
+### GanttDependency Interface
+
+```typescript
+interface GanttDependency {
+  id: number | string
+  predecessorId: number | string
+  successorId: number | string
+  type?: number
+  [key: string]: any
+}
+```
+
+### Dependency Types
+
+- `0` - Finish to Start (FS): The successor task cannot start until the predecessor task finishes
+- `1` - Start to Start (SS): The successor task cannot start until the predecessor task starts
+- `2` - Finish to Finish (FF): The successor task cannot finish until the predecessor task finishes
+- `3` - Start to Finish (SF): The successor task cannot finish until the predecessor task starts
+
+### Basic Usage
+
+```vue
+<script setup lang="ts">
+import { PantanalGanttDependencyDataSource, PantanalGrid, type GanttDependency } from '@pantanal/grid'
+import { ref } from 'vue'
+
+const dependencies: GanttDependency[] = [
+  {
+    id: 1,
+    predecessorId: 1,
+    successorId: 2,
+    type: 0,
+  },
+  {
+    id: 2,
+    predecessorId: 2,
+    successorId: 3,
+    type: 0,
+  },
+]
+
+const dataSourceData = ref<GanttDependency[]>([])
+
+function handleChange(data: GanttDependency[]) {
+  dataSourceData.value = data
+}
+</script>
+
+<template>
+  <PantanalGanttDependencyDataSource
+    :data="dependencies"
+    @change="handleChange"
+  />
+  <PantanalGrid
+    :rows="dataSourceData"
+    :columns="columns"
+    key-field="id"
+  />
+</template>
+```
+
+### Model Field Mapping
+
+GanttDependencyDataSource supports field mapping from different data structures using the schema model configuration:
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalGanttDependencyDataSource, 
+  type GanttDependency, 
+  type GanttDependencyDataSourceSchema 
+} from '@pantanal/grid'
+
+const dependencies = [
+  {
+    ID: 1,
+    PredecessorID: 1,
+    SuccessorID: 2,
+    Type: 0,
+  },
+]
+
+const schema: GanttDependencyDataSourceSchema = {
+  model: {
+    id: 'id',
+    fields: {
+      id: { from: 'ID', type: 'number' },
+      predecessorId: { from: 'PredecessorID', type: 'number' },
+      successorId: { from: 'SuccessorID', type: 'number' },
+      type: { from: 'Type', type: 'number', defaultValue: 0 },
+    },
+  },
+}
+</script>
+
+<template>
+  <PantanalGanttDependencyDataSource
+    :data="dependencies"
+    :schema="schema"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Remote GanttDependencyDataSource
+
+```vue
+<script setup lang="ts">
+import { 
+  PantanalGanttDependencyDataSource, 
+  type GanttDependencyDataSourceSchema,
+  type DataSourceTransport 
+} from '@pantanal/grid'
+
+const transport: DataSourceTransport = {
+  read: async () => {
+    const res = await fetch('https://api.example.com/gantt/dependencies')
+    return res.json()
+  },
+}
+
+const schema: GanttDependencyDataSourceSchema = {
+  data: (response: any) => response.data || [],
+  total: (response: any) => response.total || 0,
+}
+</script>
+
+<template>
+  <PantanalGanttDependencyDataSource
+    type="remote"
+    :transport="transport"
+    :schema="schema"
+    :server-paging="true"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    @change="handleChange"
+  />
+</template>
+```
+
+### Standalone Usage
+
+GanttDependencyDataSource can be used independently to manage dependency data programmatically:
+
+```vue
+<script setup lang="ts">
+import { PantanalGanttDependencyDataSource, type GanttDependencyDataSourceInstance } from '@pantanal/grid'
+import { ref } from 'vue'
+
+const dependencyDataSource = ref<GanttDependencyDataSourceInstance | null>(null)
+const dependencies = ref<GanttDependency[]>([...])
+
+function addDependency() {
+  dependencyDataSource.value?.add({
+    predecessorId: 1,
+    successorId: 2,
+    type: 0,
+  })
+}
+
+function removeDependency(id: number | string) {
+  dependencyDataSource.value?.remove(id)
+}
+
+function updateDependency(dependency: GanttDependency) {
+  dependencyDataSource.value?.update(dependency)
+}
+
+function getAllDependencies() {
+  return dependencyDataSource.value?.dependencies() || []
+}
+</script>
+
+<template>
+  <PantanalGanttDependencyDataSource
+    ref="dependencyDataSource"
+    :data="dependencies"
+    @change="handleChange"
+  />
+</template>
+```
+
+### GanttDependencyDataSource Props
+
+Extends all `PantanalDataSource` props, plus:
+
+- `schema` - `GanttDependencyDataSourceSchema` - Schema configuration with model field mapping
+
+### GanttDependencyDataSource Events
+
+Same as `PantanalDataSource` events.
+
+### GanttDependencyDataSource Methods
+
+Extends all `PantanalDataSource` methods, plus:
+
+- `dependencies()` - Returns all dependencies as `GanttDependency[]`
+- `add(dependency)` - Adds a new dependency
+- `remove(dependency)` - Removes a dependency by ID or dependency object
+- `update(dependency)` - Updates an existing dependency
+
+### Schema Model Configuration
+
+The schema model allows you to map fields from different data structures:
+
+```typescript
+interface GanttDependencyDataSourceSchema {
+  model?: {
+    id?: string | GanttTaskFieldConfig
+    fields?: {
+      id?: GanttTaskFieldConfig | string
+      predecessorId?: GanttTaskFieldConfig | string
+      successorId?: GanttTaskFieldConfig | string
+      type?: GanttTaskFieldConfig | string
+    }
+  }
+}
+```
+
+---
+
 ## Pagination Component
 
 The Pagination component can be used independently without the Grid component. Perfect for custom data displays, lists, or any paginated content.

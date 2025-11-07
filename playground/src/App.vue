@@ -107,6 +107,7 @@ const navSections = [
       { to: '/data/graphql', label: 'GraphQL', icon: 'satellite-dish' },
       { to: '/data/datasource', label: 'DataSource component', icon: 'gears' },
       { to: '/data/gantt-datasource', label: 'GanttDataSource component', icon: 'diagram-project' },
+      { to: '/data/gantt-dependency-datasource', label: 'GanttDependencyDataSource component', icon: 'link' },
       { to: '/server', label: 'Server-side pagination', icon: 'gears' },
       { to: '/persisted', label: 'Persisted state', icon: 'floppy-disk' },
     ],

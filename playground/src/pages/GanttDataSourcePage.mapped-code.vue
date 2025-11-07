@@ -1,13 +1,13 @@
 <template>
   <PantanalGanttDataSource
     ref="ganttDataSource"
-    :data="tasks"
+    :data="tasks as any"
     :schema="schema"
     @change="handleChange"
   />
   <PantanalGrid
     :rows="data"
-    :columns="columns"
+    :columns="columns as any"
     key-field="id"
   />
 </template>

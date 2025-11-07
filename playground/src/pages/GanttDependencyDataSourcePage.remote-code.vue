@@ -1,6 +1,6 @@
 <template>
-  <PantanalGanttDataSource
-    ref="ganttDataSource"
+  <PantanalGanttDependencyDataSource
+    ref="dependencyDataSource"
     type="remote"
     :transport="transport"
     :schema="schema"
@@ -11,7 +11,7 @@
   />
   <PantanalGrid
     :rows="data"
-    :columns="columns as any"
+    :columns="columns"
     key-field="id"
     server-side
     :total="total"
@@ -24,45 +24,44 @@
 import { ref } from 'vue'
 import { 
   PantanalGrid, 
-  PantanalGanttDataSource,
+  PantanalGanttDependencyDataSource,
   type ColumnDef,
-  type GanttTask,
-  type GanttDataSourceSchema,
-  type GanttDataSourceInstance,
+  type GanttDependency,
+  type GanttDependencyDataSourceSchema,
+  type GanttDependencyDataSourceInstance,
   type DataSourceTransport
 } from '@pantanal/grid'
 
 const transport: DataSourceTransport = {
   read: async () => {
-    const res = await fetch('https://api.example.com/gantt/tasks')
+    const res = await fetch('https://api.example.com/gantt/dependencies')
     return res.json()
   },
 }
 
-const schema: GanttDataSourceSchema = {
+const schema: GanttDependencyDataSourceSchema = {
   data: (response: any) => response.data || [],
   total: (response: any) => response.total || 0,
 }
 
-const ganttDataSource = ref<GanttDataSourceInstance | null>(null)
-const data = ref<GanttTask[]>([])
+const dependencyDataSource = ref<GanttDependencyDataSourceInstance | null>(null)
+const data = ref<GanttDependency[]>([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(10)
 
-function handleChange(newData: GanttTask[]) {
+function handleChange(newData: GanttDependency[]) {
   data.value = newData
-  if (ganttDataSource.value) {
-    total.value = ganttDataSource.value.total()
+  if (dependencyDataSource.value) {
+    total.value = dependencyDataSource.value.total()
   }
 }
 
-const columns: ColumnDef<GanttTask>[] = [
+const columns: ColumnDef<GanttDependency>[] = [
   { field: 'id', title: 'ID', width: 60 },
-  { field: 'title', title: 'Title', width: 200 },
-  { field: 'start', title: 'Start', width: 120 },
-  { field: 'end', title: 'End', width: 120 },
-  { field: 'percentComplete', title: 'Progress', width: 100 },
+  { field: 'predecessorId', title: 'Predecessor ID', width: 140 },
+  { field: 'successorId', title: 'Successor ID', width: 140 },
+  { field: 'type', title: 'Type', width: 100 },
 ]
 </script>
 

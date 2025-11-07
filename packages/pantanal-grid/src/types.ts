@@ -266,3 +266,38 @@ export interface GanttDataSourceInstance extends DataSourceInstance {
   remove(task: GanttTask | number | string): void
   update(task: GanttTask): void
 }
+
+// GanttDependencyDataSource Types
+export interface GanttDependency {
+  id: number | string
+  predecessorId: number | string
+  successorId: number | string
+  type?: number
+  [key: string]: any
+}
+
+export interface GanttDependencyDataSourceSchemaModel {
+  id?: GanttTaskFieldConfig | string
+  predecessorId?: GanttTaskFieldConfig | string
+  successorId?: GanttTaskFieldConfig | string
+  type?: GanttTaskFieldConfig | string
+  [key: string]: GanttTaskFieldConfig | string | undefined
+}
+
+export interface GanttDependencyDataSourceSchema extends DataSourceSchema {
+  model?: {
+    id?: string | GanttTaskFieldConfig
+    fields?: GanttDependencyDataSourceSchemaModel
+  }
+}
+
+export interface GanttDependencyDataSourceProps<T extends GanttDependency = GanttDependency> extends Omit<DataSourceProps<T>, 'schema'> {
+  schema?: GanttDependencyDataSourceSchema
+}
+
+export interface GanttDependencyDataSourceInstance extends DataSourceInstance {
+  dependencies(): GanttDependency[]
+  add(dependency: Partial<GanttDependency>): void
+  remove(dependency: GanttDependency | number | string): void
+  update(dependency: GanttDependency): void
+}

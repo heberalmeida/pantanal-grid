@@ -22,7 +22,7 @@
       />
       <PantanalGrid
         :rows="localData"
-        :columns="ganttColumns"
+        :columns="ganttColumns as any"
         key-field="id"
         :striped="true"
       />
@@ -38,13 +38,13 @@
 
       <PantanalGanttDataSource
         ref="mappedGanttDataSource"
-        :data="mappedTasks"
+        :data="mappedTasks as any"
         :schema="mappedSchema"
         @change="handleMappedChange"
       />
       <PantanalGrid
         :rows="mappedData"
-        :columns="ganttColumns"
+        :columns="ganttColumns as any"
         key-field="id"
         :striped="true"
       />
@@ -70,7 +70,7 @@
       />
       <PantanalGrid
         :rows="remoteData"
-        :columns="ganttColumns"
+        :columns="ganttColumns as any"
         key-field="id"
         :striped="true"
         server-side
