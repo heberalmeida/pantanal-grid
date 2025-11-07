@@ -38,6 +38,7 @@ import {
   faTableCells,
   faCalendar,
   faBell,
+  faWifi,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -75,6 +76,7 @@ library.add(
   faTableCells,
   faCalendar,
   faBell,
+  faWifi,
 )
 
 createApp(App)

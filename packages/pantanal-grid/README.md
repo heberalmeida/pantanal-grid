@@ -500,6 +500,194 @@ function onError(error: unknown) {
 
 ---
 
+## Data Binding
+
+The Grid supports various data binding methods to connect to different data sources.
+
+### Local Data Arrays
+
+Bind the Grid to local data arrays for client-side operations:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="products"
+    :columns="columns"
+    key-field="productID"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const products = ref([
+  { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39 },
+  { productID: 2, productName: 'Chang', unitPrice: 17, unitsInStock: 40 },
+])
+
+const columns: ColumnDef[] = [
+  { field: 'productID', title: 'ID', width: 80 },
+  { field: 'productName', title: 'Product Name', width: 200 },
+  { field: 'unitPrice', title: 'Unit Price', width: 120 },
+]
+</script>
+```
+
+### Remote Data Services (REST API)
+
+Use the `dataProvider` prop to connect to REST APIs:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    key-field="productID"
+    :data-provider="dataProvider"
+    :auto-bind="true"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type DataProvider, type DataProviderArgs } from '@pantanal/grid'
+
+const page = ref(1)
+const pageSize = ref(10)
+
+const dataProvider: DataProvider = async ({ page, pageSize, signal }: DataProviderArgs) => {
+  const response = await fetch(`/api/products?page=${page}&pageSize=${pageSize}`, { signal })
+  const json = await response.json()
+  return {
+    rows: json.data,
+    total: json.total,
+  }
+}
+</script>
+```
+
+### GraphQL Services
+
+Connect to GraphQL services using the `dataProvider` prop:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    key-field="productID"
+    :data-provider="graphQLProvider"
+    :auto-bind="true"
+  />
+</template>
+
+<script setup lang="ts">
+import { PantanalGrid, type DataProvider, type DataProviderArgs } from '@pantanal/grid'
+
+const graphQLProvider: DataProvider = async ({ page, pageSize, signal }: DataProviderArgs) => {
+  const query = `
+    query ($page: Int!, $limit: Int!) {
+      products(page: $page, limit: $limit) {
+        data { id name price }
+        total
+      }
+    }
+  `
+  
+  const response = await fetch('/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables: { page, limit: pageSize } }),
+    signal,
+  })
+  
+  const json = await response.json()
+  return {
+    rows: json.data.products.data,
+    total: json.data.products.total,
+  }
+}
+</script>
+```
+
+### WebSocket Connections
+
+For real-time data updates, you can integrate WebSocket connections:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { PantanalGrid } from '@pantanal/grid'
+
+const rows = ref([])
+const ws = ref<WebSocket | null>(null)
+
+onMounted(() => {
+  ws.value = new WebSocket('wss://your-server.com')
+  
+  ws.value.onmessage = (event) => {
+    const data = JSON.parse(event.data)
+    if (data.type === 'update') {
+      // Update rows based on WebSocket message
+      rows.value = data.products
+    }
+  }
+})
+
+onBeforeUnmount(() => {
+  ws.value?.close()
+})
+</script>
+```
+
+### Offline Mode
+
+The Grid can work offline by storing data and changes in local storage:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, watch } from 'vue'
+import { PantanalGrid } from '@pantanal/grid'
+
+const rows = ref([])
+const STORAGE_KEY = 'grid-offline-data'
+
+// Load from local storage
+onMounted(() => {
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (stored) {
+    rows.value = JSON.parse(stored)
+  }
+})
+
+// Save to local storage on changes
+watch(rows, (newRows) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(newRows))
+}, { deep: true })
+</script>
+```
+
+---
+
 ## Server-side mode
 
 When `:serverSide="true"` is set (or a `dataProvider` is provided), the grid stops mutating its local rows and instead emits the current sort/filter/page model. Bind to those events and fetch data from your API:

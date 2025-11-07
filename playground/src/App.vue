@@ -105,7 +105,9 @@ const navSections = [
     items: [
       { to: '/data/local', label: 'Static data', icon: 'folder' },
       { to: '/data/rest', label: 'REST API', icon: 'cloud-arrow-down' },
-      { to: '/data/graphql', label: 'GraphQL', icon: 'satellite-dish' },
+      { to: '/data/graphql', label: 'GraphQL', icon: 'diagram-project' },
+      { to: '/data/websocket', label: 'WebSocket', icon: 'satellite-dish' },
+      { to: '/data/offline', label: 'Offline mode', icon: 'wifi' },
       { to: '/data/datasource', label: 'DataSource component', icon: 'gears' },
       { to: '/data/gantt-datasource', label: 'GanttDataSource component', icon: 'diagram-project' },
       { to: '/data/gantt-dependency-datasource', label: 'GanttDependencyDataSource component', icon: 'link' },
