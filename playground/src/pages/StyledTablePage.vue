@@ -1,15 +1,21 @@
 <template>
   <section class="space-y-6">
-    <header class="space-y-2">
-      <h2 class="text-2xl font-semibold leading-tight">Styled sales snapshot</h2>
-      <p class="text-sm text-slate-500 dark:text-slate-300">
-        A sales dashboard style that combines gradients, avatars and progress pills. All visuals are controlled via
-        scoped CSS and the <code>#cell</code> slot.
-      </p>
+    <header class="space-y-3">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-3xl font-bold leading-tight bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-slate-100 dark:via-slate-300 dark:to-slate-100 bg-clip-text text-transparent">
+            Styled Sales Snapshot
+          </h2>
+          <p class="text-sm text-slate-600 dark:text-slate-400 mt-2">
+            A modern sales dashboard combining gradients, avatars, and progress indicators. All visuals are controlled via
+            scoped CSS and the <code class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-xs font-mono">#cell</code> slot.
+          </p>
+        </div>
+      </div>
     </header>
 
-    <div class="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-[1px] shadow-2xl">
-      <div class="rounded-[calc(theme(borderRadius.3xl)-1px)] bg-slate-950/70 p-6 backdrop-blur">
+    <div class="overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-[2px] shadow-2xl ring-1 ring-slate-800/50">
+      <div class="rounded-[calc(theme(borderRadius.3xl)-2px)] bg-gradient-to-br from-slate-950/95 via-slate-900/95 to-slate-950/95 p-8 backdrop-blur-xl">
         <PantanalGrid
           class="styled-board"
           :rows="rows"
@@ -23,50 +29,57 @@
         >
           <template #cell="{ column, value, row }">
             <template v-if="column.field === 'status'">
-              <span class="status-chip" :class="statusClass(value as string)">{{ value }}</span>
+              <span class="status-chip" :class="statusClass(value as string)">
+                <span class="status-dot"></span>
+                {{ value }}
+              </span>
             </template>
             <template v-else-if="column.field === 'owner'">
-              <span class="flex items-center gap-3">
-                <span class="owner-avatar" :style="{ background: avatarColor(row.owner) }">
+              <div class="flex items-center gap-3 group">
+                <span class="owner-avatar group-hover:scale-110 transition-transform duration-200" :style="{ background: avatarColor(row.owner) }">
                   {{ initials(row.owner) }}
                 </span>
-                <div>
+                <div class="flex flex-col">
                   <p class="owner-name">{{ row.owner }}</p>
                   <p class="owner-role">{{ row.region }}</p>
                 </div>
-              </span>
+              </div>
             </template>
             <template v-else-if="column.field === 'monthly'">
-              <div class="flex w-32 flex-col gap-1">
-                <div class="flex items-center justify-between text-[11px] uppercase tracking-widest text-slate-400">
-                  <span>{{ ((row.monthly / row.goal) * 100).toFixed(0) }}%</span>
-                  <span>{{ formatCurrency(row.monthly) }}</span>
+              <div class="flex flex-col gap-2 min-w-[180px]">
+                <div class="flex items-center justify-between">
+                  <span class="progress-percentage">{{ ((row.monthly / row.goal) * 100).toFixed(0) }}%</span>
+                  <span class="progress-amount">{{ formatCurrency(row.monthly) }}</span>
                 </div>
-                <div class="h-1.5 rounded-full bg-slate-800">
+                <div class="progress-bar-container">
                   <div
-                    class="h-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-sky-500"
+                    class="progress-bar-fill"
+                    :class="{ 'exceeded': (row.monthly / row.goal) * 100 > 100 }"
                     :style="{ width: Math.min(100, Math.round((row.monthly / row.goal) * 100)) + '%' }"
-                  />
+                  >
+                    <span class="progress-bar-glow"></span>
+                  </div>
                 </div>
               </div>
             </template>
             <template v-else-if="column.field === 'goal'">
-              <span class="goal">{{ formatCurrency(value as number) }}</span>
+              <span class="goal-text">{{ formatCurrency(value as number) }}</span>
             </template>
             <template v-else-if="column.field === 'ytd'">
-              <span class="ytd" :class="{ 'text-emerald-300': row.ytdChange >= 0, 'text-rose-300': row.ytdChange < 0 }">
-                {{ formatCurrency(value as number) }}
-                <span class="change" :class="{ up: row.ytdChange >= 0, down: row.ytdChange < 0 }">
+              <div class="flex flex-col gap-1">
+                <span class="ytd-amount">{{ formatCurrency(value as number) }}</span>
+                <span class="change-badge" :class="{ 'up': row.ytdChange >= 0, 'down': row.ytdChange < 0 }">
+                  <span class="change-icon">{{ row.ytdChange >= 0 ? '↗' : '↘' }}</span>
                   {{ row.ytdChange >= 0 ? '+' : '' }}{{ row.ytdChange.toFixed(1) }}%
                 </span>
-              </span>
+              </div>
             </template>
             <template v-else>
               {{ value }}
             </template>
           </template>
         </PantanalGrid>
-        <ExampleCode :source="codeSnippet" class="mt-6" />
+        <ExampleCode :source="codeSnippet" class="mt-8" />
       </div>
     </div>
   </section>

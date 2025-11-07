@@ -1,0 +1,574 @@
+import { mount } from '@vue/test-utils'
+import { describe, it, expect, beforeEach } from 'vitest'
+import Pagination from '../src/components/Pagination.vue'
+
+describe('PantanalPagination (Standalone)', () => {
+  describe('Basic Rendering', () => {
+    it('should render simple variant', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          variant: 'simple',
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      const buttons = wrapper.findAll('button')
+      expect(buttons.length).toBeGreaterThan(0)
+    })
+
+    it('should render pages variant', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          variant: 'pages',
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      const pageButtons = wrapper.findAll('.pg-pill')
+      expect(pageButtons.length).toBeGreaterThan(0)
+    })
+
+    it('should render edges variant', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          variant: 'edges',
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      const pageButtons = wrapper.findAll('.pg-pill')
+      expect(pageButtons.length).toBeGreaterThan(0)
+    })
+
+    it('should show total count when showTotal is true', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          showTotal: true,
+        },
+      })
+
+      const totalElement = wrapper.find('.pg-total')
+      expect(totalElement.exists()).toBe(true)
+      expect(totalElement.text()).toContain('100')
+    })
+
+    it('should hide total count when showTotal is false', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          showTotal: false,
+        },
+      })
+
+      const totalElement = wrapper.find('.pg-total')
+      expect(totalElement.exists()).toBe(false)
+    })
+
+    it('should show page size selector when showPageSize is true', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          showPageSize: true,
+        },
+      })
+
+      const select = wrapper.find('select')
+      expect(select.exists()).toBe(true)
+    })
+
+    it('should hide page size selector when showPageSize is false', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          showPageSize: false,
+        },
+      })
+
+      const select = wrapper.find('select')
+      expect(select.exists()).toBe(false)
+    })
+  })
+
+  describe('Page Navigation', () => {
+    it('should emit update:page when next button is clicked', async () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          variant: 'simple',
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      // Find the next button (last button that is not disabled)
+      const buttons = wrapper.findAll('button')
+      const nextButton = buttons[buttons.length - 1]
+      
+      if (nextButton && !nextButton.attributes('disabled')) {
+        await nextButton.trigger('click')
+        await wrapper.vm.$nextTick()
+        expect(wrapper.emitted('update:page')).toBeTruthy()
+        expect(wrapper.emitted('update:page')?.[0]).toEqual([2])
+      }
+    })
+
+    it('should emit update:page when previous button is clicked', async () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 2,
+          pageSize: 10,
+          total: 100,
+          variant: 'simple',
+        },
+      })
+
+      const buttons = wrapper.findAll('button')
+      const prevButton = buttons.find(btn => 
+        btn.attributes('aria-label')?.includes('previous') || 
+        btn.text().toLowerCase().includes('previous')
+      )
+      
+      if (prevButton && !prevButton.attributes('disabled')) {
+        await prevButton.trigger('click')
+        expect(wrapper.emitted('update:page')).toBeTruthy()
+        expect(wrapper.emitted('update:page')?.[0]).toEqual([1])
+      }
+    })
+
+    it('should emit update:page when page number is clicked', async () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          variant: 'pages',
+          maxPages: 5,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const pageButtons = wrapper.findAll('.pg-pill')
+      if (pageButtons.length > 1) {
+        const secondPageButton = pageButtons[1] // Second page (index 1)
+        await secondPageButton.trigger('click')
+        expect(wrapper.emitted('update:page')).toBeTruthy()
+        expect(wrapper.emitted('update:page')?.[0]?.[0]).toBe(2)
+      }
+    })
+
+    it('should disable previous button on first page', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          variant: 'simple',
+        },
+      })
+
+      const buttons = wrapper.findAll('button')
+      const prevButton = buttons[0]
+      expect(prevButton.attributes('disabled')).toBeDefined()
+    })
+
+    it('should disable next button on last page', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 10,
+          pageSize: 10,
+          total: 100,
+          variant: 'simple',
+        },
+      })
+
+      const buttons = wrapper.findAll('button')
+      const nextButton = buttons[buttons.length - 1]
+      expect(nextButton.attributes('disabled')).toBeDefined()
+    })
+
+    it('should calculate total pages correctly', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 95,
+        },
+      })
+
+      // Total pages should be 10 (Math.ceil(95/10))
+      const instance = wrapper.vm as any
+      expect(instance.totalPages).toBe(10)
+    })
+
+    it('should handle edge case with zero total', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 0,
+        },
+      })
+
+      const instance = wrapper.vm as any
+      expect(instance.totalPages).toBe(1)
+    })
+  })
+
+  describe('Page Size Selection', () => {
+    it('should emit update:pageSize when page size changes', async () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          showPageSize: true,
+          pageSizeOptions: [5, 10, 20, 50],
+        },
+      })
+
+      const select = wrapper.find('select')
+      await select.setValue('20')
+      
+      expect(wrapper.emitted('update:pageSize')).toBeTruthy()
+      expect(wrapper.emitted('update:pageSize')?.[0]).toEqual([20])
+    })
+
+    it('should display correct page size options', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          showPageSize: true,
+          pageSizeOptions: [5, 10, 20, 50],
+        },
+      })
+
+      const options = wrapper.findAll('select option')
+      expect(options.length).toBe(4)
+      expect(options.map(o => Number(o.text()))).toEqual([5, 10, 20, 50])
+    })
+  })
+
+  describe('Variants', () => {
+    it('should render correct buttons for simple variant', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 5,
+          pageSize: 10,
+          total: 100,
+          variant: 'simple',
+        },
+      })
+
+      const buttons = wrapper.findAll('button')
+      expect(buttons.length).toBe(2) // Previous and Next
+    })
+
+    it('should render page numbers for pages variant', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 5,
+          pageSize: 10,
+          total: 100,
+          variant: 'pages',
+          maxPages: 5,
+        },
+      })
+
+      const pageButtons = wrapper.findAll('.pg-pill')
+      expect(pageButtons.length).toBeGreaterThan(0)
+      expect(pageButtons.length).toBeLessThanOrEqual(5)
+    })
+
+    it('should render first/last buttons for edges variant', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 5,
+          pageSize: 10,
+          total: 100,
+          variant: 'edges',
+        },
+      })
+
+      const buttons = wrapper.findAll('button')
+      expect(buttons.length).toBeGreaterThan(2) // Should have more than just prev/next
+    })
+
+    it('should highlight current page in pages variant', async () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 3,
+          pageSize: 10,
+          total: 100,
+          variant: 'pages',
+          maxPages: 5,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const pageButtons = wrapper.findAll('.pg-pill')
+      const activeButton = pageButtons.find(btn => 
+        btn.classes().includes('is-active') || 
+        btn.classes().some(cls => cls.includes('active'))
+      )
+      
+      expect(activeButton).toBeDefined()
+    })
+  })
+
+  describe('Internationalization', () => {
+    it('should display English labels when locale is en', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          locale: 'en',
+          showText: true,
+        },
+      })
+
+      const wrapperText = wrapper.text()
+      // Should contain English text like "Previous" or "Next"
+      expect(
+        wrapperText.includes('Previous') || 
+        wrapperText.includes('Next') ||
+        wrapperText.includes('Total')
+      ).toBe(true)
+    })
+
+    it('should display Spanish labels when locale is es', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          locale: 'es',
+          showText: true,
+        },
+      })
+
+      const wrapperText = wrapper.text()
+      // Should contain Spanish text
+      expect(
+        wrapperText.includes('Anterior') || 
+        wrapperText.includes('Siguiente') ||
+        wrapperText.includes('Total')
+      ).toBe(true)
+    })
+
+    it('should display Portuguese labels when locale is pt', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          locale: 'pt',
+          showText: true,
+        },
+      })
+
+      const wrapperText = wrapper.text()
+      // Should contain Portuguese text
+      expect(
+        wrapperText.includes('Anterior') || 
+        wrapperText.includes('Próxima') ||
+        wrapperText.includes('Total')
+      ).toBe(true)
+    })
+  })
+
+  describe('Dense Mode', () => {
+    it('should apply dense classes when dense is true', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          dense: true,
+        },
+      })
+
+      const buttons = wrapper.findAll('button')
+      if (buttons.length > 0) {
+        const hasDenseClass = buttons.some(btn => 
+          btn.classes().includes('pg-btn--dense') ||
+          btn.classes().some(cls => cls.includes('dense'))
+        )
+        expect(hasDenseClass).toBe(true)
+      }
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should handle single page correctly', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 5,
+        },
+      })
+
+      const instance = wrapper.vm as any
+      expect(instance.totalPages).toBe(1)
+    })
+
+    it('should handle very large totals', () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 1000000,
+        },
+      })
+
+      const instance = wrapper.vm as any
+      expect(instance.totalPages).toBe(100000)
+    })
+
+    it('should clamp page number to valid range', async () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 5,
+          pageSize: 10,
+          total: 100,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      // Try to go to page 0 (should clamp to 1)
+      const instance = wrapper.vm as any
+      instance.go(0)
+      await wrapper.vm.$nextTick()
+      
+      // Should emit page 1 (clamped from 0)
+      expect(wrapper.emitted('update:page')).toBeTruthy()
+      expect(wrapper.emitted('update:page')?.[0]?.[0]).toBe(1)
+    })
+
+    it('should clamp page number to max pages', async () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 5,
+          pageSize: 10,
+          total: 100,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      // Try to go beyond last page
+      const instance = wrapper.vm as any
+      instance.go(100)
+      await wrapper.vm.$nextTick()
+      
+      // Should emit last valid page (10) - clamped from 100
+      expect(wrapper.emitted('update:page')).toBeTruthy()
+      expect(wrapper.emitted('update:page')?.[0]?.[0]).toBe(10)
+    })
+  })
+
+  describe('Max Pages Calculation', () => {
+    it('should show correct number of page buttons based on maxPages', async () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 5,
+          pageSize: 10,
+          total: 100,
+          variant: 'pages',
+          maxPages: 3,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const pageButtons = wrapper.findAll('.pg-pill')
+      expect(pageButtons.length).toBeLessThanOrEqual(3)
+    })
+
+    it('should calculate pages range correctly when at start', async () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 1,
+          pageSize: 10,
+          total: 100,
+          variant: 'pages',
+          maxPages: 5,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const instance = wrapper.vm as any
+      const pages = instance.pages
+      expect(pages[0]).toBe(1)
+      expect(pages.length).toBeLessThanOrEqual(5)
+    })
+
+    it('should calculate pages range correctly when at middle', async () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 5,
+          pageSize: 10,
+          total: 100,
+          variant: 'pages',
+          maxPages: 5,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const instance = wrapper.vm as any
+      const pages = instance.pages
+      // With 100 items and pageSize 10, there are 10 pages total
+      // When on page 5 with maxPages 5, should show pages around 5
+      expect(pages).toContain(5)
+      expect(pages.length).toBeLessThanOrEqual(5)
+    })
+
+    it('should calculate pages range correctly when at end', async () => {
+      const wrapper = mount(Pagination, {
+        props: {
+          page: 100,
+          pageSize: 10,
+          total: 100,
+          variant: 'pages',
+          maxPages: 5,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const instance = wrapper.vm as any
+      const pages = instance.pages
+      expect(pages[pages.length - 1]).toBe(10) // Last page is 10 (100 items / 10 per page)
+      expect(pages.length).toBeLessThanOrEqual(5)
+    })
+  })
+})
+

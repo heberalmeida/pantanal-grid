@@ -147,3 +147,65 @@ export interface DataProviderResult<T = Row> {
 }
 
 export type DataProvider<T = Row> = (args: DataProviderArgs) => Promise<DataProviderResult<T>>
+
+// DataSource Types
+export interface DataSourceTransport {
+  read?: string | ((options: DataSourceTransportOptions) => Promise<any>)
+  create?: string | ((options: DataSourceTransportOptions) => Promise<any>)
+  update?: string | ((options: DataSourceTransportOptions) => Promise<any>)
+  destroy?: string | ((options: DataSourceTransportOptions) => Promise<any>)
+  parameterMap?: (data: any, type: 'read' | 'create' | 'update' | 'destroy') => any
+}
+
+export interface DataSourceTransportOptions {
+  data?: any
+  type?: string
+  url?: string
+}
+
+export interface DataSourceSchema {
+  data?: string | ((response: any) => any[])
+  total?: string | ((response: any) => number)
+  errors?: string | ((response: any) => any)
+  parse?: (response: any) => any
+}
+
+export interface DataSourceProps<T = Row> {
+  data?: T[]
+  transport?: DataSourceTransport
+  schema?: DataSourceSchema
+  type?: 'local' | 'remote'
+  page?: number
+  pageSize?: number
+  sort?: SortDescriptor[]
+  filter?: FilterDescriptor[]
+  group?: GroupDescriptor[]
+  serverPaging?: boolean
+  serverFiltering?: boolean
+  serverSorting?: boolean
+  serverGrouping?: boolean
+  autoSync?: boolean
+  batch?: boolean
+}
+
+export interface DataSourceEmits {
+  (e: 'change', value: any[]): void
+  (e: 'error', error: any): void
+  (e: 'requestStart', options: any): void
+  (e: 'requestEnd', options: any): void
+  (e: 'sync', options: any): void
+  (e: 'update:data', value: any[]): void
+  (e: 'update:page', value: number): void
+  (e: 'update:pageSize', value: number): void
+  (e: 'update:sort', value: SortDescriptor[]): void
+  (e: 'update:filter', value: FilterDescriptor[]): void
+  (e: 'update:group', value: GroupDescriptor[]): void
+}
+
+export interface DataSourceInstance {
+  data(): any[]
+  total(): number
+  read(): Promise<void>
+  sync(): Promise<void>
+  query(options?: { page?: number; pageSize?: number; sort?: SortDescriptor[]; filter?: FilterDescriptor[]; group?: GroupDescriptor[] }): void
+}
