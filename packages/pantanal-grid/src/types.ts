@@ -8,8 +8,10 @@ export type SelectionMode = 'single' | 'multiple' | false
 
 export interface FilterDescriptor {
   field: string
-  operator: 'contains' | 'eq' | 'neq' | 'gt' | 'lt'
+  operator: 'contains' | 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'startswith' | 'endswith' | 'isnull' | 'isnotnull' | 'isempty' | 'isnotempty'
   value: unknown
+  logic?: 'and' | 'or'
+  filters?: FilterDescriptor[]
 }
 
 export type Locale = 'pt' | 'en' | 'es' | (string & {})
@@ -72,6 +74,23 @@ export interface ColumnDef<T = Row> {
   }
   command?: ('edit' | 'destroy' | 'save' | 'cancel')[]
   type?: 'string' | 'number' | 'boolean' | 'date'
+  
+  // Filtering options
+  filterableMode?: 'row' | 'menu' | false
+  filterableMulti?: boolean
+  filterableOperator?: FilterDescriptor['operator']
+  filterableDefaultOperator?: FilterDescriptor['operator']
+  filterableDataSource?: any[] | (() => any[])
+  filterableSearch?: boolean
+  filterableCheckAll?: boolean
+  filterableItemTemplate?: (item: any, field: string) => string | VNode
+  filterableUI?: 'textbox' | 'numeric' | 'date' | 'boolean' | 'dropdown' | ((element: HTMLElement, options: { field: string; value: any }) => void)
+  filterableOperators?: {
+    string?: Record<string, string>
+    number?: Record<string, string>
+    date?: Record<string, string>
+    boolean?: Record<string, string>
+  }
 }
 
 export type PaginationVariant = 'simple' | 'pages' | 'edges'
@@ -126,6 +145,14 @@ export interface GridProps<T = Row> {
   paginationMaxPages?: number
 
   showFilterRow?: boolean
+  filterable?: boolean
+  filterableMode?: 'row' | 'menu' | false
+  filterableOperators?: {
+    string?: Record<string, string>
+    number?: Record<string, string>
+    date?: Record<string, string>
+    boolean?: Record<string, string>
+  }
 
   pinnedShadows?: boolean
 

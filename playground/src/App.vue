@@ -97,6 +97,7 @@ const navSections = [
       { to: '/basic', label: 'Basic grid', icon: 'table-cells-large' },
       { to: '/grid-events', label: 'Grid events', icon: 'bell' },
       { to: '/editing', label: 'Editing', icon: 'pen' },
+      { to: '/filtering', label: 'Filtering', icon: 'filter' },
       { to: '/table-only', label: 'Table-only layout', icon: 'table-list' },
       { to: '/cards', label: 'Responsive cards', icon: 'mobile-screen-button' },
     ],

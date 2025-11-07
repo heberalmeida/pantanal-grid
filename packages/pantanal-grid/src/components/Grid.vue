@@ -62,13 +62,44 @@
       </div>
 
       <!-- FILTER ROW -->
-      <div v-if="props.showFilterRow && anyFilterable && (!isCardMode || props.showFiltersInCards)"
+      <div v-if="(props.showFilterRow || props.filterableMode === 'row') && anyFilterable && (!isCardMode || props.showFiltersInCards)"
         class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
         <div v-if="props.selectable" class="v3grid__cell"></div>
         <div v-if="isGrouped" class="v3grid__cell"></div>
         <div v-for="c in unlockedCols" :key="c._idx" class="v3grid__cell v3grid__cell--header" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]">
-          <input v-if="c.filterable" class="v3grid__input" type="text"
-            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
+          <!-- Text input for string/default -->
+          <input 
+            v-if="c.filterable && (!c.filterableUI || c.filterableUI === 'textbox') && c.type !== 'number' && c.type !== 'boolean' && c.type !== 'date'"
+            class="v3grid__input" 
+            type="text"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" 
+            :value="getFilterValue(String(c.field))"
+            @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
+          <!-- Number input -->
+          <input 
+            v-else-if="c.filterable && (c.filterableUI === 'numeric' || c.type === 'number')"
+            class="v3grid__input" 
+            type="number"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" 
+            :value="getFilterValue(String(c.field))"
+            @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
+          <!-- Boolean/Checkbox -->
+          <select 
+            v-else-if="c.filterable && (c.filterableUI === 'boolean' || c.type === 'boolean')"
+            class="v3grid__input"
+            :value="getFilterValue(String(c.field))"
+            @change="setFilterValue(String(c.field), ($event.target as HTMLSelectElement).value)">
+            <option value="">All</option>
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+          <!-- Date input -->
+          <input 
+            v-else-if="c.filterable && (c.filterableUI === 'date' || c.type === 'date')"
+            class="v3grid__input" 
+            type="date"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" 
+            :value="getFilterValue(String(c.field))"
             @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
         </div>
       </div>
@@ -376,11 +407,38 @@
 
       </div>
 
-      <div v-if="props.showFilterRow && anyFilterable && (!isCardMode || props.showFiltersInCards)"
+      <div v-if="(props.showFilterRow || props.filterableMode === 'row') && anyFilterable && (!isCardMode || props.showFiltersInCards)"
         class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: lockedLeftTemplate }">
         <div v-for="(c, i) in lockedLeftCols" :key="'f-left-' + i" class="v3grid__cell v3grid__cell--header">
-          <input v-if="c.filterable" class="v3grid__input" type="text"
-            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
+          <input 
+            v-if="c.filterable && (!c.filterableUI || c.filterableUI === 'textbox') && c.type !== 'number' && c.type !== 'boolean' && c.type !== 'date'"
+            class="v3grid__input" 
+            type="text"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" 
+            :value="getFilterValue(String(c.field))"
+            @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
+          <input 
+            v-else-if="c.filterable && (c.filterableUI === 'numeric' || c.type === 'number')"
+            class="v3grid__input" 
+            type="number"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" 
+            :value="getFilterValue(String(c.field))"
+            @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
+          <select 
+            v-else-if="c.filterable && (c.filterableUI === 'boolean' || c.type === 'boolean')"
+            class="v3grid__input"
+            :value="getFilterValue(String(c.field))"
+            @change="setFilterValue(String(c.field), ($event.target as HTMLSelectElement).value)">
+            <option value="">All</option>
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+          <input 
+            v-else-if="c.filterable && (c.filterableUI === 'date' || c.type === 'date')"
+            class="v3grid__input" 
+            type="date"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" 
+            :value="getFilterValue(String(c.field))"
             @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
         </div>
       </div>
@@ -429,11 +487,38 @@
         </div>
       </div>
 
-      <div v-if="props.showFilterRow && anyFilterable && (!isCardMode || props.showFiltersInCards)"
+      <div v-if="(props.showFilterRow || props.filterableMode === 'row') && anyFilterable && (!isCardMode || props.showFiltersInCards)"
         class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: lockedRightTemplate }">
         <div v-for="(c, i) in lockedRightCols" :key="'f-right-' + i" class="v3grid__cell v3grid__cell--header">
-          <input v-if="c.filterable" class="v3grid__input" type="text"
-            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" :value="getFilterValue(String(c.field))"
+          <input 
+            v-if="c.filterable && (!c.filterableUI || c.filterableUI === 'textbox') && c.type !== 'number' && c.type !== 'boolean' && c.type !== 'date'"
+            class="v3grid__input" 
+            type="text"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" 
+            :value="getFilterValue(String(c.field))"
+            @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
+          <input 
+            v-else-if="c.filterable && (c.filterableUI === 'numeric' || c.type === 'number')"
+            class="v3grid__input" 
+            type="number"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" 
+            :value="getFilterValue(String(c.field))"
+            @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
+          <select 
+            v-else-if="c.filterable && (c.filterableUI === 'boolean' || c.type === 'boolean')"
+            class="v3grid__input"
+            :value="getFilterValue(String(c.field))"
+            @change="setFilterValue(String(c.field), ($event.target as HTMLSelectElement).value)">
+            <option value="">All</option>
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+          <input 
+            v-else-if="c.filterable && (c.filterableUI === 'date' || c.type === 'date')"
+            class="v3grid__input" 
+            type="date"
+            :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" 
+            :value="getFilterValue(String(c.field))"
             @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
         </div>
       </div>
@@ -1057,16 +1142,58 @@ function toggleSort(col: any) {
   emit('sort', { sort: [...sortState.value] })
 }
 function setFilterValue(field: string, v: string) {
+  const column = columns.value.find(c => String(c.field) === field)
+  const operator = column?.filterableDefaultOperator || column?.filterableOperator || getDefaultOperatorForType(column?.type)
+  
   const others = filters.value.filter(f => f.field !== field)
   if (v === '' || v == null) {
     filters.value = others
   } else {
-    filters.value = [...others, { field, operator: 'contains', value: v }]
+    // Convert value based on column type
+    let filterValue: any = v
+    if (column?.type === 'number') {
+      const numValue = Number(v)
+      filterValue = isNaN(numValue) ? 0 : numValue
+    } else if (column?.type === 'boolean') {
+      filterValue = v === 'true' || v === '1' || v === 'yes'
+    } else if (column?.type === 'date') {
+      filterValue = v ? new Date(v) : null
+      if (filterValue && isNaN(filterValue.getTime())) {
+        filterValue = null
+      }
+    }
+    
+    filters.value = [...others, { field, operator, value: filterValue }]
   }
   // Emit filter event
   emit('filter', { filter: [...filters.value] })
 }
-function getFilterValue(field: string) { return filters.value.find(f => f.field === field)?.value ?? '' }
+
+function getDefaultOperatorForType(type?: string): FilterDescriptor['operator'] {
+  switch (type) {
+    case 'number':
+      return 'eq'
+    case 'boolean':
+      return 'eq'
+    case 'date':
+      return 'eq'
+    default:
+      return 'contains'
+  }
+}
+function getFilterValue(field: string): string {
+  const filter = filters.value.find(f => f.field === field)
+  if (!filter) return ''
+  const value = filter.value
+  if (value instanceof Date) {
+    // Format date as YYYY-MM-DD for date input
+    return value.toISOString().split('T')[0]
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false'
+  }
+  return String(value ?? '')
+}
 
 function totalPages() {
   if (props.virtual) return 1

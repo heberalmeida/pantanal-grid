@@ -40,6 +40,7 @@ import {
   faBell,
   faWifi,
   faPen,
+  faFilter,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -79,6 +80,7 @@ library.add(
   faBell,
   faWifi,
   faPen,
+  faFilter,
 )
 
 createApp(App)

@@ -1,14 +1,23 @@
 <template>
   <details class="example-code">
     <summary>View code</summary>
-    <pre><code>{{ source }}</code></pre>
+    <pre><code v-html="escapedSource"></code></pre>
   </details>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+
+const props = defineProps<{
   source: string
 }>()
+
+const escapedSource = computed(() => {
+  return props.source
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+})
 </script>
 
 <style scoped>
