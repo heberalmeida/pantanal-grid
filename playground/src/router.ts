@@ -4,6 +4,7 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: RouteRecordRaw[] = [
   { path: '/', component: () => import('./pages/Home.vue') },
   { path: '/basic', component: () => import('./pages/BasicPage.vue') },
+  { path: '/grid-events', component: () => import('./pages/GridEventsPage.vue') },
   { path: '/i18n/en', component: () => import('./pages/I18nEnPage.vue') },
   { path: '/i18n/es', component: () => import('./pages/I18nEsPage.vue') },
   { path: '/i18n/custom', component: () => import('./pages/I18nCustomPage.vue') },

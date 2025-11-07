@@ -127,6 +127,14 @@ export interface GridEmits {
   (e: 'columnReorder', value: { from: number; to: number }): void
   (e: 'toggleGroup', key: string, open: boolean): void
   (e: 'loading', value: boolean): void
+  (e: 'error', error: unknown): void
+  (e: 'databinding', options: { sort?: SortDescriptor[]; filter?: FilterDescriptor[]; group?: GroupDescriptor[]; page?: number; pageSize?: number }): void
+  (e: 'databound', data: unknown[]): void
+  (e: 'sort', options: { sort: SortDescriptor[] }): void
+  (e: 'filter', options: { filter: FilterDescriptor[] }): void
+  (e: 'group', options: { groups: GroupDescriptor[] }): void
+  (e: 'groupexpand', options: { group: { field: string; value: unknown; aggregates?: Record<string, any> } }): void
+  (e: 'groupcollapse', options: { group: { field: string; value: unknown; aggregates?: Record<string, any> } }): void
 }
 
 export type AggregateName = 'sum' | 'avg' | 'min' | 'max' | 'count'

@@ -168,6 +168,7 @@ const total = ref(100)
 - Persisted state (sort, filter, page, order, widths) via `persistStateKey`
 - Internationalization (en, es, pt) with pluggable messages
 - Grouping with aggregations and expandable tree nodes
+- Comprehensive event system for data operations and user interactions
 
 ---
 
@@ -324,6 +325,178 @@ const aggregates = { price: ['sum', 'avg'], id: ['count'] } as const
 - Group headers render full-width rows with the field/value and aggregate count.
 - Use the built-in footer buttons (or `toggleGroup` event) to expand/collapse all groups at once.
 - For server-side grouping, compute aggregates on the backend and feed the grid with pre-grouped rows.
+
+---
+
+## Grid Events
+
+The Grid component emits various events that allow you to react to user interactions and data operations.
+
+### Available Events
+
+#### Data Events
+
+- `@databinding` - Fired before data is loaded/bound
+  ```typescript
+  (options: { 
+    sort?: SortDescriptor[]; 
+    filter?: FilterDescriptor[]; 
+    group?: GroupDescriptor[]; 
+    page?: number; 
+    pageSize?: number 
+  }) => void
+  ```
+
+- `@databound` - Fired after data is loaded/bound
+  ```typescript
+  (data: unknown[]) => void
+  ```
+
+#### Operation Events
+
+- `@sort` - Fired when sorting changes
+  ```typescript
+  (options: { sort: SortDescriptor[] }) => void
+  ```
+
+- `@filter` - Fired when filtering changes
+  ```typescript
+  (options: { filter: FilterDescriptor[] }) => void
+  ```
+
+- `@group` - Fired when grouping changes
+  ```typescript
+  (options: { groups: GroupDescriptor[] }) => void
+  ```
+
+- `@groupexpand` - Fired when a group is expanded
+  ```typescript
+  (options: { group: { field: string; value: unknown; aggregates?: Record<string, any> } }) => void
+  ```
+
+- `@groupcollapse` - Fired when a group is collapsed
+  ```typescript
+  (options: { group: { field: string; value: unknown; aggregates?: Record<string, any> } }) => void
+  ```
+
+#### Interaction Events
+
+- `@selectionChange` - Fired when selection changes
+  ```typescript
+  (selected: unknown[]) => void
+  ```
+
+- `@rowClick` - Fired when a row is clicked
+  ```typescript
+  (row: unknown) => void
+  ```
+
+- `@columnResize` - Fired when a column is resized
+  ```typescript
+  (options: { field: string; width: number }) => void
+  ```
+
+- `@columnReorder` - Fired when columns are reordered
+  ```typescript
+  (options: { from: number; to: number }) => void
+  ```
+
+#### Status Events
+
+- `@loading` - Fired when loading state changes
+  ```typescript
+  (loading: boolean) => void
+  ```
+
+- `@error` - Fired when an error occurs
+  ```typescript
+  (error: unknown) => void
+  ```
+
+### Example: Using Grid Events
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="id"
+    :sortable="true"
+    :filterable="true"
+    :groupable="true"
+    :selectable="true"
+    @databinding="onDataBinding"
+    @databound="onDataBound"
+    @sort="onSort"
+    @filter="onFilter"
+    @group="onGroup"
+    @groupexpand="onGroupExpand"
+    @groupcollapse="onGroupCollapse"
+    @selectionChange="onSelectionChange"
+    @rowClick="onRowClick"
+    @columnResize="onColumnResize"
+    @columnReorder="onColumnReorder"
+    @loading="onLoading"
+    @error="onError"
+  />
+</template>
+
+<script setup lang="ts">
+import { PantanalGrid, type SortDescriptor, type FilterDescriptor, type GroupDescriptor } from '@pantanal/grid'
+
+function onDataBinding(options: any) {
+  console.log('Data binding:', options)
+}
+
+function onDataBound(data: unknown[]) {
+  console.log('Data bound:', data.length, 'items')
+}
+
+function onSort(options: { sort: SortDescriptor[] }) {
+  console.log('Sort:', options.sort)
+}
+
+function onFilter(options: { filter: FilterDescriptor[] }) {
+  console.log('Filter:', options.filter)
+}
+
+function onGroup(options: { groups: GroupDescriptor[] }) {
+  console.log('Group:', options.groups)
+}
+
+function onGroupExpand(options: { group: { field: string; value: unknown } }) {
+  console.log('Group expanded:', options.group)
+}
+
+function onGroupCollapse(options: { group: { field: string; value: unknown } }) {
+  console.log('Group collapsed:', options.group)
+}
+
+function onSelectionChange(selected: unknown[]) {
+  console.log('Selection changed:', selected.length, 'items')
+}
+
+function onRowClick(row: unknown) {
+  console.log('Row clicked:', row)
+}
+
+function onColumnResize(options: { field: string; width: number }) {
+  console.log('Column resized:', options.field, options.width)
+}
+
+function onColumnReorder(options: { from: number; to: number }) {
+  console.log('Column reordered:', options.from, 'to', options.to)
+}
+
+function onLoading(loading: boolean) {
+  console.log('Loading:', loading)
+}
+
+function onError(error: unknown) {
+  console.error('Error:', error)
+}
+</script>
+```
 
 ---
 
@@ -2535,17 +2708,39 @@ Pagination supports multiple locales:
 
 ---
 
-## Events
+## Events Summary
 
 Pantanal Grid emits the following events for integration with parent components:
 
-- `update:sort`, `update:page`, `update:pageSize`, `update:filter` — v-model bindings
-- `selectionChange` — array of key values for selected rows
+### v-model Events
+- `update:sort` — Sort descriptors array
+- `update:page` — Current page number
+- `update:pageSize` — Page size
+- `update:filter` — Filter descriptors array
+
+### Data Events
+- `databinding` — Fired before data is loaded/bound
+- `databound` — Fired after data is loaded/bound
+
+### Operation Events
+- `sort` — Fired when sorting changes
+- `filter` — Fired when filtering changes
+- `group` — Fired when grouping changes
+- `groupexpand` — Fired when a group is expanded
+- `groupcollapse` — Fired when a group is collapsed
+
+### Interaction Events
+- `selectionChange` — Array of selected rows
+- `rowClick` — Emits the clicked row
 - `columnResize` — `{ field, width }`
 - `columnReorder` — `{ from, to }`
 - `toggleGroup` — `(key, expanded)`
-- `rowClick` — emits the clicked row
-- `loading` — boolean flag around asynchronous data-provider calls
+
+### Status Events
+- `loading` — Boolean flag around asynchronous data-provider calls
+- `error` — Fired when an error occurs
+
+For detailed information about Grid events, see the [Grid Events](#grid-events) section above.
 
 ---
 

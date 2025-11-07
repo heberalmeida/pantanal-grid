@@ -473,7 +473,7 @@
 </template>
 
 <script setup lang="ts">
-import { Fragment, computed, defineComponent, h, isVNode, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
+import { Fragment, computed, defineComponent, h, isVNode, nextTick, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
 import type { CSSProperties, PropType, VNode, VNodeArrayChildren } from 'vue'
 import type { ColumnDef, ColumnTemplateContext, ColumnTemplateFn, FilterDescriptor, GridEmits, GridProps, SortDescriptor } from '../types'
 import { applyFilter, applySort, paginate } from '../composables/data'
@@ -914,6 +914,11 @@ watch(() => props.pageSize, v => { if (v) pageSize.value = v })
 watch(pageSize, v => emit('update:pageSize', v))
 watch(() => props.filter, v => { if (v) filters.value = v })
 watch(filters, v => emit('update:filter', v))
+watch(() => groupState.value, (v) => {
+  if (v && v.length > 0) {
+    emit('group', { groups: [...v] })
+  }
+}, { deep: true })
 
 /** UI helpers */
 function headerTemplate(cols: any[]) {
@@ -952,16 +957,42 @@ function effW(idx: number, col: any, fallback = 120): number {
 
 function toggleGroupKey(key: string) {
   const s = new Set(expanded.value)
-  if (s.has(key)) s.delete(key)
-  else s.add(key)
+  const wasExpanded = s.has(key)
+  if (wasExpanded) {
+    s.delete(key)
+    // Find the group node to emit groupcollapse
+    const groupNode = (groupedTree.value as any[]).find((n: any) => n.type === 'group' && n.key === key)
+    if (groupNode) {
+      emit('groupcollapse', { group: { field: groupNode.field, value: groupNode.value, aggregates: groupNode.aggregates } })
+    }
+  } else {
+    s.add(key)
+    // Find the group node to emit groupexpand
+    const groupNode = (groupedTree.value as any[]).find((n: any) => n.type === 'group' && n.key === key)
+    if (groupNode) {
+      emit('groupexpand', { group: { field: groupNode.field, value: groupNode.value, aggregates: groupNode.aggregates } })
+    }
+  }
   expanded.value = s
   emit('toggleGroup', key, s.has(key))
 }
 function expandAll() {
   const keys = (groupedTree.value as any[]).filter(n => n.type === 'group').map((n: any) => n.key)
   expanded.value = new Set(keys)
+  // Emit groupexpand for all groups
+  const groupNodes = (groupedTree.value as any[]).filter((n: any) => n.type === 'group')
+  groupNodes.forEach((groupNode: any) => {
+    emit('groupexpand', { group: { field: groupNode.field, value: groupNode.value, aggregates: groupNode.aggregates } })
+  })
 }
-function collapseAll() { expanded.value = new Set() }
+function collapseAll() {
+  // Emit groupcollapse for all currently expanded groups
+  const groupNodes = (groupedTree.value as any[]).filter((n: any) => n.type === 'group' && expanded.value.has(n.key))
+  groupNodes.forEach((groupNode: any) => {
+    emit('groupcollapse', { group: { field: groupNode.field, value: groupNode.value, aggregates: groupNode.aggregates } })
+  })
+  expanded.value = new Set()
+}
 
 function sortIconData(c: any) {
   const s = sortState.value.find(s => s.field === String(c.field))
@@ -974,22 +1005,28 @@ function toggleSort(col: any) {
   const idx = sortState.value.findIndex(s => s.field === field)
   if (idx === -1) {
     sortState.value = [{ field, dir: 'asc' }]
-    return
-  }
-
-  const current = sortState.value[idx]
-  if (current.dir === 'asc') {
-    sortState.value = sortState.value.map((descriptor, i) =>
-      i === idx ? { ...descriptor, dir: 'desc' } : descriptor
-    )
   } else {
-    sortState.value = sortState.value.filter(s => s.field !== field)
+    const current = sortState.value[idx]
+    if (current.dir === 'asc') {
+      sortState.value = sortState.value.map((descriptor, i) =>
+        i === idx ? { ...descriptor, dir: 'desc' } : descriptor
+      )
+    } else {
+      sortState.value = sortState.value.filter(s => s.field !== field)
+    }
   }
+  // Emit sort event
+  emit('sort', { sort: [...sortState.value] })
 }
 function setFilterValue(field: string, v: string) {
   const others = filters.value.filter(f => f.field !== field)
-  if (v === '' || v == null) filters.value = others
-  else filters.value = [...others, { field, operator: 'contains', value: v }]
+  if (v === '' || v == null) {
+    filters.value = others
+  } else {
+    filters.value = [...others, { field, operator: 'contains', value: v }]
+  }
+  // Emit filter event
+  emit('filter', { filter: [...filters.value] })
 }
 function getFilterValue(field: string) { return filters.value.find(f => f.field === field)?.value ?? '' }
 
@@ -1075,6 +1112,15 @@ onMounted(() => { updateHScrollState() })
 async function refresh() {
   if (!props.dataProvider) return
   
+  // Emit databinding event before loading data
+  emit('databinding', {
+    sort: sortState.value,
+    filter: filters.value,
+    group: groupState.value || [],
+    page: page.value,
+    pageSize: pageSize.value,
+  })
+  
   // Abort previous request if it exists
   if (abortCtl.value) {
     abortCtl.value.abort()
@@ -1097,6 +1143,8 @@ async function refresh() {
     if (!ctl.signal.aborted) {
       remoteRows.value = rows || []
       remoteTotal.value = typeof total === 'number' ? total : rows?.length ?? 0
+      // Emit databound event after data is loaded
+      emit('databound', remoteRows.value)
     }
   } catch (error: any) {
     // Ignore AbortError - it's expected when aborting requests
@@ -1120,12 +1168,40 @@ async function refresh() {
 }
 
 onMounted(() => {
-  if (props.dataProvider && (props.autoBind ?? true)) refresh()
+  if (props.dataProvider && (props.autoBind ?? true)) {
+    refresh()
+  } else if (!props.dataProvider && props.rows) {
+    // Emit databinding and databound for local data
+    emit('databinding', {
+      sort: sortState.value,
+      filter: filters.value,
+      group: groupState.value || [],
+      page: page.value,
+      pageSize: pageSize.value,
+    })
+    nextTick(() => {
+      emit('databound', visibleRows.value)
+    })
+  }
 })
 
-watch([page, pageSize, sortState, filters], () => {
-  if (props.dataProvider && (props.autoBind ?? true)) refresh()
-})
+watch([page, pageSize, sortState, filters, groupState], () => {
+  if (props.dataProvider && (props.autoBind ?? true)) {
+    refresh()
+  } else if (!props.dataProvider && props.rows) {
+    // Emit databinding for local data when state changes
+    emit('databinding', {
+      sort: sortState.value,
+      filter: filters.value,
+      group: groupState.value || [],
+      page: page.value,
+      pageSize: pageSize.value,
+    })
+    nextTick(() => {
+      emit('databound', visibleRows.value)
+    })
+  }
+}, { deep: true })
 const { focusRow, focusCol, onKeydown } = useKeyboardNav()
 
 const persist = usePersist(props.persistStateKey)
