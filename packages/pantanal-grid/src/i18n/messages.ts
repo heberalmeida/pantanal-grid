@@ -11,7 +11,13 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     selectAll: 'Selecionar todos',
     expandAll: 'expandir tudo', 
     collapseAll: 'recolher tudo', 
-    subtotal: 'Subtotal'
+    subtotal: 'Subtotal',
+    create: 'Criar',
+    save: 'Salvar',
+    cancel: 'Cancelar',
+    edit: 'Editar',
+    destroy: 'Excluir',
+    delete: 'Excluir'
   },
   en: {
     total: 'Total',
@@ -23,7 +29,13 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     selectAll: 'Select all',
     expandAll: 'expand all', 
     collapseAll: 'collapse all', 
-    subtotal: 'Subtotal'
+    subtotal: 'Subtotal',
+    create: 'Create',
+    save: 'Save',
+    cancel: 'Cancel',
+    edit: 'Edit',
+    destroy: 'Delete',
+    delete: 'Delete'
   },
   es: {
     total: 'Total',
@@ -35,7 +47,13 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     selectAll: 'Seleccionar todos',
     expandAll: 'expandir todo', 
     collapseAll: 'colapsar todo', 
-    subtotal: 'Subtotal'
+    subtotal: 'Subtotal',
+    create: 'Crear',
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    edit: 'Editar',
+    destroy: 'Eliminar',
+    delete: 'Eliminar'
   },
  }
 

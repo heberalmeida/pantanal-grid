@@ -34,6 +34,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/custom-cells', component: () => import('./pages/CustomCellsPage.vue') },
   { path: '/styled-table', component: () => import('./pages/StyledTablePage.vue') },
   { path: '/gallery', component: () => import('./pages/ImageGalleryPage.vue') },
+  { path: '/editing', component: () => import('./pages/EditingPage.vue') },
 ]
 
 export const router = createRouter({

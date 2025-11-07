@@ -39,6 +39,7 @@ import {
   faCalendar,
   faBell,
   faWifi,
+  faPen,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -77,6 +78,7 @@ library.add(
   faCalendar,
   faBell,
   faWifi,
+  faPen,
 )
 
 createApp(App)

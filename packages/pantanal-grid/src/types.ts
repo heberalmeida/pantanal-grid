@@ -25,6 +25,12 @@ export interface Messages {
   expandAll: string
   collapseAll: string
   subtotal: string
+  create: string
+  save: string
+  cancel: string
+  edit: string
+  destroy: string
+  delete: string
 }
 
 import type { VNodeChild } from 'vue'
@@ -55,6 +61,17 @@ export interface ColumnDef<T = Row> {
   locked?: boolean | 'left' | 'right'
   slot?: string
   template?: ColumnTemplateFn<T>
+  editor?: (container: HTMLElement, options: { field: string; value: any; row: T }) => void | HTMLElement
+  validation?: {
+    required?: boolean
+    min?: number
+    max?: number
+    pattern?: RegExp | string
+    validator?: (value: any, row: T) => boolean | string
+    [key: string]: any
+  }
+  command?: ('edit' | 'destroy' | 'save' | 'cancel')[]
+  type?: 'string' | 'number' | 'boolean' | 'date'
 }
 
 export type PaginationVariant = 'simple' | 'pages' | 'edges'
@@ -114,6 +131,10 @@ export interface GridProps<T = Row> {
 
   dataProvider?: DataProvider<T>
   autoBind?: boolean
+
+  editable?: boolean | 'inline' | 'popup' | 'batch'
+  toolbar?: ('create' | 'save' | 'cancel')[]
+  navigatable?: boolean
 }
 export interface GridEmits {
   (e: 'update:sort', value: SortDescriptor[]): void
@@ -123,6 +144,14 @@ export interface GridEmits {
   (e: 'selectionChange', value: unknown[]): void
   (e: 'rowClick', value: unknown): void
   (e: 'editCommit', value: { row: unknown; field: string; value: unknown }): void
+  (e: 'edit', value: { row: unknown; field?: string }): void
+  (e: 'editCancel', value: { row: unknown }): void
+  (e: 'editSave', value: { row: unknown }): void
+  (e: 'create', value: { row: unknown }): void
+  (e: 'destroy', value: { row: unknown }): void
+  (e: 'save', value: { changes: Array<{ type: 'create' | 'update' | 'destroy'; row: unknown }> }): void
+  (e: 'cancel', value: void): void
+  (e: 'validationError', value: { row: unknown; field: string; error: string }): void
   (e: 'columnResize', value: { field: string; width: number }): void
   (e: 'columnReorder', value: { from: number; to: number }): void
   (e: 'toggleGroup', key: string, open: boolean): void

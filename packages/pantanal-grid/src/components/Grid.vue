@@ -2,6 +2,35 @@
   <div class="v3grid" :class="{ 'v3grid--cards': isCardMode, 'v3grid--striped': !!props.striped }"
     :dir="props.rtl ? 'rtl' : undefined" ref="rootEl"
     :style="{ '--row-h': props.rowHeight + 'px', '--filter-h': props.rowHeight + 'px', '--footer-h': footerH + 'px' }">
+    <!-- TOOLBAR -->
+    <div v-if="props.toolbar && props.toolbar.length > 0" class="v3grid__toolbar">
+      <button
+        v-if="props.toolbar.includes('create')"
+        type="button"
+        @click="handleCreate"
+        class="v3grid__btn--toolbar"
+      >
+        {{ msgs.create }}
+      </button>
+      <button
+        v-if="props.toolbar.includes('save')"
+        type="button"
+        @click="handleSave"
+        :disabled="!editingState.hasChanges"
+        class="v3grid__btn--toolbar v3grid__btn--primary"
+      >
+        {{ msgs.save }}
+      </button>
+      <button
+        v-if="props.toolbar.includes('cancel')"
+        type="button"
+        @click="handleCancel"
+        :disabled="!editingState.hasChanges"
+        class="v3grid__btn--toolbar"
+      >
+        {{ msgs.cancel }}
+      </button>
+    </div>
     <!-- HSCROLL WRAPPER -->
     <div class="v3grid__scroll" ref="hScrollEl" @scroll="onHScroll"
       :style="{ marginLeft: lockedLeftWidth + 'px', marginRight: lockedRightWidth + 'px' }">
@@ -482,6 +511,7 @@ import { useColumnReorder } from '../composables/reorder'
 import { useKeyboardNav } from '../composables/keyboard'
 import { useVirtual } from '../composables/virtual'
 import { usePersist } from '../composables/persist'
+import { useEditing } from '../composables/editing'
 import { getMessages } from '../i18n/messages'
 import { buildGroupTree, flattenTree, type GroupDescriptor } from '../composables/group'
 import GridPagination from './Pagination.vue'
@@ -614,6 +644,14 @@ const filters = ref<FilterDescriptor[]>(props.filter ?? [])
 const groupState = ref<GroupDescriptor[]>(props.group ?? [])
 const expanded = ref<Set<string>>(new Set())
 watch(() => props.group, v => { if (v) groupState.value = v })
+
+/** EDITING */
+const editingState = useEditing()
+const editMode = computed(() => {
+  if (props.editable === false || props.editable === undefined) return 'none'
+  if (props.editable === true) return 'batch'
+  return props.editable
+})
 
 /** SELECTION */
 const selectedKeys = ref<Set<unknown>>(new Set())
@@ -1203,6 +1241,168 @@ watch([page, pageSize, sortState, filters, groupState], () => {
   }
 }, { deep: true })
 const { focusRow, focusCol, onKeydown } = useKeyboardNav()
+
+// Editing handlers
+function handleCreate() {
+  console.log('handleCreate called')
+  const newRow: Record<string, any> = {}
+  editingState.addNewRow(newRow)
+  emit('create', { row: newRow })
+  
+  if (editMode.value === 'inline' || editMode.value === 'popup') {
+    const tempKey = `__new__${Date.now()}`
+    editingState.startEditingRow(tempKey)
+    newRow[keyFieldStr.value] = tempKey
+    editingState.setPendingChange(tempKey, '__isNew__', true)
+  }
+}
+
+function handleSave() {
+  console.log('handleSave called')
+  const changes: Array<{ type: 'create' | 'update' | 'destroy'; row: unknown }> = []
+  
+  // Collect pending changes
+  editingState.pendingChanges.value.forEach((changesObj, rowKey) => {
+    const row = findRowByKey(rowKey)
+    if (row) {
+      // Apply pending changes to row
+      Object.keys(changesObj).forEach(field => {
+        if (field !== '__isNew__') {
+          row[field] = changesObj[field]
+        }
+      })
+      changes.push({ type: 'update', row })
+    }
+  })
+  
+  // Collect new rows
+  editingState.newRows.value.forEach(row => {
+    changes.push({ type: 'create', row })
+  })
+  
+  // Collect deleted rows
+  editingState.deletedRows.value.forEach(rowKey => {
+    const row = findRowByKey(rowKey)
+    if (row) {
+      changes.push({ type: 'destroy', row })
+    }
+  })
+  
+  console.log('Saving changes:', changes)
+  emit('save', { changes })
+  editingState.clearAll()
+}
+
+function handleCancel() {
+  console.log('handleCancel called')
+  editingState.clearAll()
+  emit('cancel')
+}
+
+function findRowByKey(key: string | number): any {
+  // Search in all rows, not just visible ones
+  const allRows = props.rows || []
+  return allRows.find((row: any) => {
+    const rowKey = row[keyFieldStr.value]
+    return (typeof rowKey === 'number' && typeof key === 'number' && rowKey === key) ||
+           (String(rowKey) === String(key))
+  })
+}
+
+function handleEdit(row: any, field?: string) {
+  const rowKey = row[keyFieldStr.value]
+  editingState.startEditingRow(rowKey)
+  emit('edit', { row, field })
+}
+
+function handleEditSave(row: any) {
+  const rowKey = row[keyFieldStr.value]
+  editingState.stopEditingRow(rowKey)
+  emit('editSave', { row })
+}
+
+function handleEditCancel(row: any) {
+  const rowKey = row[keyFieldStr.value]
+  editingState.stopEditingRow(rowKey)
+  editingState.clearPendingChanges(rowKey)
+  emit('editCancel', { row })
+}
+
+function handleDestroy(row: any) {
+  const rowKey = row[keyFieldStr.value]
+  if (editMode.value === 'batch') {
+    editingState.markAsDeleted(rowKey)
+  }
+  // Always emit destroy event - parent component should handle the actual removal
+  emit('destroy', { row })
+}
+
+function handleCellEdit(row: any, field: string, value: any) {
+  const rowKey = row[keyFieldStr.value]
+  editingState.setPendingChange(rowKey, field, value)
+  emit('editCommit', { row, field, value })
+}
+
+function validateField(column: ColumnDef, value: any, row: any): boolean | string {
+  if (!column.validation) return true
+  
+  const validation = column.validation
+  if (validation.required && (value === undefined || value === null || value === '')) {
+    return validation.validator ? validation.validator(value, row) : 'Field is required'
+  }
+  if (validation.min !== undefined && typeof value === 'number' && value < validation.min) {
+    return `Value must be at least ${validation.min}`
+  }
+  if (validation.max !== undefined && typeof value === 'number' && value > validation.max) {
+    return `Value must be at most ${validation.max}`
+  }
+  if (validation.pattern) {
+    const pattern = typeof validation.pattern === 'string' ? new RegExp(validation.pattern) : validation.pattern
+    if (!pattern.test(String(value))) {
+      return 'Value does not match required pattern'
+    }
+  }
+  if (validation.validator) {
+    const result = validation.validator(value, row)
+    if (result !== true) {
+      return typeof result === 'string' ? result : 'Validation failed'
+    }
+  }
+  return true
+}
+
+function renderEditor(column: ColumnDef, row: any, value: any): HTMLElement | null {
+  if (column.editor) {
+    const container = document.createElement('div')
+    column.editor(container, { field: String(column.field), value, row })
+    return container.firstElementChild as HTMLElement || container
+  }
+  
+  // Default editors based on type
+  const type = column.type || 'string'
+  const input = document.createElement('input')
+  input.className = 'v3grid__editor'
+  input.type = type === 'number' ? 'number' : type === 'boolean' ? 'checkbox' : 'text'
+  input.value = value !== undefined && value !== null ? String(value) : ''
+  
+  if (type === 'number') {
+    input.addEventListener('input', (e) => {
+      const numValue = Number((e.target as HTMLInputElement).value)
+      handleCellEdit(row, String(column.field), isNaN(numValue) ? 0 : numValue)
+    })
+  } else if (type === 'boolean') {
+    input.checked = Boolean(value)
+    input.addEventListener('change', (e) => {
+      handleCellEdit(row, String(column.field), (e.target as HTMLInputElement).checked)
+    })
+  } else {
+    input.addEventListener('input', (e) => {
+      handleCellEdit(row, String(column.field), (e.target as HTMLInputElement).value)
+    })
+  }
+  
+  return input
+}
 
 const persist = usePersist(props.persistStateKey)
 onMounted(() => {
