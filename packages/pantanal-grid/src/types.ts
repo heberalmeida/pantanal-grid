@@ -179,6 +179,9 @@ export interface GridProps<T = Row> {
   sortableMode?: 'single' | 'multiple'
   sortableAllowUnsort?: boolean
   sortableShowIndexes?: boolean
+
+  allowCopy?: boolean
+  allowCopyDelimiter?: string
 }
 export interface GridEmits {
   (e: 'update:sort', value: SortDescriptor[]): void

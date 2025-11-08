@@ -3283,6 +3283,102 @@ function clearSelection() {
 
 ---
 
+## Copy to Clipboard
+
+Pantanal Grid supports copying data to the clipboard. Enable copy functionality by setting the `allowCopy` prop to `true`.
+
+### Basic Usage
+
+Enable copy by setting the `allowCopy` prop to `true`. By default, data is copied in TSV (Tab-Separated Values) format:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :allowCopy="true"
+    key-field="id"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref([
+  { id: 1, name: 'Product 1', price: 10 },
+  { id: 2, name: 'Product 2', price: 20 },
+])
+
+const columns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80 },
+  { field: 'name', title: 'Name', width: 200 },
+  { field: 'price', title: 'Price', width: 120 },
+]
+</script>
+```
+
+### Custom Delimiter
+
+Change the delimiter by setting the `allowCopyDelimiter` prop. For example, to use CSV format:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :allowCopy="true"
+    allowCopyDelimiter=","
+    key-field="id"
+  />
+</template>
+```
+
+### Copy Selected Rows
+
+When selection is enabled, pressing `Ctrl+C` (or `Cmd+C` on Mac) without selecting text will copy all selected rows:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :allowCopy="true"
+    :selectable="'multiple'"
+    key-field="id"
+  />
+</template>
+```
+
+### Copy with Keyboard Navigation
+
+When keyboard navigation is enabled, you can copy the focused cell by pressing `Ctrl+C`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :allowCopy="true"
+    :navigatable="true"
+    key-field="id"
+  />
+</template>
+```
+
+### How It Works
+
+1. **Text Selection**: Select text in the grid and press `Ctrl+C` (or `Cmd+C` on Mac) to copy the selected cells
+2. **Selected Rows**: If rows are selected (with `selectable` enabled), pressing `Ctrl+C` copies all selected rows
+3. **Focused Cell**: If keyboard navigation is enabled and no text is selected, pressing `Ctrl+C` copies the focused cell
+
+### Props
+
+- `allowCopy` (boolean, default: `false`) - Enable copy functionality
+- `allowCopyDelimiter` (string, default: `'\t'`) - Delimiter between items on the same row (TSV format by default)
+
+---
+
 ## Keyboard Navigation
 
 The keyboard support of the Grid is always available when the `navigatable` prop is enabled. To apply the keyboard shortcuts, focus the Grid by clicking the example area and pressing the `Tab` key.

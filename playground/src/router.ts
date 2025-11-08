@@ -41,6 +41,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/sorting', component: () => import('./pages/SortingPage.vue') },
   { path: '/rtl', component: () => import('./pages/RTSPage.vue') },
   { path: '/selection', component: () => import('./pages/SelectionPage.vue') },
+  { path: '/copy', component: () => import('./pages/CopyPage.vue') },
 ]
 
 export const router = createRouter({

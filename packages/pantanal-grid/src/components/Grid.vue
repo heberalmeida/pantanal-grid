@@ -126,9 +126,9 @@
       <!-- BODY (VIRTUAL) -->
       <div v-if="props.virtual" :style="{ height: props.height + 'px', overflowY: 'auto', overflowX: 'hidden' }"
         @scroll="onScroll" 
-        @keydown="props.navigatable && handleKeydown($event)" 
+        @keydown="handleBodyKeydown" 
         @focus="props.navigatable && handleBodyFocus"
-        :tabindex="props.navigatable ? 0 : undefined">
+        :tabindex="props.navigatable || props.allowCopy ? 0 : undefined">
         <div :style="{ height: topPad + 'px' }"></div>
         <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
           :class="props.striped && ((start ?? 0) + r) % 2 === 1 ? 'v3grid__row--alt' : ''"
@@ -178,9 +178,9 @@
 
       <!-- BODY (NÃO VIRTUAL) -->
       <div v-else class="v3grid__body" :style="nonVirtualBodyStyle"
-        @keydown="props.navigatable && handleKeydown($event)"
+        @keydown="handleBodyKeydown"
         @focus="props.navigatable && handleBodyFocus"
-        :tabindex="props.navigatable ? 0 : undefined">
+        :tabindex="props.navigatable || props.allowCopy ? 0 : undefined">
 
         <!-- ====== MODO CARDS ====== -->
         <template v-if="isCardMode">
@@ -745,6 +745,9 @@ const props = withDefaults(defineProps<GridProps>(), {
   sortableShowIndexes: false,
   showFilterRow: true,
   maxBodyHeight: undefined,
+
+  allowCopy: false,
+  allowCopyDelimiter: '\t',
 })
 const emit = defineEmits<GridEmits>()
 const slots = useSlots()
@@ -1891,6 +1894,209 @@ function handleBodyFocus(e: FocusEvent) {
       }
     }
   })
+}
+
+function handleBodyKeydown(e: KeyboardEvent) {
+  // Handle copy functionality (Ctrl+C or Cmd+C)
+  if (props.allowCopy && (e.ctrlKey || e.metaKey) && e.key === 'c') {
+    e.preventDefault()
+    copySelectedCells()
+    return
+  }
+  
+  // Handle keyboard navigation if enabled
+  if (props.navigatable) {
+    handleKeydown(e)
+  }
+}
+
+function copySelectedCells() {
+  if (!props.allowCopy) return
+  
+  // Get selected cells from browser selection
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) {
+    // If no selection, try to copy focused cell or selected rows
+    copyFocusedCellOrSelectedRows()
+    return
+  }
+  
+  const range = selection.getRangeAt(0)
+  const selectedCells = getCellsFromRange(range)
+  
+  if (selectedCells.length === 0) {
+    copyFocusedCellOrSelectedRows()
+    return
+  }
+  
+  // Extract text from selected cells
+  const text = extractTextFromCells(selectedCells)
+  
+  // Copy to clipboard
+  copyToClipboard(text)
+}
+
+function getCellsFromRange(range: Range): HTMLElement[] {
+  const cells: HTMLElement[] = []
+  const container = range.commonAncestorContainer
+  
+  // Find the grid container
+  let gridContainer = container.nodeType === Node.ELEMENT_NODE 
+    ? (container as HTMLElement).closest('.v3grid')
+    : (container.parentElement?.closest('.v3grid') as HTMLElement)
+  
+  if (!gridContainer) return cells
+  
+  // Get all cells in the range
+  const walker = document.createTreeWalker(
+    range.cloneContents(),
+    NodeFilter.SHOW_ELEMENT,
+    (node) => {
+      const el = node as HTMLElement
+      if (el.classList.contains('v3grid__cell') && !el.classList.contains('v3grid__cell--header')) {
+        return NodeFilter.FILTER_ACCEPT
+      }
+      return NodeFilter.FILTER_SKIP
+    }
+  )
+  
+  let node
+  while (node = walker.nextNode()) {
+    cells.push(node as HTMLElement)
+  }
+  
+  // If no cells found in range, try to find cells that intersect with the range
+  if (cells.length === 0) {
+    const allCells = gridContainer.querySelectorAll('.v3grid__cell:not(.v3grid__cell--header)')
+    allCells.forEach(cell => {
+      const cellRange = document.createRange()
+      cellRange.selectNodeContents(cell)
+      if (range.intersectsNode(cell)) {
+        cells.push(cell as HTMLElement)
+      }
+    })
+  }
+  
+  return cells
+}
+
+function extractTextFromCells(cells: HTMLElement[]): string {
+  if (cells.length === 0) return ''
+  
+  // Group cells by row
+  const rows = new Map<number, HTMLElement[]>()
+  
+  cells.forEach(cell => {
+    const row = cell.closest('.v3grid__row')
+    if (!row) return
+    
+    // Find row index
+    const body = row.closest('.v3grid__body')
+    if (!body) return
+    
+    const rowIndex = Array.from(body.children).indexOf(row as Element)
+    if (rowIndex === -1) return
+    
+    if (!rows.has(rowIndex)) {
+      rows.set(rowIndex, [])
+    }
+    rows.get(rowIndex)!.push(cell)
+  })
+  
+  // Sort rows by index
+  const sortedRows = Array.from(rows.entries()).sort((a, b) => a[0] - b[0])
+  
+  // Extract text from each row
+  const lines = sortedRows.map(([rowIndex, rowCells]) => {
+    // Sort cells by column index
+    const sortedCells = rowCells.sort((a, b) => {
+      const aIndex = Array.from(a.parentElement?.children || []).indexOf(a)
+      const bIndex = Array.from(b.parentElement?.children || []).indexOf(b)
+      return aIndex - bIndex
+    })
+    
+    // Extract text from cells
+    return sortedCells.map(cell => {
+      // Get text content, excluding checkbox
+      const text = cell.textContent?.trim() || ''
+      return text
+    }).join(props.allowCopyDelimiter || '\t')
+  })
+  
+  return lines.join('\n')
+}
+
+function copyFocusedCellOrSelectedRows() {
+  // If there are selected rows, copy those
+  if (props.selectable && selectedKeys.value.size > 0) {
+    const selectedRows = visibleRows.value.filter((row: any) => {
+      if (isGroupNode(row) || isGroupFooter(row)) return false
+      const key = row[keyFieldStr.value]
+      return selectedKeys.value.has(key)
+    })
+    
+    if (selectedRows.length > 0) {
+      const text = extractTextFromSelectedRows(selectedRows)
+      copyToClipboard(text)
+      return
+    }
+  }
+  
+  // Otherwise, copy focused cell if navigatable
+  if (props.navigatable && focusRow.value >= 0 && focusCol.value >= 0) {
+    const dataRows = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+    const row = dataRows[focusRow.value]
+    if (row) {
+      const cols = unlockedCols.value
+      const col = cols[focusCol.value]
+      if (col) {
+        const value = columnValue(row, col, focusRow.value)
+        const text = String(value ?? '')
+        copyToClipboard(text)
+      }
+    }
+  }
+}
+
+function extractTextFromSelectedRows(rows: any[]): string {
+  const lines = rows.map(row => {
+    const values = unlockedCols.value.map(col => {
+      const value = columnValue(row, col, 0)
+      return String(value ?? '')
+    })
+    return values.join(props.allowCopyDelimiter || '\t')
+  })
+  return lines.join('\n')
+}
+
+function copyToClipboard(text: string) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(err => {
+      console.error('Failed to copy to clipboard:', err)
+      fallbackCopyToClipboard(text)
+    })
+  } else {
+    fallbackCopyToClipboard(text)
+  }
+}
+
+function fallbackCopyToClipboard(text: string) {
+  const textArea = document.createElement('textarea')
+  textArea.value = text
+  textArea.style.position = 'fixed'
+  textArea.style.left = '-999999px'
+  textArea.style.top = '-999999px'
+  document.body.appendChild(textArea)
+  textArea.focus()
+  textArea.select()
+  
+  try {
+    document.execCommand('copy')
+  } catch (err) {
+    console.error('Fallback copy failed:', err)
+  }
+  
+  document.body.removeChild(textArea)
 }
 
 // Editing handlers
