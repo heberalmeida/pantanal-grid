@@ -42,6 +42,14 @@ export interface Messages {
   sortAsc?: string
   sortDesc?: string
   sortNone?: string
+  columnMenuColumns?: string
+  columnMenuFilter?: string
+  columnMenuSortAscending?: string
+  columnMenuSortDescending?: string
+  columnMenuSettings?: string
+  columnMenuDone?: string
+  columnMenuLock?: string
+  columnMenuUnlock?: string
 }
 
 export interface ColumnTemplateContext<T = Row> {
@@ -182,6 +190,11 @@ export interface GridProps<T = Row> {
 
   allowCopy?: boolean
   allowCopyDelimiter?: string
+
+  columnMenu?: boolean
+  columnMenuColumns?: boolean
+  columnMenuFilterable?: boolean
+  columnMenuSortable?: boolean
 }
 export interface GridEmits {
   (e: 'update:sort', value: SortDescriptor[]): void

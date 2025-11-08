@@ -51,7 +51,7 @@
             @dragstart="props.enableColumnReorder && onDragStart(c._orderIndex, $event)"
             @dragover="props.enableColumnReorder && onDragOver($event)"
             @drop="props.enableColumnReorder && handleHeaderDrop(c._orderIndex)"
-            @click="(c.sortable !== false && (props.sortable || c.sortable === true)) && toggleSort(c)"
+            @click="handleHeaderCellClick(c, $event)"
             @keydown="props.navigatable && handleKeydown($event, undefined, c._idx)">
             <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
               {{ c.title ?? String(c.field) }}
@@ -62,6 +62,19 @@
                   class="v3grid__icon" />
               </template>
             </span>
+
+            <button
+              v-if="props.columnMenu"
+              class="v3grid__column-menu-btn"
+              @click.stop="openColumnMenu(c, $event)"
+              :aria-label="msgs.columnMenuSettings || 'Column menu'"
+              type="button">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                <circle cx="7" cy="3" r="1.5"/>
+                <circle cx="7" cy="7" r="1.5"/>
+                <circle cx="7" cy="11" r="1.5"/>
+              </svg>
+            </button>
 
             <span v-if="props.enableColumnResize && (c.resizable ?? true)" class="v3grid__resizer"
               @mousedown="(e: any) => { onResizeDown(e, c._orderIndex); $emit('columnResize', { field: String(c.field), width: effW(c._orderIndex, c) }) }"></span>
@@ -668,6 +681,97 @@
           @update:pageSize="(s: number) => pageSize = s" />
       </div>
     </div>
+
+    <!-- Column Menu -->
+    <div
+      v-if="columnMenuOpen && columnMenuColumn"
+      ref="columnMenuEl"
+      class="v3grid__column-menu"
+      :style="columnMenuStyle">
+      <div class="v3grid__column-menu-header" v-if="isCardMode">
+        <span>{{ msgs.columnMenuSettings || 'Settings' }}</span>
+        <button @click="closeColumnMenu" class="v3grid__column-menu-close">
+          {{ msgs.columnMenuDone || 'Done' }}
+        </button>
+      </div>
+      <div class="v3grid__column-menu-content">
+        <!-- Columns (Show/Hide) -->
+        <div v-if="props.columnMenuColumns !== false" class="v3grid__column-menu-section">
+          <div class="v3grid__column-menu-title">{{ msgs.columnMenuColumns || 'Columns' }}</div>
+          <div class="v3grid__column-menu-items">
+            <label
+              v-for="col in allColumns"
+              :key="String(col.field)"
+              class="v3grid__column-menu-item">
+              <input
+                type="checkbox"
+                :checked="isColumnVisible(col)"
+                @change="toggleColumnVisibility(col, ($event.target as HTMLInputElement).checked)" />
+              <span>{{ col.title ?? String(col.field) }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Filter -->
+        <div
+          v-if="(props.columnMenuFilterable !== false && (props.filterable || columnMenuColumn.filterable)) && (props.columnMenuFilterable === true || (props.columnMenuFilterable === undefined && props.filterable))"
+          class="v3grid__column-menu-section">
+          <div class="v3grid__column-menu-title">{{ msgs.columnMenuFilter || 'Filter' }}</div>
+          <div class="v3grid__column-menu-items">
+            <button
+              @click="openColumnFilter"
+              class="v3grid__column-menu-action">
+              {{ msgs.columnMenuFilter || 'Filter' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Sort -->
+        <div
+          v-if="(props.columnMenuSortable !== false && (props.sortable || columnMenuColumn.sortable)) && (props.columnMenuSortable === true || (props.columnMenuSortable === undefined && props.sortable)) && (columnMenuColumn.sortable !== false && (props.sortable || columnMenuColumn.sortable === true))"
+          class="v3grid__column-menu-section">
+          <div class="v3grid__column-menu-title">{{ msgs.sortBy || 'Sort by:' }}</div>
+          <div class="v3grid__column-menu-items">
+            <button
+              @click="sortColumnAscending"
+              class="v3grid__column-menu-action">
+              {{ msgs.columnMenuSortAscending || 'Sort Ascending' }}
+            </button>
+            <button
+              @click="sortColumnDescending"
+              class="v3grid__column-menu-action">
+              {{ msgs.columnMenuSortDescending || 'Sort Descending' }}
+            </button>
+            <button
+              v-if="props.sortableAllowUnsort"
+              @click="unsortColumn"
+              class="v3grid__column-menu-action">
+              {{ msgs.sortNone || 'None' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Lock/Unlock -->
+        <div
+          v-if="columnMenuColumn.locked !== undefined || columnMenuColumn.pinned !== undefined"
+          class="v3grid__column-menu-section">
+          <div class="v3grid__column-menu-items">
+            <button
+              v-if="!columnMenuColumn.locked && columnMenuColumn.pinned !== 'left' && columnMenuColumn.pinned !== 'right'"
+              @click="lockColumn"
+              class="v3grid__column-menu-action">
+              {{ msgs.columnMenuLock || 'Lock' }}
+            </button>
+            <button
+              v-else
+              @click="unlockColumn"
+              class="v3grid__column-menu-action">
+              {{ msgs.columnMenuUnlock || 'Unlock' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -748,6 +852,10 @@ const props = withDefaults(defineProps<GridProps>(), {
 
   allowCopy: false,
   allowCopyDelimiter: '\t',
+  columnMenu: false,
+  columnMenuColumns: true,
+  columnMenuFilterable: undefined,
+  columnMenuSortable: undefined,
 })
 const emit = defineEmits<GridEmits>()
 const slots = useSlots()
@@ -877,6 +985,154 @@ const slotColumnDefs = computed<ColumnDef[]>(() => {
 const columns = computed<ColumnDef[]>(() => {
   if (slotColumnDefs.value.length > 0) return slotColumnDefs.value
   return (props.columns ?? []) as ColumnDef[]
+})
+
+/** COLUMN MENU */
+const columnMenuOpen = ref(false)
+const columnMenuColumn = ref<ColumnDef | null>(null)
+const columnMenuEl = ref<HTMLElement | null>(null)
+const columnMenuPosition = ref<{ top: number; left: number }>({ top: 0, left: 0 })
+const visibleColumns = ref<Set<string>>(new Set())
+
+// Initialize visible columns
+watch(() => columns.value, (cols) => {
+  if (visibleColumns.value.size === 0) {
+    cols.forEach(col => {
+      if (col.field) {
+        visibleColumns.value.add(String(col.field))
+      }
+    })
+  }
+}, { immediate: true })
+
+const allColumns = computed(() => columns.value)
+const columnMenuStyle = computed(() => ({
+  position: 'fixed',
+  top: `${columnMenuPosition.value.top}px`,
+  left: `${columnMenuPosition.value.left}px`,
+  zIndex: 1000,
+}) as CSSProperties)
+
+function isColumnVisible(col: ColumnDef): boolean {
+  if (!col.field) return true
+  return visibleColumns.value.has(String(col.field))
+}
+
+function toggleColumnVisibility(col: ColumnDef, visible: boolean) {
+  if (!col.field) return
+  const fieldStr = String(col.field)
+  if (visible) {
+    visibleColumns.value.add(fieldStr)
+  } else {
+    visibleColumns.value.delete(fieldStr)
+  }
+}
+
+function openColumnMenu(col: ColumnDef, event: MouseEvent) {
+  event.stopPropagation()
+  columnMenuColumn.value = col
+  columnMenuOpen.value = true
+  const button = event.currentTarget as HTMLElement
+  const rect = button.getBoundingClientRect()
+  if (rect) {
+    columnMenuPosition.value = {
+      top: rect.bottom + 4,
+      left: rect.left,
+    }
+  }
+  nextTick(() => {
+    document.addEventListener('click', handleClickOutside, true)
+  })
+}
+
+function closeColumnMenu() {
+  columnMenuOpen.value = false
+  columnMenuColumn.value = null
+  document.removeEventListener('click', handleClickOutside, true)
+}
+
+function handleClickOutside(event: MouseEvent) {
+  if (columnMenuEl.value && !columnMenuEl.value.contains(event.target as Node)) {
+    closeColumnMenu()
+  }
+}
+
+function handleHeaderCellClick(col: ColumnDef, event: MouseEvent) {
+  // Don't toggle sort if clicking on menu button (handled by @click.stop)
+  const target = event.target as HTMLElement
+  if (target.closest('.v3grid__column-menu-btn')) {
+    return
+  }
+  if (col.sortable !== false && (props.sortable || col.sortable === true)) {
+    toggleSort(col)
+  }
+}
+
+function sortColumnAscending() {
+  if (!columnMenuColumn.value) return
+  const field = String(columnMenuColumn.value.field)
+  const currentSort = sortState.value.find(s => s.field === field)
+  if (currentSort?.dir === 'asc') {
+    // Already ascending, just close menu
+    closeColumnMenu()
+    return
+  }
+  // Remove existing sort for this field and add ascending sort
+  const newSort = sortState.value.filter(s => s.field !== field)
+  newSort.push({ field, dir: 'asc' })
+  sortState.value = newSort
+  emit('update:sort', newSort)
+  closeColumnMenu()
+}
+
+function sortColumnDescending() {
+  if (!columnMenuColumn.value) return
+  const field = String(columnMenuColumn.value.field)
+  const currentSort = sortState.value.find(s => s.field === field)
+  if (currentSort?.dir === 'desc') {
+    // Already descending, just close menu
+    closeColumnMenu()
+    return
+  }
+  // Remove existing sort for this field and add descending sort
+  const newSort = sortState.value.filter(s => s.field !== field)
+  newSort.push({ field, dir: 'desc' })
+  sortState.value = newSort
+  emit('update:sort', newSort)
+  closeColumnMenu()
+}
+
+function unsortColumn() {
+  if (!columnMenuColumn.value) return
+  const field = String(columnMenuColumn.value.field)
+  const newSort = sortState.value.filter(s => s.field !== field)
+  sortState.value = newSort
+  emit('update:sort', newSort)
+  closeColumnMenu()
+}
+
+function openColumnFilter() {
+  // For now, just enable filter row if not already enabled
+  // In a full implementation, this would open a filter dialog
+  closeColumnMenu()
+}
+
+function lockColumn() {
+  if (!columnMenuColumn.value) return
+  // Implementation would require updating column.pinned or column.locked
+  // This is a placeholder
+  closeColumnMenu()
+}
+
+function unlockColumn() {
+  if (!columnMenuColumn.value) return
+  // Implementation would require updating column.pinned or column.locked
+  // This is a placeholder
+  closeColumnMenu()
+}
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 
 // Sortable columns for card mode
@@ -1553,7 +1809,7 @@ const lockedRightTemplate = computed(() =>
 const unlockedCols = computed(() =>
   orderedCols.value
     .map((c, i) => ({ ...c, _idx: i, _orderIndex: order.value[i] ?? i })) 
-    .filter(c => !c.locked)
+    .filter(c => !c.locked && (c.field ? isColumnVisible(c) : true))
 )
 const footerEl = ref<HTMLElement | null>(null)
 const footerH = ref(0)

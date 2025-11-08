@@ -42,6 +42,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/rtl', component: () => import('./pages/RTSPage.vue') },
   { path: '/selection', component: () => import('./pages/SelectionPage.vue') },
   { path: '/copy', component: () => import('./pages/CopyPage.vue') },
+  { path: '/column-menu', component: () => import('./pages/ColumnMenuPage.vue') },
 ]
 
 export const router = createRouter({

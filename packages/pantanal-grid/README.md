@@ -3283,6 +3283,141 @@ function clearSelection() {
 
 ---
 
+## Column Menu
+
+The Grid supports a column menu that provides quick access to column operations such as showing/hiding columns, filtering, sorting, and locking/unlocking columns.
+
+### Basic Usage
+
+Enable the column menu by setting the `columnMenu` prop to `true`:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+import { ref } from 'vue'
+
+const rows = ref([
+  { id: 1, name: 'Product 1', price: 99.99, category: 'Electronics' },
+  { id: 2, name: 'Product 2', price: 49.99, category: 'Clothing' },
+  // ... more data
+])
+
+const columns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80 },
+  { field: 'name', title: 'Name', width: 200 },
+  { field: 'price', title: 'Price', width: 120 },
+  { field: 'category', title: 'Category', width: 150 },
+]
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :columnMenu="true"
+    key-field="id"
+  />
+</template>
+```
+
+### Column Menu Features
+
+The column menu supports the following features:
+
+#### Show/Hide Columns
+
+By default, the column menu allows users to show and hide columns. Control this with the `columnMenuColumns` prop:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :columnMenu="true"
+  :columnMenuColumns="true"
+  key-field="id"
+/>
+```
+
+#### Sorting
+
+When `sortable` is enabled, the column menu includes sorting options. Control this with the `columnMenuSortable` prop:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :columnMenu="true"
+  :sortable="true"
+  :columnMenuSortable="true"
+  key-field="id"
+/>
+```
+
+#### Filtering
+
+When `filterable` is enabled, the column menu includes filtering options. Control this with the `columnMenuFilterable` prop:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :columnMenu="true"
+  :filterable="true"
+  :columnMenuFilterable="true"
+  key-field="id"
+/>
+```
+
+### Column Menu Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `columnMenu` | `boolean` | `false` | Enable/disable the column menu |
+| `columnMenuColumns` | `boolean` | `true` | Show/hide the column visibility option in the menu |
+| `columnMenuFilterable` | `boolean \| undefined` | `undefined` | Show/hide the filter option in the menu. If `undefined`, follows `filterable` prop |
+| `columnMenuSortable` | `boolean \| undefined` | `undefined` | Show/hide the sort option in the menu. If `undefined`, follows `sortable` prop |
+
+### Column Menu Messages
+
+Customize the column menu messages using the `messages` prop:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :columnMenu="true"
+  :messages="{
+    columnMenuColumns: 'Colunas',
+    columnMenuFilter: 'Filtrar',
+    columnMenuSortAscending: 'Ordenar Crescente',
+    columnMenuSortDescending: 'Ordenar Decrescente',
+    columnMenuSettings: 'Configurações',
+    columnMenuDone: 'Concluído',
+    columnMenuLock: 'Travar',
+    columnMenuUnlock: 'Destravar',
+  }"
+  key-field="id"
+/>
+```
+
+### Custom Column Menu Configuration
+
+Combine the various column menu props to customize which features appear in the menu:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :columnMenu="true"
+  :columnMenuColumns="true"
+  :sortable="true"
+  :columnMenuSortable="true"
+  :filterable="true"
+  :columnMenuFilterable="false"
+  key-field="id"
+/>
+```
+
 ## Copy to Clipboard
 
 Pantanal Grid supports copying data to the clipboard. Enable copy functionality by setting the `allowCopy` prop to `true`.
