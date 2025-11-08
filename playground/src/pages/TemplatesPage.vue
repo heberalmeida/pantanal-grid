@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { PantanalGrid, type ColumnDef, type FilterDescriptor, type Row } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
-import exampleSource from './TemplatesPage.vue?raw'
 
 // Toolbar Template Example
 const toolbarRows = ref([
@@ -10,24 +9,33 @@ const toolbarRows = ref([
   { id: 2, name: 'Product 2', price: 149.99, category: 'Clothing' },
   { id: 3, name: 'Product 3', price: 79.99, category: 'Electronics' },
   { id: 4, name: 'Product 4', price: 199.99, category: 'Home' },
+  { id: 5, name: 'Product 5', price: 89.99, category: 'Electronics' },
+  { id: 6, name: 'Product 6', price: 129.99, category: 'Clothing' },
 ])
 
 const toolbarColumns: ColumnDef[] = [
   { field: 'id', title: 'ID', width: 80 },
   { field: 'name', title: 'Name', width: 200 },
   { field: 'price', title: 'Price', width: 120 },
-  { field: 'category', title: 'Category', width: 150 },
+  { field: 'category', title: 'Category', width: 150, filterable: true },
 ]
+
+// Filter state
+const toolbarFilter = ref<FilterDescriptor[]>([])
+
+// Toolbar template with unique ID
+const toolbarTemplateId = 'toolbar-template-' + Math.random().toString(36).substr(2, 9)
+const categoryFilterId = 'category-filter-' + Math.random().toString(36).substr(2, 9)
 
 const toolbarTemplate = () => {
   return `
     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
       <div>
-        <button class="v3grid__btn--toolbar" onclick="alert('Refresh clicked')">🔄 Refresh</button>
+        <button class="v3grid__btn--toolbar" id="refresh-btn-${toolbarTemplateId}">🔄 Refresh</button>
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
-        <label for="category-filter">Filter by category:</label>
-        <select id="category-filter" style="padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <label for="${categoryFilterId}">Filter by category:</label>
+        <select id="${categoryFilterId}" style="padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px;">
           <option value="">All</option>
           <option value="Electronics">Electronics</option>
           <option value="Clothing">Clothing</option>
@@ -37,6 +45,124 @@ const toolbarTemplate = () => {
     </div>
   `
 }
+
+// Setup toolbar event listeners after mount
+const gridRef = ref<InstanceType<typeof PantanalGrid> | null>(null)
+
+// Watch for filter changes and update select value
+watch(toolbarFilter, (newFilter) => {
+  nextTick(() => {
+    const categorySelect = document.getElementById(categoryFilterId) as HTMLSelectElement
+    if (categorySelect) {
+      const categoryFilter = newFilter.find(f => f.field === 'category')
+      if (categoryFilter && categoryFilter.value) {
+        categorySelect.value = String(categoryFilter.value)
+      } else {
+        categorySelect.value = ''
+      }
+    }
+  })
+}, { deep: true })
+
+// Setup event listeners
+function setupToolbarListeners() {
+  const categorySelect = document.getElementById(categoryFilterId) as HTMLSelectElement
+  const refreshBtn = document.getElementById('refresh-btn-' + toolbarTemplateId) as HTMLButtonElement
+  
+  if (categorySelect && !categorySelect.dataset.listenerAttached) {
+    categorySelect.dataset.listenerAttached = 'true'
+    
+    categorySelect.addEventListener('change', (e) => {
+      const target = e.target as HTMLSelectElement
+      const value = target.value
+      
+      if (value) {
+        // Set filter for category field
+        toolbarFilter.value = [
+          { field: 'category', operator: 'eq', value: value }
+        ]
+      } else {
+        // Clear filter
+        toolbarFilter.value = []
+      }
+    })
+    
+    // Initialize select value based on current filter
+    const categoryFilter = toolbarFilter.value.find(f => f.field === 'category')
+    if (categoryFilter && categoryFilter.value) {
+      categorySelect.value = String(categoryFilter.value)
+    }
+  }
+  
+  if (refreshBtn && !refreshBtn.dataset.listenerAttached) {
+    refreshBtn.dataset.listenerAttached = 'true'
+    
+    refreshBtn.addEventListener('click', () => {
+      // Refresh the grid - you can add custom logic here
+      alert('Refresh clicked - Grid data refreshed')
+    })
+  }
+}
+
+// MutationObserver for toolbar
+let toolbarObserver: MutationObserver | null = null
+
+onMounted(() => {
+  // Use MutationObserver to detect when toolbar is rendered
+  toolbarObserver = new MutationObserver((mutations, obs) => {
+    const categorySelect = document.getElementById(categoryFilterId)
+    if (categorySelect) {
+      setupToolbarListeners()
+      obs.disconnect() // Stop observing once we found the element
+      toolbarObserver = null
+    }
+  })
+  
+  // Start observing after nextTick
+  nextTick(() => {
+    // Try immediately first
+    setupToolbarListeners()
+    
+    // If not found, start observing
+    const categorySelect = document.getElementById(categoryFilterId)
+    if (!categorySelect && toolbarObserver && gridRef.value) {
+      // Try to find the grid container element
+      const gridEl = (gridRef.value as any).$el || document.querySelector('.v3grid')
+      
+      if (gridEl) {
+        // Observe only the grid container for better performance
+        toolbarObserver.observe(gridEl, {
+          childList: true,
+          subtree: true
+        })
+      } else {
+        // Fallback: observe document body
+        toolbarObserver.observe(document.body, {
+          childList: true,
+          subtree: true
+        })
+      }
+      
+      // Fallback: stop observing after 3 seconds
+      setTimeout(() => {
+        if (toolbarObserver) {
+          toolbarObserver.disconnect()
+          toolbarObserver = null
+        }
+        // Final attempt
+        setupToolbarListeners()
+      }, 3000)
+    }
+  })
+})
+
+onBeforeUnmount(() => {
+  // Cleanup observer on unmount
+  if (toolbarObserver) {
+    toolbarObserver.disconnect()
+    toolbarObserver = null
+  }
+})
 
 // Row Template Example
 interface Employee {
@@ -61,35 +187,37 @@ const rowTemplateColumns: ColumnDef[] = [
   { field: 'employeeID', title: 'ID', width: 110 },
 ]
 
-const rowTemplate = (row: Employee, rowIndex: number) => {
+const rowTemplate = (row: Row, rowIndex: number) => {
+  const emp = row as Employee
   return `
-    <tr data-uid="${row.id}" style="background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 100%); padding: 20px;">
+    <tr data-uid="${emp.id}" style="background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 100%); padding: 20px;">
       <td class="details" style="width: 400px;">
-        <span class="name" style="display: block; font-size: 1.6em;">${row.firstName} ${row.lastName}</span>
-        <span class="title" style="display: block; padding-top: 1.6em;">Title: ${row.title}</span>
+        <span class="name" style="display: block; font-size: 1.6em;">${emp.firstName} ${emp.lastName}</span>
+        <span class="title" style="display: block; padding-top: 1.6em;">Title: ${emp.title}</span>
       </td>
       <td class="country" style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 50px; font-weight: bold; color: #898989; text-align: center;">
-        ${row.country}
+        ${emp.country}
       </td>
       <td class="employeeID" style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 50px; font-weight: bold; color: #898989; text-align: center;">
-        ${row.employeeID}
+        ${emp.employeeID}
       </td>
     </tr>
   `
 }
 
-const altRowTemplate = (row: Employee, rowIndex: number) => {
+const altRowTemplate = (row: Row, rowIndex: number) => {
+  const emp = row as Employee
   return `
-    <tr class="k-alt" data-uid="${row.id}" style="background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 100%); padding: 20px;">
+    <tr class="k-alt" data-uid="${emp.id}" style="background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 100%); padding: 20px;">
       <td class="details" style="width: 400px;">
-        <span class="name" style="display: block; font-size: 1.6em;">${row.firstName} ${row.lastName}</span>
-        <span class="title" style="display: block; padding-top: 1.6em;">Title: ${row.title}</span>
+        <span class="name" style="display: block; font-size: 1.6em;">${emp.firstName} ${emp.lastName}</span>
+        <span class="title" style="display: block; padding-top: 1.6em;">Title: ${emp.title}</span>
       </td>
       <td class="country" style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 50px; font-weight: bold; color: #898989; text-align: center;">
-        ${row.country}
+        ${emp.country}
       </td>
       <td class="employeeID" style="font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 50px; font-weight: bold; color: #898989; text-align: center;">
-        ${row.employeeID}
+        ${emp.employeeID}
       </td>
     </tr>
   `
@@ -155,11 +283,12 @@ const masterDetailColumns: ColumnDef[] = [
   { field: 'title', title: 'Title', width: 200 },
 ]
 
-const detailTemplate = (row: EmployeeWithOrders, rowIndex: number) => {
-  const orders = row.orders || []
+const detailTemplate = (row: Row, rowIndex: number) => {
+  const emp = row as EmployeeWithOrders
+  const orders = emp.orders || []
   return `
     <div style="padding: 20px; background: #f5f5f5; border-top: 2px solid #ddd;">
-      <h4 style="margin: 0 0 10px 0; font-size: 16px; font-weight: bold;">Orders for ${row.firstName} ${row.lastName}</h4>
+      <h4 style="margin: 0 0 10px 0; font-size: 16px; font-weight: bold;">Orders for ${emp.firstName} ${emp.lastName}</h4>
       <table style="width: 100%; border-collapse: collapse;">
         <thead>
           <tr style="background: #e0e0e0;">
@@ -184,7 +313,215 @@ const detailTemplate = (row: EmployeeWithOrders, rowIndex: number) => {
   `
 }
 
-const codeSnippet = exampleSource
+// Code snippets for each example
+const getToolbarTemplateCode = () => {
+  const scriptTag = '<script setup lang="ts">'
+  const scriptClose = '</' + 'script>'
+  const refOpen = 'ref<'
+  const refClose = '>'
+  const filterType = 'FilterDescriptor[]'
+  return scriptTag + `
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef, type FilterDescriptor } from '@pantanal/grid'
+
+const toolbarRows = ref([
+  { id: 1, name: 'Product 1', price: 99.99, category: 'Electronics' },
+  { id: 2, name: 'Product 2', price: 149.99, category: 'Clothing' },
+  { id: 3, name: 'Product 3', price: 79.99, category: 'Electronics' },
+  { id: 4, name: 'Product 4', price: 199.99, category: 'Home' },
+])
+
+const toolbarColumns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80 },
+  { field: 'name', title: 'Name', width: 200 },
+  { field: 'price', title: 'Price', width: 120 },
+  { field: 'category', title: 'Category', width: 150, filterable: true },
+]
+
+const toolbarFilter = ` + refOpen + filterType + refClose + `([])
+
+const toolbarTemplate = () => {
+  return \`<div style="display: flex; justify-content: space-between;">
+    <button class="v3grid__btn--toolbar">🔄 Refresh</button>
+    <select id="category-filter">
+      <option value="">All</option>
+      <option value="Electronics">Electronics</option>
+      <option value="Clothing">Clothing</option>
+      <option value="Home">Home</option>
+    </select>
+  </div>\`
+}
+
+// Setup event listeners to connect filter dropdown to grid filter
+` + scriptClose + `
+
+<template>
+  <PantanalGrid
+    :rows="toolbarRows"
+    :columns="toolbarColumns"
+    key-field="id"
+    :toolbar="toolbarTemplate"
+    v-model:filter="toolbarFilter"
+    responsive="table"
+  />
+</template>`
+}
+const toolbarTemplateCode = getToolbarTemplateCode()
+
+const getRowTemplateCode = () => {
+  const scriptTag = '<script setup lang="ts">'
+  const scriptClose = '</' + 'script>'
+  const refOpen = 'ref<'
+  const refClose = '>'
+  const employeeType = 'Employee[]'
+  return scriptTag + `
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+interface Employee {
+  id: number
+  firstName: string
+  lastName: string
+  title: string
+  country: string
+  employeeID: number
+}
+
+const employeeRows = ` + refOpen + employeeType + refClose + `([
+  { id: 1, firstName: 'Nancy', lastName: 'Davolio', title: 'Sales Representative', country: 'USA', employeeID: 1 },
+  { id: 2, firstName: 'Andrew', lastName: 'Fuller', title: 'Vice President', country: 'UK', employeeID: 2 },
+])
+
+const rowTemplateColumns: ColumnDef[] = [
+  { field: 'details', title: 'Details', width: 400 },
+  { field: 'country', title: 'Country', width: 110 },
+  { field: 'employeeID', title: 'ID', width: 110 },
+]
+
+const rowTemplate = (row: Employee, rowIndex: number) => {
+  return \`<tr data-uid="\${row.id}">
+    <td class="details">
+      <span class="name">\${row.firstName} \${row.lastName}</span>
+      <span class="title">Title: \${row.title}</span>
+    </td>
+    <td class="country">\${row.country}</td>
+    <td class="employeeID">\${row.employeeID}</td>
+  </tr>\`
+}
+
+const altRowTemplate = (row: Employee, rowIndex: number) => {
+  return \`<tr class="k-alt" data-uid="\${row.id}">
+    <td class="details">
+      <span class="name">\${row.firstName} \${row.lastName}</span>
+      <span class="title">Title: \${row.title}</span>
+    </td>
+    <td class="country">\${row.country}</td>
+    <td class="employeeID">\${row.employeeID}</td>
+  </tr>\`
+}
+` + scriptClose + `
+
+<template>
+  <PantanalGrid
+    :rows="employeeRows"
+    :columns="rowTemplateColumns"
+    key-field="id"
+    :row-template="rowTemplate"
+    :alt-row-template="altRowTemplate"
+    :striped="true"
+    responsive="table"
+  />
+</template>`
+}
+const rowTemplateCode = getRowTemplateCode()
+
+const getMasterDetailTemplateCode = () => {
+  const scriptTag = '<script setup lang="ts">'
+  const scriptClose = '</' + 'script>'
+  const refOpen = 'ref<'
+  const refClose = '>'
+  const employeeWithOrdersType = 'EmployeeWithOrders[]'
+  return scriptTag + `
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+interface Order {
+  id: number
+  orderID: number
+  employeeID: number
+  shipCountry: string
+  shipAddress: string
+  shipName: string
+}
+
+interface EmployeeWithOrders {
+  id: number
+  firstName: string
+  lastName: string
+  title: string
+  country: string
+  employeeID: number
+  orders?: Order[]
+}
+
+const employeeWithOrdersRows = ` + refOpen + employeeWithOrdersType + refClose + `([
+  {
+    id: 1,
+    firstName: 'Nancy',
+    lastName: 'Davolio',
+    title: 'Sales Representative',
+    country: 'USA',
+    employeeID: 1,
+    orders: [
+      { id: 1, orderID: 10248, employeeID: 1, shipCountry: 'USA', shipAddress: '507 - 20th Ave. E. Apt. 2A', shipName: 'Vins et alcools Chevalier' },
+    ],
+  },
+])
+
+const masterDetailColumns: ColumnDef[] = [
+  { field: 'firstName', title: 'First Name', width: 110 },
+  { field: 'lastName', title: 'Last Name', width: 110 },
+  { field: 'country', title: 'Country', width: 110 },
+  { field: 'title', title: 'Title', width: 200 },
+]
+
+const detailTemplate = (row: EmployeeWithOrders, rowIndex: number) => {
+  const orders = row.orders || []
+  return \`<div style="padding: 20px;">
+    <h4>Orders for \${row.firstName} \${row.lastName}</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Ship Country</th>
+          <th>Ship Address</th>
+          <th>Ship Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        \${orders.map(order => \`<tr>
+          <td>\${order.orderID}</td>
+          <td>\${order.shipCountry}</td>
+          <td>\${order.shipAddress}</td>
+          <td>\${order.shipName}</td>
+        </tr>\`).join('')}
+      </tbody>
+    </table>
+  </div>\`
+}
+` + scriptClose + `
+
+<template>
+  <PantanalGrid
+    :rows="employeeWithOrdersRows"
+    :columns="masterDetailColumns"
+    key-field="id"
+    :detail-template="detailTemplate"
+    responsive="table"
+  />
+</template>`
+}
+const masterDetailTemplateCode = getMasterDetailTemplateCode()
 </script>
 
 <template>
@@ -205,13 +542,15 @@ const codeSnippet = exampleSource
       </p>
 
       <PantanalGrid
+        ref="gridRef"
         :rows="toolbarRows"
         :columns="toolbarColumns as any"
         key-field="id"
         :toolbar="toolbarTemplate"
+        v-model:filter="toolbarFilter"
         responsive="table"
       />
-      <ExampleCode :source="codeSnippet" />
+      <ExampleCode :source="toolbarTemplateCode" />
     </article>
 
     <!-- Row Template Example -->
@@ -230,7 +569,7 @@ const codeSnippet = exampleSource
         :striped="true"
         responsive="table"
       />
-      <ExampleCode :source="codeSnippet" />
+      <ExampleCode :source="rowTemplateCode" />
     </article>
 
     <!-- Master-Detail Template Example -->
@@ -252,7 +591,7 @@ const codeSnippet = exampleSource
           responsive="table"
         />
       </div>
-      <ExampleCode :source="codeSnippet" />
+      <ExampleCode :source="masterDetailTemplateCode" />
     </article>
   </div>
 </template>
