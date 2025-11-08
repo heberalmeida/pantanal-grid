@@ -2727,7 +2727,7 @@ function getCommandLabel(cmd: string | { name: string; text?: string }): string 
   }
 }
 
-function getCommandContent(cmd: string | { name: string; text?: string; template?: string | ((row: any) => string) }, row: any, column?: ColumnDef): string {
+function getCommandContent(cmd: string | { name: string; text?: string; template?: string | ((row: any) => string) }, row: any, _column?: ColumnDef): string {
   if (isCommandObject(cmd)) {
     if (cmd.template) {
       if (typeof cmd.template === 'function') {
@@ -2741,7 +2741,7 @@ function getCommandContent(cmd: string | { name: string; text?: string; template
   return getCommandLabel(cmd)
 }
 
-function getCommandIconClass(cmd: string | { name: string; iconClass?: string }, column?: ColumnDef): string | undefined {
+function getCommandIconClass(cmd: string | { name: string; iconClass?: string }, _column?: ColumnDef): string | undefined {
   if (isCommandObject(cmd)) {
     return cmd.iconClass
   }
@@ -2755,7 +2755,7 @@ function getCommandIconClass(cmd: string | { name: string; iconClass?: string },
   }
 }
 
-function getCommandClasses(cmd: string | { name: string; className?: string }, column?: ColumnDef): string {
+function getCommandClasses(cmd: string | { name: string; className?: string }, _column?: ColumnDef): string {
   const baseClass = 'v3grid__btn--command'
   if (isCommandObject(cmd)) {
     const cmdName = cmd.name
@@ -2765,7 +2765,7 @@ function getCommandClasses(cmd: string | { name: string; className?: string }, c
   return `${baseClass} ${baseClass}--${cmd}`
 }
 
-function shouldShowCommand(cmd: string | { name: string; visible?: (row: any) => boolean }, row: any, column?: ColumnDef): boolean {
+function shouldShowCommand(cmd: string | { name: string; visible?: (row: any) => boolean }, row: any, _column?: ColumnDef): boolean {
   // Check custom visible function
   if (isCommandObject(cmd) && cmd.visible) {
     return cmd.visible(row)
@@ -2784,7 +2784,7 @@ function shouldShowCommand(cmd: string | { name: string; visible?: (row: any) =>
   return true
 }
 
-function handleCommand(cmd: string | { name: string; click?: (e: MouseEvent, row: any) => void }, row: any, column?: ColumnDef, event?: MouseEvent) {
+function handleCommand(cmd: string | { name: string; click?: (e: MouseEvent, row: any) => void }, row: any, _column?: ColumnDef, event?: MouseEvent) {
   // Check for custom click handler
   if (isCommandObject(cmd) && cmd.click) {
     cmd.click(event || new MouseEvent('click'), row)

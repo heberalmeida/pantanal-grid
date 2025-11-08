@@ -896,7 +896,7 @@ const groupHeaderTemplateColumns: ColumnDef[] = [
     field: 'category',
     title: 'Category',
     width: 150,
-    groupHeaderColumnTemplate: (group, column) => {
+    groupHeaderColumnTemplate: (group, _column) => {
       return `<strong style="color: #10b981; font-size: 1.1em;">📁 ${group.value}</strong> <span style="font-size: 0.875rem; color: #6b7280;">(${group.items.length} items)</span>`
     },
   },
