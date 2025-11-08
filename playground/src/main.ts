@@ -43,6 +43,7 @@ import {
   faFilter,
   faKeyboard,
   faFileLines,
+  faArrowDownWideShort
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -85,6 +86,7 @@ library.add(
   faFilter,
   faKeyboard,
   faFileLines,
+  faArrowDownWideShort
 )
 
 createApp(App)

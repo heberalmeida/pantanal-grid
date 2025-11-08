@@ -21,6 +21,10 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     filterAll: 'Todos',
     filterTrue: 'Sim',
     filterFalse: 'Não',
+    sortBy: 'Ordenar por:',
+    sortAsc: 'Crescente',
+    sortDesc: 'Decrescente',
+    sortNone: 'Nenhum',
   },
   en: {
     total: 'Total',
@@ -42,6 +46,10 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     filterAll: 'All',
     filterTrue: 'Yes',
     filterFalse: 'No',
+    sortBy: 'Sort by:',
+    sortAsc: 'Ascending',
+    sortDesc: 'Descending',
+    sortNone: 'None',
   },
   es: {
     total: 'Total',
@@ -63,6 +71,10 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     filterAll: 'Todos',
     filterTrue: 'Sí',
     filterFalse: 'No',
+    sortBy: 'Ordenar por:',
+    sortAsc: 'Ascendente',
+    sortDesc: 'Descendente',
+    sortNone: 'Ninguno',
   },
 }
 

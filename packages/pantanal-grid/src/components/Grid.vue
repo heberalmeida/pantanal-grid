@@ -51,12 +51,16 @@
             @dragstart="props.enableColumnReorder && onDragStart(c._orderIndex, $event)"
             @dragover="props.enableColumnReorder && onDragOver($event)"
             @drop="props.enableColumnReorder && handleHeaderDrop(c._orderIndex)"
-            @click="toggleSort(c)"
+            @click="(c.sortable !== false && (props.sortable || c.sortable === true)) && toggleSort(c)"
             @keydown="props.navigatable && handleKeydown($event, undefined, c._idx)">
             <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
               {{ c.title ?? String(c.field) }}
-              <img v-if="sortIconData(c)" :src="sortIconData(c)!.src" :alt="sortIconData(c)!.alt"
-                class="v3grid__icon" />
+              <template v-if="sortIconData(c)">
+                <span v-if="props.sortableMode === 'multiple' && props.sortableShowIndexes && sortIconData(c)?.index" 
+                  class="v3grid__sort-index">{{ sortIconData(c)!.index }}</span>
+                <img :src="sortIconData(c)!.src" :alt="sortIconData(c)!.alt"
+                  class="v3grid__icon" />
+              </template>
             </span>
 
             <span v-if="props.enableColumnResize && (c.resizable ?? true)" class="v3grid__resizer"
@@ -180,6 +184,50 @@
 
         <!-- ====== MODO CARDS ====== -->
         <template v-if="isCardMode">
+          <!-- Card Sorting Controls -->
+          <div v-if="props.sortable || sortableColumns.length > 0" 
+            class="v3grid__card-sort-controls">
+            <div class="v3grid__card-sort-controls__container">
+              <label class="v3grid__card-sort-controls__label">{{ msgs.sortBy || 'Sort by:' }}</label>
+              <select 
+                v-model="cardSortField" 
+                class="v3grid__card-sort-controls__select"
+                @change="handleCardSortFieldChange">
+                <option value="">{{ msgs.sortNone || 'None' }}</option>
+                <option 
+                  v-for="c in sortableColumns" 
+                  :key="String(c.field)" 
+                  :value="String(c.field)">
+                  {{ c.title ?? String(c.field) }}
+                </option>
+              </select>
+              <select 
+                v-if="cardSortField"
+                v-model="cardSortDir" 
+                class="v3grid__card-sort-controls__select"
+                @change="handleCardSortDirChange">
+                <option value="asc">{{ msgs.sortAsc || 'Ascending' }}</option>
+                <option value="desc">{{ msgs.sortDesc || 'Descending' }}</option>
+              </select>
+              <template v-if="props.sortableMode === 'multiple' && sortState.length > 0">
+                <span class="v3grid__card-sort-controls__badges">
+                  <span 
+                    v-for="(s, idx) in sortState" 
+                    :key="`${s.field}-${idx}`" 
+                    class="v3grid__card-sort-controls__badge">
+                    {{ getColumnTitle(s.field) }} {{ s.dir === 'asc' ? '↑' : '↓' }}
+                    <button 
+                      v-if="props.sortableAllowUnsort"
+                      @click="removeSortByField(s.field)"
+                      class="v3grid__card-sort-controls__badge-close"
+                      aria-label="Remove sort">
+                      ×
+                    </button>
+                  </span>
+                </span>
+              </template>
+            </div>
+          </div>
           <div class="v3grid__cards">
             <!-- AGRUPADO -->
             <template v-if="isGrouped">
@@ -430,10 +478,14 @@
       <!-- Cabeçalho (agora com gridTemplateColumns) -->
       <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: lockedLeftTemplate }">
         <div v-for="(c, i) in lockedLeftCols" :key="'h-left-' + i" class="v3grid__cell v3grid__headercell"
-          @click="toggleSort(c)">
+          @click="(c.sortable !== false && (props.sortable || c.sortable === true)) && toggleSort(c)">
           <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
             {{ c.title ?? String(c.field) }}
-            <img v-if="sortIconData(c)" :src="sortIconData(c)!.src" :alt="sortIconData(c)!.alt" class="v3grid__icon" />
+            <template v-if="sortIconData(c)">
+              <span v-if="props.sortableMode === 'multiple' && props.sortableShowIndexes && sortIconData(c)?.index" 
+                class="v3grid__sort-index">{{ sortIconData(c)!.index }}</span>
+              <img :src="sortIconData(c)!.src" :alt="sortIconData(c)!.alt" class="v3grid__icon" />
+            </template>
           </span>
         </div>
 
@@ -663,7 +715,7 @@ const props = withDefaults(defineProps<GridProps>(), {
   page: 1,
   pageSize: 20,
   selectable: false,
-  locale: 'pt',
+  locale: 'en',
   virtual: false,
   height: 420,
   rowHeight: 44,
@@ -686,6 +738,10 @@ const props = withDefaults(defineProps<GridProps>(), {
   pageable: true,
   pageableAlwaysVisible: true,
   pageablePageSizes: () => [10, 20, 50, 100],
+  sortable: false,
+  sortableMode: 'single',
+  sortableAllowUnsort: true,
+  sortableShowIndexes: false,
   showFilterRow: true,
   maxBodyHeight: undefined,
 })
@@ -745,7 +801,7 @@ function collectSlotColumns(children: VNodeArrayChildren | VNode | undefined, ac
 }
 
 /** i18n */
-const msgs = computed(() => getMessages(String(props.locale ?? 'pt'), props.messages))
+const msgs = computed(() => getMessages(String(props.locale ?? 'en'), props.messages))
 
 /** RESPONSIVO / CARD MODE */
 const isCardMode = computed<boolean>(() => {
@@ -760,6 +816,10 @@ const sortState = ref<SortDescriptor[]>(props.sort ?? [])
 const page = ref(props.page!)
 const pageSize = ref(props.pageSize!)
 const filters = ref<FilterDescriptor[]>(props.filter ?? [])
+
+// Card sorting controls
+const cardSortField = ref<string>('')
+const cardSortDir = ref<'asc' | 'desc'>('asc')
 
 /** GROUPING */
 const groupState = ref<GroupDescriptor[]>(props.group ?? [])
@@ -813,6 +873,14 @@ const slotColumnDefs = computed<ColumnDef[]>(() => {
 const columns = computed<ColumnDef[]>(() => {
   if (slotColumnDefs.value.length > 0) return slotColumnDefs.value
   return (props.columns ?? []) as ColumnDef[]
+})
+
+// Sortable columns for card mode
+const sortableColumns = computed(() => {
+  return columns.value.filter(c => {
+    const isColumnSortable = c.sortable !== false && (props.sortable || c.sortable === true)
+    return isColumnSortable
+  })
 })
 const { order, onDragStart, onDragOver, onDrop, mapColumns, ensureOrder } = useColumnReorder(() => columns.value)
 const { widths, onMouseDown: onResizeDown, ensureWidths } = useColumnResize(() => columns.value)
@@ -1168,29 +1236,172 @@ function collapseAll() {
 }
 
 function sortIconData(c: any) {
-  const s = sortState.value.find(s => s.field === String(c.field))
-  if (!s) return null
-  return s.dir === 'asc' ? { src: iconOrderUp, alt: 'sort-asc' } : { src: iconOrderDown, alt: 'sort-desc' }
+  const field = String(c.field)
+  const idx = sortState.value.findIndex(s => s.field === field)
+  if (idx === -1) return null
+  const s = sortState.value[idx]
+  const result: { src: string; alt: string; index?: number } = s.dir === 'asc' 
+    ? { src: iconOrderUp, alt: 'sort-asc' } 
+    : { src: iconOrderDown, alt: 'sort-desc' }
+  
+  // Add index if multiple sorting mode and showIndexes is enabled
+  if (props.sortableMode === 'multiple' && props.sortableShowIndexes) {
+    result.index = idx + 1
+  }
+  
+  return result
 }
 function toggleSort(col: any) {
-  if (!col.sortable) return
+  // Check if column is sortable (either via column.sortable or global sortable prop)
+  const isColumnSortable = col.sortable !== false && (props.sortable || col.sortable === true)
+  if (!isColumnSortable) return
+  
   const field = String(col.field)
-  const idx = sortState.value.findIndex(s => s.field === field)
-  if (idx === -1) {
-    sortState.value = [{ field, dir: 'asc' }]
+  const currentIdx = sortState.value.findIndex(s => s.field === field)
+  const isMultiple = props.sortableMode === 'multiple'
+  
+  if (currentIdx === -1) {
+    // Column is not currently sorted
+    if (isMultiple) {
+      // Add to existing sort state
+      sortState.value = [...sortState.value, { field, dir: 'asc' }]
+    } else {
+      // Replace existing sort state
+      sortState.value = [{ field, dir: 'asc' }]
+    }
   } else {
-    const current = sortState.value[idx]
+    // Column is already sorted
+    const current = sortState.value[currentIdx]
     if (current.dir === 'asc') {
+      // Change to descending
       sortState.value = sortState.value.map((descriptor, i) =>
-        i === idx ? { ...descriptor, dir: 'desc' } : descriptor
+        i === currentIdx ? { ...descriptor, dir: 'desc' } : descriptor
       )
     } else {
-      sortState.value = sortState.value.filter(s => s.field !== field)
+      // Remove from sort state (only if allowUnsort is true)
+      if (props.sortableAllowUnsort) {
+        sortState.value = sortState.value.filter((_, i) => i !== currentIdx)
+      } else {
+        // Cycle back to ascending
+        sortState.value = sortState.value.map((descriptor, i) =>
+          i === currentIdx ? { ...descriptor, dir: 'asc' } : descriptor
+        )
+      }
     }
   }
+  
+  emit('update:sort', [...sortState.value])
   // Emit sort event
   emit('sort', { sort: [...sortState.value] })
+  
+  // Update card sort controls
+  if (sortState.value.length > 0) {
+    const firstSort = sortState.value[0]
+    cardSortField.value = firstSort.field
+    cardSortDir.value = firstSort.dir
+  } else {
+    cardSortField.value = ''
+    cardSortDir.value = 'asc'
+  }
 }
+
+// Card sorting handlers
+function handleCardSortFieldChange() {
+  if (!cardSortField.value) {
+    // Clear sorting
+    if (props.sortableMode === 'multiple') {
+      // In multiple mode, keep other sorts
+      return
+    } else {
+      sortState.value = []
+    }
+  } else {
+    const field = cardSortField.value
+    const currentIdx = sortState.value.findIndex(s => s.field === field)
+    
+    if (currentIdx === -1) {
+      // Add new sort
+      if (props.sortableMode === 'multiple') {
+        sortState.value = [...sortState.value, { field, dir: cardSortDir.value }]
+      } else {
+        sortState.value = [{ field, dir: cardSortDir.value }]
+      }
+    } else {
+      // Update existing sort
+      sortState.value = sortState.value.map((s, i) =>
+        i === currentIdx ? { ...s, dir: cardSortDir.value } : s
+      )
+    }
+  }
+  
+  emit('update:sort', [...sortState.value])
+  emit('sort', { sort: [...sortState.value] })
+}
+
+function handleCardSortDirChange() {
+  if (!cardSortField.value) return
+  
+  const field = cardSortField.value
+  const currentIdx = sortState.value.findIndex(s => s.field === field)
+  
+  if (currentIdx !== -1) {
+    sortState.value = sortState.value.map((s, i) =>
+      i === currentIdx ? { ...s, dir: cardSortDir.value } : s
+    )
+    
+    emit('update:sort', [...sortState.value])
+    emit('sort', { sort: [...sortState.value] })
+  }
+}
+
+function getColumnTitle(field: string): string {
+  const col = columns.value.find(c => String(c.field) === field)
+  return col?.title ?? field
+}
+
+function removeSortByField(field: string) {
+  sortState.value = sortState.value.filter(s => s.field !== field)
+  emit('update:sort', [...sortState.value])
+  emit('sort', { sort: [...sortState.value] })
+  
+  // Update card controls
+  if (sortState.value.length > 0) {
+    const firstSort = sortState.value[0]
+    cardSortField.value = firstSort.field
+    cardSortDir.value = firstSort.dir
+  } else {
+    cardSortField.value = ''
+    cardSortDir.value = 'asc'
+  }
+}
+
+// Watch sortState to update card controls
+watch([sortState, isCardMode], ([newSort, isCard]) => {
+  if (isCard) {
+    if (newSort.length > 0) {
+      const firstSort = newSort[0]
+      if (cardSortField.value !== firstSort.field) {
+        cardSortField.value = firstSort.field
+      }
+      if (cardSortDir.value !== firstSort.dir) {
+        cardSortDir.value = firstSort.dir
+      }
+    } else {
+      cardSortField.value = ''
+      cardSortDir.value = 'asc'
+    }
+  }
+}, { deep: true })
+
+// Initialize card controls from sortState
+watch(() => props.sort, (newSort) => {
+  if (newSort && newSort.length > 0 && isCardMode.value) {
+    const firstSort = newSort[0]
+    cardSortField.value = firstSort.field
+    cardSortDir.value = firstSort.dir
+  }
+}, { immediate: true })
+
 function setFilterValue(field: string, v: string) {
   const column = columns.value.find(c => String(c.field) === field)
   const operator = column?.filterableDefaultOperator || column?.filterableOperator || getDefaultOperatorForType(column?.type)
@@ -1358,11 +1569,8 @@ onMounted(() => {
 onMounted(() => { updateHScrollState() })
 async function refresh() {
   if (props.dataProvider === undefined || typeof props.dataProvider !== 'function') {
-    console.log('refresh() - dataProvider is not a function:', typeof props.dataProvider, props.dataProvider)
     return
   }
-  
-  console.log('refresh() - calling dataProvider with:', { page: page.value, pageSize: pageSize.value })
   
   // Emit databinding event before loading data
   emit('databinding', {
@@ -1391,19 +1599,14 @@ async function refresh() {
       signal: ctl.signal,
     })
     
-    console.log('refresh() - dataProvider returned:', { rows: result.rows?.length, total: result.total })
-    
     const { rows, total } = result
     
     // Only update if the request wasn't aborted (e.g., by a newer request)
     if (!ctl.signal.aborted) {
       remoteRows.value = rows || []
       remoteTotal.value = typeof total === 'number' ? total : rows?.length ?? 0
-      console.log('refresh() - updated remoteRows:', remoteRows.value.length, 'remoteTotal:', remoteTotal.value)
       // Emit databound event after data is loaded
       emit('databound', remoteRows.value)
-    } else {
-      console.log('refresh() - request was aborted')
     }
   } catch (error: any) {
     // Ignore AbortError - it's expected when aborting requests
@@ -1428,9 +1631,7 @@ async function refresh() {
 
 onMounted(() => {
   const hasDataProvider = props.dataProvider !== undefined && typeof props.dataProvider === 'function'
-  console.log('Grid onMounted:', { hasDataProvider, autoBind: props.autoBind ?? true, dataProviderType: typeof props.dataProvider })
   if (hasDataProvider && (props.autoBind ?? true)) {
-    console.log('Grid onMounted - calling refresh()')
     refresh()
   } else if (!hasDataProvider && props.rows) {
     // Emit databinding and databound for local data

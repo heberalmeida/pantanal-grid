@@ -38,6 +38,10 @@ export interface Messages {
   filterAll: string
   filterTrue: string
   filterFalse: string
+  sortBy?: string
+  sortAsc?: string
+  sortDesc?: string
+  sortNone?: string
 }
 
 export interface ColumnTemplateContext<T = Row> {
@@ -170,6 +174,11 @@ export interface GridProps<T = Row> {
   editable?: boolean | 'inline' | 'popup' | 'batch'
   toolbar?: ('create' | 'save' | 'cancel')[]
   navigatable?: boolean
+
+  sortable?: boolean
+  sortableMode?: 'single' | 'multiple'
+  sortableAllowUnsort?: boolean
+  sortableShowIndexes?: boolean
 }
 export interface GridEmits {
   (e: 'update:sort', value: SortDescriptor[]): void

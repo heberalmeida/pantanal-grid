@@ -328,6 +328,150 @@ const aggregates = { price: ['sum', 'avg'], id: ['count'] } as const
 
 ---
 
+## Sorting
+
+Pantanal Grid supports sorting by one or multiple columns. Enable sorting by setting the `sortable` prop to `true` and configure individual columns with `sortable: true`.
+
+### Basic Usage (Single Column)
+
+Enable single-column sorting by setting `sortable` to `true` and `sortableMode` to `'single'`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :sortable="true"
+    :sortableMode="'single'"
+    :sort="sort"
+    @update:sort="sort = $event"
+    key-field="id"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef, type SortDescriptor } from '@pantanal/grid'
+
+const rows = ref([
+  { id: 1, name: 'Alpha', price: 9.9 },
+  { id: 2, name: 'Beta', price: 19.5 },
+  { id: 3, name: 'Gamma', price: 29.9 },
+])
+
+const columns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true },
+  { field: 'name', title: 'Name', width: 200, sortable: true },
+  { field: 'price', title: 'Price', width: 120, sortable: true },
+]
+
+const sort = ref<SortDescriptor[]>([])
+</script>
+```
+
+### Multi-Column Sorting
+
+Enable multi-column sorting by setting `sortableMode` to `'multiple'`. You can sort by multiple columns by clicking on different column headers:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :sortable="true"
+    :sortableMode="'multiple'"
+    :sortableShowIndexes="true"
+    :sort="sort"
+    @update:sort="sort = $event"
+    key-field="id"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef, type SortDescriptor } from '@pantanal/grid'
+
+const sort = ref<SortDescriptor[]>([])
+// ... rows and columns
+</script>
+```
+
+### Sorting Options
+
+- `sortable` - Enable/disable sorting globally (default: `false`)
+- `sortableMode` - Sorting mode: `'single'` or `'multiple'` (default: `'single'`)
+- `sortableAllowUnsort` - Allow users to remove sorting by clicking a sorted column (default: `true`)
+- `sortableShowIndexes` - Show sorting order indices in multi-column mode (default: `false`)
+
+### Column-Level Sortable
+
+Control sorting per column by setting `sortable` on individual columns. Only columns with `sortable: true` will be sortable:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true },
+  { field: 'name', title: 'Name', width: 200, sortable: false },
+  { field: 'price', title: 'Price', width: 120, sortable: true },
+]
+</script>
+```
+
+### Server-Side Sorting
+
+For large datasets, use server-side sorting by setting `serverSide` to `true` and providing a `dataProvider` function that handles sorting:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    :sortable="true"
+    :sortableMode="'multiple'"
+    :serverSide="true"
+    :sort="sort"
+    :dataProvider="dataProvider"
+    @update:sort="sort = $event"
+    key-field="id"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef, type SortDescriptor, type DataProvider } from '@pantanal/grid'
+
+const sort = ref<SortDescriptor[]>([])
+
+const dataProvider: DataProvider = async (args) => {
+  // Apply sorting on server
+  let data = [...allData]
+  if (args.sort && args.sort.length > 0) {
+    data.sort((a, b) => {
+      for (const s of args.sort!) {
+        const av = (a as any)[s.field]
+        const bv = (b as any)[s.field]
+        if (av === bv) continue
+        const dir = s.dir === 'asc' ? 1 : -1
+        return av > bv ? dir : -dir
+      }
+      return 0
+    })
+  }
+  
+  // Apply pagination
+  const start = (args.page - 1) * args.pageSize
+  const end = start + args.pageSize
+  
+  return {
+    rows: data.slice(start, end),
+    total: data.length,
+  }
+}
+</script>
+```
+
+---
+
 ## Grid Events
 
 The Grid component emits various events that allow you to react to user interactions and data operations.

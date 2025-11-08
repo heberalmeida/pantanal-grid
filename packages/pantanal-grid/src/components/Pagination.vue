@@ -173,7 +173,7 @@ const props = withDefaults(defineProps<{
   variant: 'simple',
   showTotal: true,
   maxPages: 5,
-  locale: 'pt',
+  locale: 'en',
   showText: true,
   showIcons: true,
   showPageSize: false,

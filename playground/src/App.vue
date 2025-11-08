@@ -98,6 +98,7 @@ const navSections = [
       { to: '/grid-events', label: 'Grid events', icon: 'bell' },
       { to: '/editing', label: 'Editing', icon: 'pen' },
       { to: '/filtering', label: 'Filtering', icon: 'filter' },
+      { to: '/sorting', label: 'Sorting', icon: 'arrow-down-wide-short' },
       { to: '/keyboard-navigation', label: 'Keyboard Navigation', icon: 'keyboard' },
       { to: '/paging', label: 'Paging', icon: 'file-lines' },
       { to: '/table-only', label: 'Table-only layout', icon: 'table-list' },
