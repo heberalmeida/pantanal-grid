@@ -1,5 +1,11 @@
 # @pantanal/grid
 
+## 1.1.3
+
+### Patch Changes
+
+- add functions datasource
+
 ## 1.1.2
 
 ### Patch Changes
