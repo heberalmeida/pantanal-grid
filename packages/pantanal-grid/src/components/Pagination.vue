@@ -2,6 +2,7 @@
   <div
     class="pg pg-row"
     :class="tailwind ? 'flex flex-wrap items-center gap-3' : ''"
+    :dir="rtl ? 'rtl' : undefined"
   >
     <!-- total -->
     <div
@@ -169,6 +170,7 @@ const props = withDefaults(defineProps<{
   dense?: boolean
 
   tailwind?: boolean
+  rtl?: boolean
 }>(), {
   variant: 'simple',
   showTotal: true,

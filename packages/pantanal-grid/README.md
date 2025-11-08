@@ -3040,6 +3040,86 @@ Pagination supports multiple locales:
 
 ---
 
+## RTL Support
+
+Pantanal Grid supports right-to-left (RTL) layouts for languages like Arabic, Hebrew, and Persian. Enable RTL by setting the `rtl` prop to `true`.
+
+### Basic Usage
+
+Enable RTL support by setting the `rtl` prop to `true`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :rtl="true"
+    :sortable="true"
+    :filterable="true"
+    :pageable="true"
+    key-field="id"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref([
+  { id: 1, name: 'Alpha', price: 9.9 },
+  { id: 2, name: 'Beta', price: 19.5 },
+])
+
+const columns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80 },
+  { field: 'name', title: 'Name', width: 200 },
+  { field: 'price', title: 'Price', width: 120 },
+]
+</script>
+```
+
+### Dynamic RTL Toggle
+
+You can dynamically toggle RTL mode using a reactive prop:
+
+```vue
+<template>
+  <div>
+    <label>
+      <input type="checkbox" v-model="rtlEnabled" />
+      Enable RTL
+    </label>
+    
+    <PantanalGrid
+      :rows="rows"
+      :columns="columns"
+      :rtl="rtlEnabled"
+      key-field="id"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rtlEnabled = ref(false)
+// ... rows and columns
+</script>
+```
+
+### RTL Features
+
+When RTL is enabled, the grid automatically:
+- Inverts text alignment and layout direction
+- Swaps border positions (left/right)
+- Adjusts column resizer position
+- Mirrors locked columns (left becomes right)
+- Adjusts spacing and margins for proper RTL layout
+- Works seamlessly with sorting, filtering, grouping, and pagination
+
+---
+
 ## Keyboard Navigation
 
 The keyboard support of the Grid is always available when the `navigatable` prop is enabled. To apply the keyboard shortcuts, focus the Grid by clicking the example area and pressing the `Tab` key.

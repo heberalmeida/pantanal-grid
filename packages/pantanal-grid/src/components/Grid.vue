@@ -663,7 +663,8 @@
         <GridPagination :page="page" :pageSize="pageSize" :total="total" :variant="props.paginationVariant ?? 'simple'"
           :showText="props.paginationShowText ?? true" :showIcons="props.paginationShowIcons ?? true"
           :showTotal="props.paginationShowTotal ?? true" :maxPages="props.paginationMaxPages ?? 5"
-          :locale="props.locale" :messages="props.messages" @update:page="(p: number) => page = p"
+          :locale="props.locale" :messages="props.messages" :rtl="props.rtl"
+          @update:page="(p: number) => page = p"
           @update:pageSize="(s: number) => pageSize = s" />
       </div>
     </div>

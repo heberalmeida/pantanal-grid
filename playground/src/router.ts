@@ -39,6 +39,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/keyboard-navigation', component: () => import('./pages/KeyboardNavigationPage.vue') },
   { path: '/paging', component: () => import('./pages/PagingPage.vue') },
   { path: '/sorting', component: () => import('./pages/SortingPage.vue') },
+  { path: '/rtl', component: () => import('./pages/RTSPage.vue') },
 ]
 
 export const router = createRouter({
