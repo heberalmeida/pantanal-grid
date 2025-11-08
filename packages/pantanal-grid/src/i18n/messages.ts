@@ -52,6 +52,7 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     filterableMessagesOperator: 'Operador',
     filterableMessagesValue: 'Valor',
     filterableMessagesCheckAll: 'Selecionar todos',
+    noRecords: 'Nenhum registro encontrado',
   },
   en: {
     total: 'Total',
@@ -104,6 +105,7 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     filterableMessagesOperator: 'Operator',
     filterableMessagesValue: 'Value',
     filterableMessagesCheckAll: 'Check all',
+    noRecords: 'No records available',
   },
   es: {
     total: 'Total',
@@ -156,6 +158,7 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     filterableMessagesOperator: 'Operador',
     filterableMessagesValue: 'Valor',
     filterableMessagesCheckAll: 'Seleccionar todos',
+    noRecords: 'No hay registros disponibles',
   },
 }
 

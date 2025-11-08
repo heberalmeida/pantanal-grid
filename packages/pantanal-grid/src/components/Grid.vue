@@ -85,7 +85,8 @@
             </button>
 
             <span v-if="props.enableColumnResize && (c.resizable ?? true)" class="v3grid__resizer"
-              @mousedown="(e: any) => { onResizeDown(e, c._orderIndex); $emit('columnResize', { field: String(c.field), width: effW(c._orderIndex, c) }) }"></span>
+              @mousedown="(e: any) => { onResizeDown(e, c._orderIndex); handleColumnResize(c, effW(c._orderIndex, c)) }"
+              :style="{ width: (props.columnResizeHandleWidth ?? 4) * 2 + 'px', right: '-' + (props.columnResizeHandleWidth ?? 4) + 'px' }"></span>
           </div>
         </template>
       </div>
@@ -685,6 +686,20 @@
         </div>
       </div>
 
+      <!-- NO RECORDS MESSAGE -->
+      <div v-if="props.noRecords !== false && visibleRows.length === 0" 
+        class="v3grid__no-records">
+        <template v-if="typeof props.noRecords === 'object' && props.noRecords.template">
+          <div v-html="props.noRecords.template"></div>
+        </template>
+        <template v-else-if="typeof props.noRecords === 'object' && props.noRecords.message">
+          <div>{{ props.noRecords.message }}</div>
+        </template>
+        <template v-else>
+          <div>{{ msgs.noRecords || 'No records available' }}</div>
+        </template>
+      </div>
+
     </div>
 
     <!-- FOOTER / PAGING -->
@@ -1098,8 +1113,10 @@ function toggleColumnVisibility(col: ColumnDef, visible: boolean) {
   const fieldStr = String(col.field)
   if (visible) {
     visibleColumns.value.add(fieldStr)
+    emit('columnshow', { column: col, field: fieldStr })
   } else {
     visibleColumns.value.delete(fieldStr)
+    emit('columnhide', { column: col, field: fieldStr })
   }
 }
 
@@ -1108,6 +1125,19 @@ function openColumnMenu(col: ColumnDef, event: MouseEvent) {
   columnMenuColumn.value = col
   columnMenuOpen.value = true
   const button = event.currentTarget as HTMLElement
+  
+  // Emit columnmenuopen event
+  if (col.field) {
+    emit('columnmenuopen', { column: col, field: String(col.field) })
+  }
+  
+  // Find menu container for columnmenuinit event
+  nextTick(() => {
+    const menuContainer = rootEl.value?.querySelector('.v3grid__column-menu')
+    if (menuContainer && col.field) {
+      emit('columnmenuinit', { column: col, field: String(col.field), container: menuContainer as HTMLElement })
+    }
+  })
   const rect = button.getBoundingClientRect()
   if (rect) {
     columnMenuPosition.value = {
@@ -1193,16 +1223,22 @@ function openColumnFilter() {
 }
 
 function lockColumn() {
-  if (!columnMenuColumn.value) return
-  // Implementation would require updating column.pinned or column.locked
-  // This is a placeholder
+  if (!columnMenuColumn.value || !columnMenuColumn.value.field) return
+  const col = columnMenuColumn.value
+  const fieldStr = String(col.field)
+  // In a full implementation, this would update column.pinned or column.locked
+  // For now, just emit the event
+  emit('columnlock', { column: col, field: fieldStr })
   closeColumnMenu()
 }
 
 function unlockColumn() {
-  if (!columnMenuColumn.value) return
-  // Implementation would require updating column.pinned or column.locked
-  // This is a placeholder
+  if (!columnMenuColumn.value || !columnMenuColumn.value.field) return
+  const col = columnMenuColumn.value
+  const fieldStr = String(col.field)
+  // In a full implementation, this would update column.pinned or column.locked
+  // For now, just emit the event
+  emit('columnunlock', { column: col, field: fieldStr })
   closeColumnMenu()
 }
 
@@ -2122,38 +2158,13 @@ const keyboardNav = useKeyboardNav({
       emit('columnReorder', { from: fromOrderIdx, to: toOrderIdx })
     }
   },
-  onFocusFirst: () => {
-    const firstCell = rootEl.value?.querySelector('.v3grid__row .v3grid__cell[tabindex="0"]') as HTMLElement
-    firstCell?.focus()
-  },
-  onFocusLast: () => {
-    const cells = rootEl.value?.querySelectorAll('.v3grid__row .v3grid__cell[tabindex="0"]')
-    const lastCell = cells?.[cells.length - 1] as HTMLElement
-    lastCell?.focus()
-  },
-  onFocusFirstInRow: () => {
-    const row = rootEl.value?.querySelector(`.v3grid__row:nth-child(${keyboardNav.focusRow.value + 1})`) as HTMLElement
-    const firstCell = row?.querySelector('.v3grid__cell[tabindex="0"]') as HTMLElement
-    firstCell?.focus()
-  },
-  onFocusLastInRow: () => {
-    const row = rootEl.value?.querySelector(`.v3grid__row:nth-child(${keyboardNav.focusRow.value + 1})`) as HTMLElement
-    const cells = row?.querySelectorAll('.v3grid__cell[tabindex="0"]')
-    const lastCell = cells?.[cells.length - 1] as HTMLElement
-    lastCell?.focus()
-  },
-  getGroupKey: (rowIndex: number) => {
-    const row = visibleRows.value[rowIndex]
-    if (isGroupNode(row)) {
-      return row.key
-    }
-    return null
-  },
-  isGroupRow: (rowIndex: number) => {
-    const row = visibleRows.value[rowIndex]
-    return isGroupNode(row)
-  },
 })
+
+function handleColumnResize(col: ColumnDef, width: number) {
+  if (col.field) {
+    emit('columnResize', { field: String(col.field), width })
+  }
+}
 
 const { focusRow, focusCol, onKeydown: handleKeydown } = keyboardNav
 
@@ -3056,18 +3067,36 @@ onMounted(() => {
    widths.value = loaded.widths.map((x: number | undefined) =>
      (x != null && x > 0) ? x : undefined
    ) as any
-}
+  }
+  // Load persisted selection if persistSelection is enabled
+  if (props.persistSelection && loaded.selectedKeys && Array.isArray(loaded.selectedKeys)) {
+    selectedKeys.value = new Set(loaded.selectedKeys)
+  }
 })
 watch([sortState, page, pageSize, filters, order, widths], () => {
-  persist.save({
+  const dataToSave: any = {
     sort: sortState.value,
     page: page.value,
     pageSize: pageSize.value,
     filters: filters.value,
     order: order.value,
-    widths: widths.value
-  } as any)
-})
+    widths: widths.value,
+  }
+  // Save selection if persistSelection is enabled
+  if (props.persistSelection) {
+    dataToSave.selectedKeys = Array.from(selectedKeys.value)
+  }
+  persist.save(dataToSave)
+}, { deep: true })
+
+// Watch selectedKeys for persistSelection
+if (props.persistSelection) {
+  watch(selectedKeys, () => {
+    const dataToSave: any = persist.load() || {}
+    dataToSave.selectedKeys = Array.from(selectedKeys.value)
+    persist.save(dataToSave)
+  }, { deep: true })
+}
 
 onBeforeUnmount(() => {
   rootObserver?.disconnect()

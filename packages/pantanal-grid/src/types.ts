@@ -69,6 +69,7 @@ export interface Messages {
   filterableMessagesOperator?: string
   filterableMessagesValue?: string
   filterableMessagesCheckAll?: string
+  noRecords?: string
 }
 
 export interface ColumnTemplateContext<T = Row> {
@@ -150,6 +151,25 @@ export interface GridProps<T = Row> {
 
   locale?: Locale
   messages?: Partial<Messages>
+
+  // Row templates
+  rowTemplate?: string | ((row: T, rowIndex: number) => string)
+  altRowTemplate?: string | ((row: T, rowIndex: number) => string)
+
+  // No records message
+  noRecords?: boolean | { template?: string; message?: string }
+
+  // Column resize handle width
+  columnResizeHandleWidth?: number
+
+  // Persist selection
+  persistSelection?: boolean
+
+  // Scrollable configuration
+  scrollable?: boolean | {
+    virtual?: boolean
+    endless?: boolean
+  }
 
   persistStateKey?: string
 
@@ -261,6 +281,12 @@ export interface GridEmits {
   (e: 'group', options: { groups: GroupDescriptor[] }): void
   (e: 'groupexpand', options: { group: { field: string; value: unknown; aggregates?: Record<string, any> } }): void
   (e: 'groupcollapse', options: { group: { field: string; value: unknown; aggregates?: Record<string, any> } }): void
+  (e: 'columnhide', options: { column: ColumnDef; field: string }): void
+  (e: 'columnshow', options: { column: ColumnDef; field: string }): void
+  (e: 'columnlock', options: { column: ColumnDef; field: string }): void
+  (e: 'columnunlock', options: { column: ColumnDef; field: string }): void
+  (e: 'columnmenuinit', options: { column: ColumnDef; field: string; container: HTMLElement }): void
+  (e: 'columnmenuopen', options: { column: ColumnDef; field: string }): void
 }
 
 export type AggregateName = 'sum' | 'avg' | 'min' | 'max' | 'count'
