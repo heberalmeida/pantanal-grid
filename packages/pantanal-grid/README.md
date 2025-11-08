@@ -3120,6 +3120,169 @@ When RTL is enabled, the grid automatically:
 
 ---
 
+## Selection
+
+Pantanal Grid supports row selection functionality. You can enable single-row selection, multiple-row selection, and checkbox-based selection.
+
+### Single-Row Selection
+
+Enable single-row selection by setting the `selectable` prop to `"single"`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :selectable="'single'"
+    key-field="id"
+    @selectionChange="selected = $event"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref([
+  { id: 1, name: 'Product 1', price: 10 },
+  { id: 2, name: 'Product 2', price: 20 },
+])
+
+const columns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80 },
+  { field: 'name', title: 'Name', width: 200 },
+  { field: 'price', title: 'Price', width: 120 },
+]
+
+const selected = ref([])
+</script>
+```
+
+### Multiple-Row Selection
+
+Enable multiple-row selection by setting the `selectable` prop to `"multiple"`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :selectable="'multiple'"
+    key-field="id"
+    @selectionChange="selected = $event"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref([...]) // Your data
+const columns: ColumnDef[] = [...] // Your columns
+const selected = ref([])
+</script>
+```
+
+### Selection with Keyboard Navigation
+
+When `navigatable` is enabled, you can use keyboard shortcuts to select rows:
+
+- `Space` - Select/deselect current row
+- `Ctrl+Space` - Toggle selection (multiple mode)
+- `Shift+Space` - Range selection (multiple mode)
+- `Shift+Arrow Keys` - Extend selection (multiple mode)
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :selectable="'multiple'"
+    :navigatable="true"
+    key-field="id"
+    @selectionChange="selected = $event"
+  />
+</template>
+```
+
+### Selection with Paging
+
+Selection works with paging. When you navigate between pages, selected rows are maintained within each page. Use the `persistSelection` prop (when available) to persist selection across pages.
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :selectable="'multiple'"
+    :pageable="true"
+    :page="page"
+    :pageSize="pageSize"
+    key-field="id"
+    @selectionChange="selected = $event"
+    @update:page="page = $event"
+    @update:pageSize="pageSize = $event"
+  />
+</template>
+```
+
+### Programmatic Selection
+
+You can programmatically control selection by listening to `@selectionChange` events and managing the selection state:
+
+```vue
+<template>
+  <div>
+    <button @click="selectAll">Select All</button>
+    <button @click="clearSelection">Clear Selection</button>
+    
+    <PantanalGrid
+      :rows="rows"
+      :columns="columns"
+      :selectable="'multiple'"
+      key-field="id"
+      @selectionChange="selected = $event"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref([...]) // Your data
+const columns: ColumnDef[] = [...] // Your columns
+const selected = ref([])
+
+function selectAll() {
+  selected.value = rows.value.map(r => r.id)
+}
+
+function clearSelection() {
+  selected.value = []
+}
+</script>
+```
+
+### Selection Events
+
+- `selectionChange` - Emitted when selection changes
+  ```typescript
+  (selectedKeys: unknown[]) => void
+  ```
+- `rowClick` - Emitted when a row is clicked
+  ```typescript
+  (row: unknown) => void
+  ```
+
+### Selection Modes
+
+- `false` (default) - Selection disabled
+- `"single"` - Single-row selection
+- `"multiple"` - Multiple-row selection with checkboxes
+
+---
+
 ## Keyboard Navigation
 
 The keyboard support of the Grid is always available when the `navigatable` prop is enabled. To apply the keyboard shortcuts, focus the Grid by clicking the example area and pressing the `Tab` key.

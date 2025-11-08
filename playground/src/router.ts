@@ -40,6 +40,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/paging', component: () => import('./pages/PagingPage.vue') },
   { path: '/sorting', component: () => import('./pages/SortingPage.vue') },
   { path: '/rtl', component: () => import('./pages/RTSPage.vue') },
+  { path: '/selection', component: () => import('./pages/SelectionPage.vue') },
 ]
 
 export const router = createRouter({

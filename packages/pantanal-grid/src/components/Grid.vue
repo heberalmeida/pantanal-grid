@@ -1851,6 +1851,12 @@ function handleCellFocus(rowIndex: number, colIndex: number) {
 
 function handleCellClick(row: any, column: any, rowIndex: number, colIndex: number) {
   emit('rowClick', row)
+  // Handle row selection on cell click (only if selectable is enabled and not clicking on checkbox)
+  // The checkbox column doesn't have a field, so we check for that
+  if (props.selectable && column && column.field !== undefined && column.field !== null) {
+    // Only select if clicking on a data cell (not checkbox column which has no field)
+    toggleRow(row)
+  }
   if (props.navigatable) {
     // Convert actual rowIndex to data row index for keyboard nav
     const dataRowIndex = getDataRowIndexFromActual(rowIndex)

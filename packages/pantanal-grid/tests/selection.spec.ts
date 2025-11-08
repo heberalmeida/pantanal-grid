@@ -13,10 +13,72 @@ describe('PantanalGrid selection', () => {
   ]
 
   it('select all visible from header checkbox', async () => {
-    const wrapper = mount(Grid, { props: { rows, columns, selectable:'multiple' } })
+    const wrapper = mount(Grid, { props: { rows, columns, selectable:'multiple', keyField: 'id' } })
     const headerCb = wrapper.find('.v3grid__head input[type="checkbox"]')
     await headerCb.setValue(true)
     const cbs = wrapper.findAll('.v3grid__row input[type="checkbox"]')
     expect(cbs.every(cb => (cb.element as HTMLInputElement).checked)).toBe(true)
+  })
+
+  it('should show checkbox column when selectable is enabled', () => {
+    const wrapper = mount(Grid, { props: { rows, columns, selectable:'multiple', keyField: 'id' } })
+    const checkboxes = wrapper.findAll('.v3grid__head input[type="checkbox"]')
+    expect(checkboxes.length).toBe(1)
+  })
+
+  it('should not show checkbox column when selectable is false', () => {
+    const wrapper = mount(Grid, { props: { rows, columns, selectable: false, keyField: 'id' } })
+    const checkboxes = wrapper.findAll('.v3grid__head input[type="checkbox"]')
+    expect(checkboxes.length).toBe(0)
+  })
+
+  it('should select single row when selectable is single', async () => {
+    const wrapper = mount(Grid, { props: { rows, columns, selectable:'single', keyField: 'id' } })
+    const firstRowCb = wrapper.findAll('.v3grid__row input[type="checkbox"]')[0]
+    await firstRowCb.setValue(true)
+    
+    // In single mode, only one row should be selected
+    const checked = wrapper.findAll('.v3grid__row input[type="checkbox"]').filter(cb => (cb.element as HTMLInputElement).checked)
+    expect(checked.length).toBe(1)
+  })
+
+  it('should emit selectionChange when row is selected', async () => {
+    const wrapper = mount(Grid, { props: { rows, columns, selectable:'multiple', keyField: 'id' } })
+    const firstRowCb = wrapper.findAll('.v3grid__row input[type="checkbox"]')[0]
+    await firstRowCb.setValue(true)
+    
+    expect(wrapper.emitted('selectionChange')).toBeTruthy()
+    const events = wrapper.emitted('selectionChange')
+    expect(events).toBeDefined()
+    if (events) {
+      expect(events[0][0]).toContain(1) // Should contain row id 1
+    }
+  })
+
+  it('should toggle row selection on checkbox click', async () => {
+    const wrapper = mount(Grid, { props: { rows, columns, selectable:'multiple', keyField: 'id' } })
+    const firstRowCb = wrapper.findAll('.v3grid__row input[type="checkbox"]')[0]
+    
+    // Select
+    await firstRowCb.setValue(true)
+    expect((firstRowCb.element as HTMLInputElement).checked).toBe(true)
+    
+    // Deselect
+    await firstRowCb.setValue(false)
+    expect((firstRowCb.element as HTMLInputElement).checked).toBe(false)
+  })
+
+  it('should handle multiple row selection', async () => {
+    const wrapper = mount(Grid, { props: { rows, columns, selectable:'multiple', keyField: 'id' } })
+    const rowCheckboxes = wrapper.findAll('.v3grid__row input[type="checkbox"]')
+    
+    // Select first row
+    await rowCheckboxes[0].setValue(true)
+    // Select second row
+    await rowCheckboxes[1].setValue(true)
+    
+    // Both should be checked
+    expect((rowCheckboxes[0].element as HTMLInputElement).checked).toBe(true)
+    expect((rowCheckboxes[1].element as HTMLInputElement).checked).toBe(true)
   })
 })
