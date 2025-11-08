@@ -104,6 +104,7 @@ const navSections = [
       { to: '/selection', label: 'Selection', icon: 'check-square' },
       { to: '/copy', label: 'Copy to Clipboard', icon: 'copy' },
       { to: '/column-menu', label: 'Column Menu', icon: 'bars' },
+      { to: '/excel-export', label: 'Excel Export', icon: 'file-excel' },
       { to: '/rtl', label: 'RTL Support', icon: 'arrow-right-arrow-left' },
       { to: '/table-only', label: 'Table-only layout', icon: 'table-list' },
       { to: '/cards', label: 'Responsive cards', icon: 'mobile-screen-button' },

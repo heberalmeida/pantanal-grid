@@ -53,6 +53,7 @@ export interface Messages {
   confirmDelete?: string
   cancelDelete?: string
   confirmDeleteTitle?: string
+  excel?: string
 }
 
 export interface ColumnTemplateContext<T = Row> {
@@ -183,7 +184,7 @@ export interface GridProps<T = Row> {
   autoBind?: boolean
 
   editable?: boolean | 'inline' | 'popup' | 'batch'
-  toolbar?: ('create' | 'save' | 'cancel')[]
+  toolbar?: ('create' | 'save' | 'cancel' | 'excel')[]
   navigatable?: boolean
 
   sortable?: boolean

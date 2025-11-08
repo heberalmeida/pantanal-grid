@@ -3418,6 +3418,124 @@ Combine the various column menu props to customize which features appear in the 
 />
 ```
 
+## Excel Export
+
+Pantanal Grid supports exporting data to Excel format. You can export the current page or all pages, customize the file name, and use a proxy for browsers that don't support direct file downloads.
+
+### Basic Usage
+
+Add `'excel'` to the toolbar to enable Excel export:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+import { ref } from 'vue'
+
+const rows = ref([
+  { id: 1, name: 'Product 1', price: 99.99, category: 'Electronics' },
+  { id: 2, name: 'Product 2', price: 49.99, category: 'Clothing' },
+  // ... more data
+])
+
+const columns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80 },
+  { field: 'name', title: 'Name', width: 200 },
+  { field: 'price', title: 'Price', width: 120 },
+  { field: 'category', title: 'Category', width: 150 },
+]
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :toolbar="['excel']"
+    key-field="id"
+  />
+</template>
+```
+
+### Export All Pages
+
+Set `excelAllPages` to `true` to export all data pages instead of just the current page:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['excel']"
+  :excelAllPages="true"
+  :pageable="true"
+  :pageSize="10"
+  key-field="id"
+/>
+```
+
+### Custom File Name
+
+Specify a custom file name using the `excelFileName` prop:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['excel']"
+  excelFileName="products-export.xlsx"
+  key-field="id"
+/>
+```
+
+### Export with Proxy
+
+For browsers that don't support direct file downloads (like IE9 or Safari), you can use a proxy server:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['excel']"
+  :excelForceProxy="false"
+  excelProxyUrl="/api/excel-proxy"
+  key-field="id"
+/>
+```
+
+The proxy should accept a `POST` request with the following parameters in the request body:
+
+- `contentType` - The MIME type of the file
+- `base64` - The base-64 encoded file content
+- `fileName` - The file name as requested by the caller
+
+The proxy is expected to return the decoded file with a `Content-Disposition` header set to `attachment; filename="<fileName.xlsx>"`.
+
+### Excel Export Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `excelAllPages` | `boolean` | `false` | Export all pages instead of just the current page |
+| `excelFileName` | `string` | `'export.xlsx'` | File name for the exported Excel file |
+| `excelFilterable` | `boolean` | `true` | Enable autofilter in the Excel file (adds filter dropdowns to column headers) |
+| `excelForceProxy` | `boolean` | `false` | Force use of proxy even if browser supports local file saving |
+| `excelProxyUrl` | `string` | `undefined` | URL of the server-side proxy for file download |
+
+### How It Works
+
+1. **Current Page Export**: By default, only the current page is exported. The exported data respects any filters and sorting applied in the Grid.
+2. **All Pages Export**: When `excelAllPages` is `true`, all filtered/sorted data is exported (client-side) or all pages are fetched (server-side). Filters applied in the Grid are respected.
+3. **File Format**: The export uses the SheetJS library (xlsx) to generate true Excel files (.xlsx format). If xlsx is not installed, it falls back to CSV format.
+4. **Autofilter**: When `excelFilterable` is `true` (default), the exported Excel file will have autofilter enabled on all columns, allowing users to filter data directly in Excel.
+5. **Proxy Support**: For browsers that don't support direct downloads, a proxy can be used.
+
+### Notes
+
+- The export uses the SheetJS library (xlsx) to generate true Excel files (.xlsx format)
+- Install `xlsx` as a peer dependency: `npm install xlsx`
+- If `xlsx` is not available, the export will fallback to CSV format
+- Server-side export with `excelAllPages` may require multiple API calls to fetch all pages
+- The proxy is only used for browsers that don't support direct file downloads (IE9, Safari) or when `excelForceProxy` is enabled
+
+---
+
 ## Copy to Clipboard
 
 Pantanal Grid supports copying data to the clipboard. Enable copy functionality by setting the `allowCopy` prop to `true`.

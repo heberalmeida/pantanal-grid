@@ -27,7 +27,8 @@
     "prepublishOnly": "cp ../../README.md ./README.md && yarn build"
   },
   "peerDependencies": {
-    "vue": "^3.3.0"
+    "vue": "^3.3.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^24.2.1",
@@ -52,6 +53,9 @@
   "peerDependenciesMeta": {
     "tailwindcss": {
       "optional": true
+    },
+    "xlsx": {
+      "optional": true
     }
   },
   "publishConfig": {
@@ -60,5 +64,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/heberalmeida/pantanal-grid.git"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
   }
 }

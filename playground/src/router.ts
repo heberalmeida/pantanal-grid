@@ -43,6 +43,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/selection', component: () => import('./pages/SelectionPage.vue') },
   { path: '/copy', component: () => import('./pages/CopyPage.vue') },
   { path: '/column-menu', component: () => import('./pages/ColumnMenuPage.vue') },
+  { path: '/excel-export', component: () => import('./pages/ExcelExportPage.vue') },
 ]
 
 export const router = createRouter({

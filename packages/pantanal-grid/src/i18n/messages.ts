@@ -36,6 +36,7 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     confirmDelete: 'Tem certeza que deseja excluir este registro?',
     cancelDelete: 'Cancelar',
     confirmDeleteTitle: 'Confirmar Exclusão',
+    excel: 'Exportar para Excel',
   },
   en: {
     total: 'Total',
@@ -72,6 +73,7 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     confirmDelete: 'Are you sure you want to delete this record?',
     cancelDelete: 'Cancel',
     confirmDeleteTitle: 'Confirm Delete',
+    excel: 'Export to Excel',
   },
   es: {
     total: 'Total',
@@ -108,6 +110,7 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     confirmDelete: '¿Está seguro de que desea eliminar este registro?',
     cancelDelete: 'Cancelar',
     confirmDeleteTitle: 'Confirmar Eliminación',
+    excel: 'Exportar a Excel',
   },
 }
 

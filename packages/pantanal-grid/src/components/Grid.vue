@@ -30,6 +30,14 @@
       >
         {{ msgs.cancel }}
       </button>
+      <button
+        v-if="props.toolbar && props.toolbar.includes('excel')"
+        type="button"
+        @click="exportToExcel"
+        class="v3grid__btn--toolbar"
+      >
+        {{ msgs.excel || 'Export to Excel' }}
+      </button>
     </div>
     <!-- HSCROLL WRAPPER -->
     <div class="v3grid__scroll" ref="hScrollEl" @scroll="onHScroll"
@@ -918,6 +926,11 @@ const props = withDefaults(defineProps<GridProps>(), {
   editableTemplate: undefined,
   editableUpdate: true,
   editableWindow: undefined,
+  excelAllPages: false,
+  excelFileName: 'export.xlsx',
+  excelFilterable: true,
+  excelForceProxy: false,
+  excelProxyUrl: undefined,
 })
 const emit = defineEmits<GridEmits>()
 const slots = useSlots()
@@ -2598,6 +2611,419 @@ function confirmDelete() {
 
 function cancelDelete() {
   confirmDeleteDialog.value = { open: false, row: null, message: '' }
+}
+
+// Excel Export
+
+// Fallback CSV export function (used when xlsx library is not available)
+async function exportToCSV() {
+  try {
+    // Get data to export
+    let dataToExport: any[] = []
+    
+    if (props.excelAllPages) {
+      // Export all pages
+      if (props.dataProvider && typeof props.dataProvider === 'function') {
+        // For server-side, fetch all pages
+        const allData: any[] = []
+        let currentPage = 1
+        const pageSize = 1000 // Large page size to minimize requests
+        let hasMore = true
+        let totalRecords = 0
+        
+        while (hasMore) {
+          try {
+            const result = await props.dataProvider({
+              page: currentPage,
+              pageSize: pageSize,
+              sort: sortState.value,
+              filter: filters.value,
+              signal: new AbortController().signal,
+            })
+            
+            if (result.rows && result.rows.length > 0) {
+              allData.push(...result.rows)
+              totalRecords = result.total || allData.length
+              
+              // Check if we have all data
+              if (result.rows.length < pageSize || allData.length >= totalRecords) {
+                hasMore = false
+              } else {
+                currentPage++
+              }
+            } else {
+              hasMore = false
+            }
+          } catch (error) {
+            console.error('Error fetching page for export:', error)
+            hasMore = false
+          }
+        }
+        
+        dataToExport = allData.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+      } else {
+        // Client-side: get all filtered/sorted data
+        dataToExport = sorted.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+      }
+    } else {
+      // Export current page only
+      dataToExport = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+    }
+    
+    // Get visible columns (excluding command columns and hidden columns)
+    const colsToExport = unlockedCols.value.filter(col => {
+      if (col.command) return false
+      if (!col.field) return false
+      return true
+    })
+    
+    // Build CSV content
+    function escapeCsvValue(value: string): string {
+      if (value === null || value === undefined) return ''
+      const str = String(value)
+      // If value contains comma, quote, newline, or carriage return, wrap in quotes
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        // Escape quotes by doubling them
+        return `"${str.replace(/"/g, '""')}"`
+      }
+      return str
+    }
+    
+    const headers = colsToExport.map(col => {
+      const header = col.title || String(col.field)
+      return escapeCsvValue(header)
+    })
+    
+    const csvRows = dataToExport.map(row => {
+      return colsToExport.map(col => {
+        const value = columnValue(row, col, 0)
+        let str = ''
+        if (value == null || value === '') {
+          str = ''
+        } else if (col.type === 'number') {
+          str = String(Number(value))
+        } else if (col.type === 'boolean') {
+          str = value ? '1' : '0'
+        } else if (col.type === 'date' && value instanceof Date) {
+          // Format date as YYYY-MM-DD for Excel
+          const year = value.getFullYear()
+          const month = String(value.getMonth() + 1).padStart(2, '0')
+          const day = String(value.getDate()).padStart(2, '0')
+          str = `${year}-${month}-${day}`
+        } else {
+          str = String(value)
+        }
+        return escapeCsvValue(str)
+      })
+    })
+    
+    // Create CSV content - use \r\n for Windows line endings
+    const csvLines = [
+      headers.join(','),
+      ...csvRows.map(row => row.join(','))
+    ]
+    const csvContent = csvLines.join('\r\n')
+    
+    // Use .csv extension for CSV files
+    let fileName = props.excelFileName || 'export.csv'
+    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      fileName = fileName.replace(/\.(xlsx|xls)$/, '.csv')
+    } else if (!fileName.endsWith('.csv')) {
+      fileName = fileName + '.csv'
+    }
+    
+    // Create blob with CSV format
+    try {
+      const encoder = new TextEncoder()
+      const utf8BOM = new Uint8Array([0xEF, 0xBB, 0xBF])
+      const csvBytes = encoder.encode(csvContent)
+      const fullBytes = new Uint8Array(utf8BOM.length + csvBytes.length)
+      fullBytes.set(utf8BOM, 0)
+      fullBytes.set(csvBytes, utf8BOM.length)
+      
+      const blob = new Blob([fullBytes], { 
+        type: 'text/csv;charset=utf-8' 
+      })
+      
+      // Check if we need to use proxy
+      const needsProxy = props.excelForceProxy || 
+        (props.excelProxyUrl && (isIE9() || isSafari()))
+      
+      if (needsProxy && props.excelProxyUrl) {
+        // Use proxy for download
+        await exportViaProxy(blob, fileName)
+      } else {
+        // Direct download
+        downloadFile(blob, fileName)
+      }
+    } catch (error) {
+      // Fallback: simple string approach
+      console.warn('Error creating CSV with TextEncoder, using fallback:', error)
+      const csvWithBom = '\uFEFF' + csvContent
+      const blob = new Blob([csvWithBom], { 
+        type: 'text/csv;charset=utf-8' 
+      })
+      
+      const needsProxy = props.excelForceProxy || 
+        (props.excelProxyUrl && (isIE9() || isSafari()))
+      
+      if (needsProxy && props.excelProxyUrl) {
+        await exportViaProxy(blob, fileName)
+      } else {
+        downloadFile(blob, fileName)
+      }
+    }
+  } catch (error) {
+    console.error('Error exporting to CSV:', error)
+    emit('error', error)
+  }
+}
+
+async function exportToExcel() {
+  // Check if xlsx library is available
+  let XLSX: any = null
+  try {
+    // Try to dynamically import xlsx library
+    XLSX = await import('xlsx')
+  } catch (error) {
+    console.warn('xlsx library not found. Falling back to CSV export. Install xlsx package for Excel export: npm install xlsx')
+    // Fallback to CSV export
+    await exportToCSV()
+    return
+  }
+  try {
+    // Get data to export
+    let dataToExport: any[] = []
+    
+    if (props.excelAllPages) {
+      // Export all pages
+      if (props.dataProvider && typeof props.dataProvider === 'function') {
+        // For server-side, fetch all pages
+        const allData: any[] = []
+        let currentPage = 1
+        const pageSize = 1000 // Large page size to minimize requests
+        let hasMore = true
+        let totalRecords = 0
+        
+        while (hasMore) {
+          try {
+            const result = await props.dataProvider({
+              page: currentPage,
+              pageSize: pageSize,
+              sort: sortState.value,
+              filter: filters.value,
+              signal: new AbortController().signal,
+            })
+            
+            if (result.rows && result.rows.length > 0) {
+              allData.push(...result.rows)
+              totalRecords = result.total || allData.length
+              
+              // Check if we have all data
+              if (result.rows.length < pageSize || allData.length >= totalRecords) {
+                hasMore = false
+              } else {
+                currentPage++
+              }
+            } else {
+              hasMore = false
+            }
+          } catch (error) {
+            console.error('Error fetching page for export:', error)
+            hasMore = false
+          }
+        }
+        
+        dataToExport = allData.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+      } else {
+        // Client-side: get all filtered/sorted data
+        dataToExport = sorted.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+      }
+    } else {
+      // Export current page only
+      dataToExport = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+    }
+    
+    // Get visible columns (excluding command columns and hidden columns)
+    const colsToExport = unlockedCols.value.filter(col => {
+      if (col.command) return false
+      if (!col.field) return false
+      return true
+    })
+    
+    // Build data array for Excel export
+    const excelData: any[][] = []
+    
+    // Add headers
+    const headers = colsToExport.map(col => col.title || String(col.field))
+    excelData.push(headers)
+    
+    // Add data rows
+    dataToExport.forEach(row => {
+      const rowData = colsToExport.map(col => {
+        const value = columnValue(row, col, 0)
+        
+        // Format values according to type
+        if (value == null || value === '') {
+          return ''
+        } else if (col.type === 'number') {
+          return Number(value)
+        } else if (col.type === 'boolean') {
+          return value ? true : false
+        } else if (col.type === 'date' && value instanceof Date) {
+          // Excel uses serial date numbers, but SheetJS can handle Date objects
+          return value
+        } else {
+          return String(value)
+        }
+      })
+      excelData.push(rowData)
+    })
+    
+    // Create worksheet from data array
+    const worksheet = XLSX.utils.aoa_to_sheet(excelData)
+    
+    // Set column widths (optional, but improves readability)
+    const colWidths = colsToExport.map(col => {
+      return { wch: Math.max((col.title || String(col.field)).length, col.width ? col.width / 7 : 10) }
+    })
+    worksheet['!cols'] = colWidths
+    
+    // Add autofilter if excelFilterable is enabled (default: true)
+    if (props.excelFilterable !== false && excelData.length > 1) {
+      // Helper function to convert column index to Excel column letter (A, B, ..., Z, AA, AB, ...)
+      function numToCol(num: number): string {
+        let col = ''
+        while (num >= 0) {
+          col = String.fromCharCode(65 + (num % 26)) + col
+          num = Math.floor(num / 26) - 1
+        }
+        return col
+      }
+      
+      // Calculate range: header row (1) to last data row
+      const startCol = 'A'
+      const endCol = numToCol(colsToExport.length - 1) // Convert number to letter (A, B, ..., Z, AA, AB, ...)
+      const startRow = 1
+      const endRow = excelData.length
+      worksheet['!autofilter'] = { ref: `${startCol}${startRow}:${endCol}${endRow}` }
+    }
+    
+    // Create workbook
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
+    
+    // Determine file name
+    let fileName = props.excelFileName || 'export.xlsx'
+    if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+      fileName = fileName + '.xlsx'
+    }
+    
+    // Check if we need to use proxy
+    const needsProxy = props.excelForceProxy || 
+      (props.excelProxyUrl && (isIE9() || isSafari()))
+    
+    if (needsProxy && props.excelProxyUrl) {
+      // For proxy, we need to convert to base64
+      const excelBuffer = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' })
+      const blob = new Blob([excelBuffer], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      })
+      await exportViaProxy(blob, fileName)
+    } else {
+      // Direct download using SheetJS
+      XLSX.writeFile(workbook, fileName)
+    }
+  } catch (error) {
+    console.error('Error exporting to Excel:', error)
+    emit('error', error)
+  }
+}
+
+function downloadFile(blob: Blob, fileName: string) {
+  try {
+    // Create a download link
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = fileName
+    link.style.display = 'none'
+    document.body.appendChild(link)
+    link.click()
+    // Clean up after a short delay to ensure download starts
+    setTimeout(() => {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link)
+      }
+      URL.revokeObjectURL(url)
+    }, 100)
+  } catch (error) {
+    console.error('Error downloading file:', error)
+    // Fallback: try opening in new window
+    try {
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank')
+      setTimeout(() => URL.revokeObjectURL(url), 100)
+    } catch (fallbackError) {
+      console.error('Fallback download also failed:', fallbackError)
+    }
+  }
+}
+
+async function exportViaProxy(blob: Blob, fileName: string) {
+  if (!props.excelProxyUrl) {
+    console.error('Proxy URL is required but not provided')
+    return
+  }
+  
+  // Convert blob to base64
+  const base64 = await blobToBase64(blob)
+  
+  // Send to proxy
+  const response = await fetch(props.excelProxyUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contentType: blob.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      base64: base64,
+      fileName: fileName,
+    }),
+  })
+  
+  if (!response.ok) {
+    throw new Error(`Proxy request failed: ${response.statusText}`)
+  }
+  
+  // The proxy should return the file with Content-Disposition header
+  // For browsers that support it, the file will be downloaded automatically
+  const proxyBlob = await response.blob()
+  downloadFile(proxyBlob, fileName)
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const base64String = (reader.result as string).split(',')[1]
+      resolve(base64String)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+function isIE9(): boolean {
+  if (typeof window === 'undefined') return false
+  const ua = window.navigator.userAgent
+  return /MSIE 9/.test(ua) || /Trident\/5\.0/.test(ua)
+}
+
+function isSafari(): boolean {
+  if (typeof window === 'undefined') return false
+  const ua = window.navigator.userAgent
+  return /Safari/.test(ua) && !/Chrome/.test(ua) && !/Chromium/.test(ua)
 }
 
 // @ts-ignore - Reserved for future editing implementation
