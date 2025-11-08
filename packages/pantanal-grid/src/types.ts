@@ -54,6 +54,21 @@ export interface Messages {
   cancelDelete?: string
   confirmDeleteTitle?: string
   excel?: string
+  filterableMessagesAnd?: string
+  filterableMessagesOr?: string
+  filterableMessagesClear?: string
+  filterableMessagesFilter?: string
+  filterableMessagesInfo?: string
+  filterableMessagesTitle?: string
+  filterableMessagesIsTrue?: string
+  filterableMessagesIsFalse?: string
+  filterableMessagesSearch?: string
+  filterableMessagesSelectValue?: string
+  filterableMessagesCancel?: string
+  filterableMessagesSelectedItemsFormat?: string
+  filterableMessagesOperator?: string
+  filterableMessagesValue?: string
+  filterableMessagesCheckAll?: string
 }
 
 export interface ColumnTemplateContext<T = Row> {
@@ -170,12 +185,14 @@ export interface GridProps<T = Row> {
 
   showFilterRow?: boolean
   filterable?: boolean
-  filterableMode?: 'row' | 'menu' | false
+  filterableMode?: 'row' | 'menu' | 'menu, row' | false
+  filterableExtra?: boolean
   filterableOperators?: {
     string?: Record<string, string>
     number?: Record<string, string>
     date?: Record<string, string>
     boolean?: Record<string, string>
+    enums?: Record<string, string>
   }
 
   pinnedShadows?: boolean

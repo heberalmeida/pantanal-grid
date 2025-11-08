@@ -14,7 +14,7 @@ describe('PantanalGrid pagination basic', () => {
 
   it('renders GridPagination in footer when not virtual', async () => {
     const wrapper = mount(Grid, {
-      props: { rows, columns, pageSize:10, page:1, responsive:'table' }
+      props: { rows, columns, pageSize:10, page:1, responsive:'table', locale: 'pt' }
     })
 
     // Footer existe

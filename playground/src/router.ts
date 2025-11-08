@@ -44,6 +44,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/copy', component: () => import('./pages/CopyPage.vue') },
   { path: '/column-menu', component: () => import('./pages/ColumnMenuPage.vue') },
   { path: '/excel-export', component: () => import('./pages/ExcelExportPage.vue') },
+  { path: '/filterable-props', component: () => import('./pages/FilterablePropsPage.vue') },
 ]
 
 export const router = createRouter({

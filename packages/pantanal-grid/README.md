@@ -3632,6 +3632,225 @@ When keyboard navigation is enabled, you can copy the focused cell by pressing `
 
 ---
 
+## Filterable Props API
+
+Pantanal Grid provides extensive filtering configuration through the `filterableProps` API, allowing you to customize filter messages, operators, and filter modes.
+
+### Filterable Messages
+
+Customize all filter-related messages using the `messages` prop:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :show-filter-row="true"
+    :filterable="true"
+    :messages="customMessages"
+    key-field="id"
+  />
+</template>
+
+<script setup lang="ts">
+import { PantanalGrid, type Messages } from '@pantanal/grid'
+
+const customMessages: Partial<Messages> = {
+  filterableMessagesAnd: 'AND',
+  filterableMessagesOr: 'OR',
+  filterableMessagesClear: 'Clear Filters',
+  filterableMessagesFilter: 'Apply Filter',
+  filterableMessagesInfo: 'Show items where',
+  filterableMessagesTitle: 'Filter',
+  filterableMessagesIsTrue: 'Yes',
+  filterableMessagesIsFalse: 'No',
+  filterableMessagesSearch: 'Search...',
+  filterableMessagesSelectValue: 'Select a value',
+  filterableMessagesCancel: 'Cancel',
+  filterableMessagesSelectedItemsFormat: '{0} item(s) selected',
+  filterableMessagesOperator: 'Operator',
+  filterableMessagesValue: 'Value',
+  filterableMessagesCheckAll: 'Check all',
+}
+</script>
+```
+
+### Filter Operators
+
+Customize operator labels for different data types:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :show-filter-row="true"
+    :filterable="true"
+    :filterableOperators="customOperators"
+    key-field="id"
+  />
+</template>
+
+<script setup lang="ts">
+const customOperators = {
+  string: {
+    eq: 'Equals',
+    neq: 'Not equals',
+    contains: 'Contains',
+    startswith: 'Starts with',
+    endswith: 'Ends with',
+    isnull: 'Is null',
+    isnotnull: 'Is not null',
+    isempty: 'Is empty',
+    isnotempty: 'Is not empty',
+  },
+  number: {
+    eq: 'Equals',
+    neq: 'Not equals',
+    gt: 'Greater than',
+    gte: 'Greater than or equal',
+    lt: 'Less than',
+    lte: 'Less than or equal',
+    isnull: 'Is null',
+    isnotnull: 'Is not null',
+  },
+  date: {
+    eq: 'Equals',
+    neq: 'Not equals',
+    gt: 'After',
+    gte: 'On or after',
+    lt: 'Before',
+    lte: 'On or before',
+    isnull: 'Is null',
+    isnotnull: 'Is not null',
+  },
+  boolean: {
+    eq: 'Equals',
+    neq: 'Not equals',
+  },
+  enums: {
+    eq: 'Equals',
+    neq: 'Not equals',
+    isnull: 'Is null',
+    isnotnull: 'Is not null',
+  },
+}
+</script>
+```
+
+### Filter Mode
+
+Control how filtering is displayed using the `filterableMode` prop:
+
+```vue
+<template>
+  <!-- Row mode: Filter inputs in a row below headers -->
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :filterable="true"
+    :filterableMode="'row'"
+    :show-filter-row="true"
+    key-field="id"
+  />
+
+  <!-- Menu mode: Filter menu accessible via header -->
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :filterable="true"
+    :filterableMode="'menu'"
+    key-field="id"
+  />
+
+  <!-- Both modes: Row and menu filtering enabled -->
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :filterable="true"
+    :filterableMode="'menu, row'"
+    :show-filter-row="true"
+    key-field="id"
+  />
+</template>
+```
+
+### Filter Extra
+
+Enable an extra filter criterion using the `filterableExtra` prop:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :filterable="true"
+    :filterableExtra="true"
+    key-field="id"
+  />
+</template>
+```
+
+### Internationalization
+
+Filter messages are automatically translated based on the `locale` prop:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :show-filter-row="true"
+    :filterable="true"
+    :locale="locale"
+    key-field="id"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+
+const locale = ref<'en' | 'pt' | 'es'>('en')
+</script>
+```
+
+Supported locales include:
+- `'en'` - English (default)
+- `'pt'` - Portuguese
+- `'es'` - Spanish
+
+### Filterable Props Reference
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `filterable` | `boolean` | `false` | Enable/disable filtering |
+| `filterableMode` | `'row' \| 'menu' \| 'menu, row' \| false` | `false` | Filter display mode |
+| `filterableExtra` | `boolean` | `false` | Enable extra filter criterion |
+| `filterableOperators` | `object` | `undefined` | Custom operator labels for string, number, date, boolean, and enums |
+| `showFilterRow` | `boolean` | `true` | Show filter row (when filterableMode includes 'row') |
+
+### Filterable Messages Reference
+
+| Message | Type | Description |
+|---------|------|-------------|
+| `filterableMessagesAnd` | `string` | Text for "And" logical operation |
+| `filterableMessagesOr` | `string` | Text for "Or" logical operation |
+| `filterableMessagesClear` | `string` | Text for clear button |
+| `filterableMessagesFilter` | `string` | Text for filter button |
+| `filterableMessagesInfo` | `string` | Information message at top of filter menu |
+| `filterableMessagesTitle` | `string` | Title attribute of filter menu form |
+| `filterableMessagesIsTrue` | `string` | Text for true values (boolean filters) |
+| `filterableMessagesIsFalse` | `string` | Text for false values (boolean filters) |
+| `filterableMessagesSearch` | `string` | Placeholder for search input |
+| `filterableMessagesSelectValue` | `string` | Text for dropdown list |
+| `filterableMessagesCancel` | `string` | Text for cancel button (mobile mode) |
+| `filterableMessagesSelectedItemsFormat` | `string` | Format string for selected items count |
+| `filterableMessagesOperator` | `string` | Text for operator item (mobile mode) |
+| `filterableMessagesValue` | `string` | Text for value item (mobile mode) |
+| `filterableMessagesCheckAll` | `string` | Label for "Check all" checkbox |
+
+---
+
 ## Keyboard Navigation
 
 The keyboard support of the Grid is always available when the `navigatable` prop is enabled. To apply the keyboard shortcuts, focus the Grid by clicking the example area and pressing the `Tab` key.

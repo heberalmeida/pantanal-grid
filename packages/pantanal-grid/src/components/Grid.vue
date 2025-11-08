@@ -91,7 +91,7 @@
       </div>
 
       <!-- FILTER ROW -->
-      <div v-if="(props.showFilterRow || props.filterableMode === 'row') && anyFilterable && (!isCardMode || props.showFiltersInCards)"
+      <div v-if="(props.showFilterRow || props.filterableMode === 'row' || props.filterableMode === 'menu, row') && anyFilterable && (!isCardMode || props.showFiltersInCards)"
         class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
         <div v-if="props.selectable" class="v3grid__cell"></div>
         <div v-if="isGrouped" class="v3grid__cell"></div>
@@ -128,9 +128,9 @@
               </option>
             </template>
             <template v-else>
-              <option value="">All</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
+              <option value="">{{ msgs.filterAll || 'All' }}</option>
+              <option value="true">{{ msgs.filterableMessagesIsTrue || msgs.filterTrue || 'True' }}</option>
+              <option value="false">{{ msgs.filterableMessagesIsFalse || msgs.filterFalse || 'False' }}</option>
             </template>
           </select>
           <!-- Date input -->
@@ -560,9 +560,9 @@
             class="v3grid__input"
             :value="getFilterValue(String(c.field))"
             @change="setFilterValue(String(c.field), ($event.target as HTMLSelectElement).value)">
-            <option value="">All</option>
-            <option value="true">True</option>
-            <option value="false">False</option>
+            <option value="">{{ msgs.filterAll || 'All' }}</option>
+            <option value="true">{{ msgs.filterableMessagesIsTrue || msgs.filterTrue || 'True' }}</option>
+            <option value="false">{{ msgs.filterableMessagesIsFalse || msgs.filterFalse || 'False' }}</option>
           </select>
           <input 
             v-else-if="c.filterable && (c.filterableUI === 'date' || c.type === 'date')"
@@ -640,9 +640,9 @@
             class="v3grid__input"
             :value="getFilterValue(String(c.field))"
             @change="setFilterValue(String(c.field), ($event.target as HTMLSelectElement).value)">
-            <option value="">All</option>
-            <option value="true">True</option>
-            <option value="false">False</option>
+            <option value="">{{ msgs.filterAll || 'All' }}</option>
+            <option value="true">{{ msgs.filterableMessagesIsTrue || msgs.filterTrue || 'True' }}</option>
+            <option value="false">{{ msgs.filterableMessagesIsFalse || msgs.filterFalse || 'False' }}</option>
           </select>
           <input 
             v-else-if="c.filterable && (c.filterableUI === 'date' || c.type === 'date')"
