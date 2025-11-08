@@ -3,41 +3,46 @@
     :dir="props.rtl ? 'rtl' : undefined" ref="rootEl"
     :style="{ '--row-h': props.rowHeight + 'px', '--filter-h': props.rowHeight + 'px', '--footer-h': footerH + 'px' }">
     <!-- TOOLBAR -->
-    <div v-if="props.toolbar && props.toolbar.length > 0" class="v3grid__toolbar">
-      <button
-        v-if="props.toolbar.includes('create')"
-        type="button"
-        @click="handleCreate"
-        class="v3grid__btn--toolbar"
-      >
-        {{ msgs.create }}
-      </button>
-      <button
-        v-if="props.toolbar.includes('save')"
-        type="button"
-        @click="handleSave"
-        :disabled="!editingState.hasChanges"
-        class="v3grid__btn--toolbar v3grid__btn--primary"
-      >
-        {{ msgs.save }}
-      </button>
-      <button
-        v-if="props.toolbar.includes('cancel')"
-        type="button"
-        @click="handleCancel"
-        :disabled="!editingState.hasChanges"
-        class="v3grid__btn--toolbar"
-      >
-        {{ msgs.cancel }}
-      </button>
-      <button
-        v-if="props.toolbar && props.toolbar.includes('excel')"
-        type="button"
-        @click="exportToExcel"
-        class="v3grid__btn--toolbar"
-      >
-        {{ msgs.excel || 'Export to Excel' }}
-      </button>
+    <div v-if="props.toolbar" class="v3grid__toolbar">
+      <!-- Custom toolbar template -->
+      <div v-if="renderToolbarTemplate()" v-html="renderToolbarTemplate()" ref="toolbarTemplateEl"></div>
+      <!-- Default toolbar buttons -->
+      <template v-else-if="Array.isArray(props.toolbar) && props.toolbar.length > 0">
+        <button
+          v-if="props.toolbar.includes('create')"
+          type="button"
+          @click="handleCreate"
+          class="v3grid__btn--toolbar"
+        >
+          {{ msgs.create }}
+        </button>
+        <button
+          v-if="props.toolbar.includes('save')"
+          type="button"
+          @click="handleSave"
+          :disabled="!editingState.hasChanges"
+          class="v3grid__btn--toolbar v3grid__btn--primary"
+        >
+          {{ msgs.save }}
+        </button>
+        <button
+          v-if="props.toolbar.includes('cancel')"
+          type="button"
+          @click="handleCancel"
+          :disabled="!editingState.hasChanges"
+          class="v3grid__btn--toolbar"
+        >
+          {{ msgs.cancel }}
+        </button>
+        <button
+          v-if="props.toolbar.includes('excel')"
+          type="button"
+          @click="exportToExcel"
+          class="v3grid__btn--toolbar"
+        >
+          {{ msgs.excel || 'Export to Excel' }}
+        </button>
+      </template>
     </div>
     <!-- HSCROLL WRAPPER -->
     <div class="v3grid__scroll" ref="hScrollEl" @scroll="onHScroll"
@@ -480,60 +485,99 @@
 
           <!-- CAMINHO NORMAL -->
           <template v-else>
-            <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
-              :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
-              :style="{ gridTemplateColumns: bodyTemplate(columns) }">
-              <div v-if="props.selectable" class="v3grid__cell" @click.stop>
-                <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
-              </div>
-              <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
-                :style="[pinStyle(c._idx)]" 
-                :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
-                :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
-                @click="handleCellClick(row, c, r, i)"
-                @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
-                @focus="props.navigatable && handleCellFocus(r, c._idx)">
-                <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
-                  :name="columnSlotPrimary(c)"
-                  :column="c"
-                  :row="row"
-                  :value="columnValue(row, c, r)"
-                  :rowIndex="r"
-                  :columnIndex="i"
-                />
-                <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
-                  :name="columnSlotSecondary(c)"
-                  :column="c"
-                  :row="row"
-                  :value="columnValue(row, c, r)"
-                  :rowIndex="r"
-                  :columnIndex="i"
-                />
-                <TemplateRenderer v-else-if="c.template"
-                  :template="c.template!"
-                  :payload="{ column: c, row, value: columnValue(row, c, r), rowIndex: r, columnIndex: i }"
-                />
-                <template v-else-if="c.command && c.command.length > 0">
-                  <div class="v3grid__command-cell">
-                    <template v-for="(cmd, cmdIdx) in c.command" :key="cmdIdx">
-                      <button
-                        v-if="shouldShowCommand(cmd, row, c)"
-                        @click.stop="handleCommand(cmd, row, c, $event)"
-                        class="v3grid__btn--command"
-                        :class="getCommandClasses(cmd, c)">
-                        <span v-if="getCommandIconClass(cmd, c)" :class="getCommandIconClass(cmd, c)"></span>
-                        <span v-html="getCommandContent(cmd, row, c)"></span>
-                      </button>
-                    </template>
+            <!-- Custom row templates -->
+            <template v-if="props.rowTemplate || props.altRowTemplate">
+              <template v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r">
+                <div
+                  v-html="renderRowTemplate(row, r, props.striped && (r % 2 === 1))"
+                ></div>
+                <!-- Detail row for custom templates -->
+                <div v-if="props.detailTemplate && expandedRows.includes((row as any)[keyFieldStr])" 
+                  class="v3grid__detail-row-wrapper"
+                  style="grid-column: 1 / -1; padding: 0; border-top: 1px solid #e0e0e0; background: #f5f5f5;">
+                  <div v-html="renderDetailTemplate(row, r)"></div>
+                </div>
+              </template>
+            </template>
+            <!-- Default row rendering -->
+            <template v-else>
+              <template v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r">
+                <div class="v3grid__row"
+                  :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
+                  :style="{ gridTemplateColumns: bodyTemplate(columns) }">
+                  <div v-if="props.selectable" class="v3grid__cell" @click.stop>
+                    <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
                   </div>
-                </template>
-                <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, r)"
-                  :rowIndex="r" :columnIndex="i">
-                  <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, r), c, row as any)"></span>
-                  <span v-else>{{ formatColumnValue(columnValue(row, c, r), c, row as any) }}</span>
-                </slot>
-              </div>
-            </div>
+                  <!-- Expand/collapse button for master-detail -->
+                  <div v-if="props.detailTemplate && !props.selectable && unlockedCols.length > 0 && unlockedCols[0]._idx === 0" 
+                    class="v3grid__cell" @click.stop="toggleDetailRow(row)"
+                    style="cursor: pointer; user-select: none;">
+                    <span style="display: inline-block; width: 16px; text-align: center;">
+                      {{ expandedRows.includes((row as any)[keyFieldStr]) ? '▼' : '▶' }}
+                    </span>
+                  </div>
+                  <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
+                    :style="[pinStyle(c._idx)]" 
+                    :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
+                    :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
+                    @click="handleCellClick(row, c, r, i)"
+                    @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
+                    @focus="props.navigatable && handleCellFocus(r, c._idx)">
+                    <!-- Expand/collapse button for master-detail (if first column and no selectable) -->
+                    <span v-if="props.detailTemplate && i === 0 && !props.selectable" 
+                      @click.stop="toggleDetailRow(row)"
+                      style="cursor: pointer; user-select: none; margin-right: 8px; display: inline-block; width: 16px; text-align: center;">
+                      {{ expandedRows.includes((row as any)[keyFieldStr]) ? '▼' : '▶' }}
+                    </span>
+                    <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+                      :name="columnSlotPrimary(c)"
+                      :column="c"
+                      :row="row"
+                      :value="columnValue(row, c, r)"
+                      :rowIndex="r"
+                      :columnIndex="i"
+                    />
+                    <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
+                      :name="columnSlotSecondary(c)"
+                      :column="c"
+                      :row="row"
+                      :value="columnValue(row, c, r)"
+                      :rowIndex="r"
+                      :columnIndex="i"
+                    />
+                    <TemplateRenderer v-else-if="c.template"
+                      :template="c.template!"
+                      :payload="{ column: c, row, value: columnValue(row, c, r), rowIndex: r, columnIndex: i }"
+                    />
+                    <template v-else-if="c.command && c.command.length > 0">
+                      <div class="v3grid__command-cell">
+                        <template v-for="(cmd, cmdIdx) in c.command" :key="cmdIdx">
+                          <button
+                            v-if="shouldShowCommand(cmd, row, c)"
+                            @click.stop="handleCommand(cmd, row, c, $event)"
+                            class="v3grid__btn--command"
+                            :class="getCommandClasses(cmd, c)">
+                            <span v-if="getCommandIconClass(cmd, c)" :class="getCommandIconClass(cmd, c)"></span>
+                            <span v-html="getCommandContent(cmd, row, c)"></span>
+                          </button>
+                        </template>
+                      </div>
+                    </template>
+                    <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, r)"
+                      :rowIndex="r" :columnIndex="i">
+                      <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, r), c, row as any)"></span>
+                      <span v-else>{{ formatColumnValue(columnValue(row, c, r), c, row as any) }}</span>
+                    </slot>
+                  </div>
+                </div>
+                <!-- Detail row (master-detail) - rendered outside the grid row -->
+                <div v-if="props.detailTemplate && expandedRows.includes((row as any)[keyFieldStr])" 
+                  class="v3grid__detail-row-wrapper"
+                  style="grid-column: 1 / -1; padding: 0; border-top: 1px solid #e0e0e0; background: #f5f5f5;">
+                  <div v-html="renderDetailTemplate(row, r)"></div>
+                </div>
+              </template>
+            </template>
           </template>
         </template>
       </div>
@@ -1590,6 +1634,81 @@ function renderGroupFooterTemplate(column: ColumnDef, group: { field: string; va
     return typeof result === 'string' ? result : ''
   }
   return column.groupFooterTemplate
+}
+
+// Helper functions for row templates
+function renderRowTemplate(row: any, rowIndex: number, isAlt: boolean = false): string | null {
+  const template = isAlt ? props.altRowTemplate : props.rowTemplate
+  if (!template) return null
+  
+  if (typeof template === 'function') {
+    const result = template(row, rowIndex)
+    return typeof result === 'string' ? result : null
+  }
+  // String template - simple replacement (similar to Kendo's template syntax)
+  // Replace #: FieldName # with actual values
+  let html = template
+  if (row && typeof row === 'object') {
+    Object.keys(row).forEach(key => {
+      const value = row[key]
+      const regex = new RegExp(`#:\\s*${key}\\s*#`, 'g')
+      html = html.replace(regex, String(value ?? ''))
+    })
+    // Also replace uid placeholder
+    html = html.replace(/#:\s*uid\s*#/g, String(row[keyFieldStr.value] ?? rowIndex))
+  }
+  return html
+}
+
+// Helper function for toolbar template
+function renderToolbarTemplate(): string | null {
+  if (!props.toolbar) return null
+  
+  // If it's an array, use default rendering (handled in template)
+  if (Array.isArray(props.toolbar)) return null
+  
+  if (typeof props.toolbar === 'function') {
+    const result = props.toolbar()
+    return typeof result === 'string' ? result : null
+  }
+  
+  return props.toolbar
+}
+
+// Helper function for detail template (master-detail)
+function renderDetailTemplate(row: any, rowIndex: number): string {
+  if (!props.detailTemplate) return ''
+  
+  if (typeof props.detailTemplate === 'function') {
+    const result = props.detailTemplate(row, rowIndex)
+    return typeof result === 'string' ? result : ''
+  }
+  
+  // String template - simple replacement
+  let html = props.detailTemplate
+  if (row && typeof row === 'object') {
+    Object.keys(row).forEach(key => {
+      const value = row[key]
+      const regex = new RegExp(`#:\\s*${key}\\s*#`, 'g')
+      html = html.replace(regex, String(value ?? ''))
+    })
+    html = html.replace(/#:\s*uid\s*#/g, String(row[keyFieldStr.value] ?? rowIndex))
+  }
+  return html
+}
+
+// Expanded rows for master-detail
+const expandedRows = ref<(string | number)[]>([])
+const toolbarTemplateEl = ref<HTMLElement | null>(null)
+
+function toggleDetailRow(row: any) {
+  const key = row[keyFieldStr.value]
+  const index = expandedRows.value.indexOf(key)
+  if (index > -1) {
+    expandedRows.value.splice(index, 1)
+  } else {
+    expandedRows.value.push(key)
+  }
 }
 
 /** DATA PIPELINE  DataProvider */

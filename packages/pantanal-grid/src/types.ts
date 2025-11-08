@@ -224,6 +224,9 @@ export interface GridProps<T = Row> {
   // Row templates
   rowTemplate?: string | ((row: T, rowIndex: number) => string)
   altRowTemplate?: string | ((row: T, rowIndex: number) => string)
+  
+  // Detail template (master-detail)
+  detailTemplate?: string | ((row: T, rowIndex: number) => string)
 
   // No records message
   noRecords?: boolean | { template?: string; message?: string }
@@ -290,7 +293,7 @@ export interface GridProps<T = Row> {
   autoBind?: boolean
 
   editable?: boolean | 'inline' | 'popup' | 'batch'
-  toolbar?: ('create' | 'save' | 'cancel' | 'excel')[]
+  toolbar?: ('create' | 'save' | 'cancel' | 'excel')[] | string | (() => string)
   navigatable?: boolean
 
   sortable?: boolean

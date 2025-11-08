@@ -48,6 +48,7 @@ import {
   faCheckSquare,
   faCopy,
   faFileExcel,
+  faFileCode,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -95,6 +96,7 @@ library.add(
   faCheckSquare,
   faCopy,
   faFileExcel,
+  faFileCode,
 )
 
 createApp(App)

@@ -46,6 +46,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/excel-export', component: () => import('./pages/ExcelExportPage.vue') },
   { path: '/filterable-props', component: () => import('./pages/FilterablePropsPage.vue') },
   { path: '/grid-column', component: () => import('./pages/GridColumnPage.vue') },
+  { path: '/templates', component: () => import('./pages/TemplatesPage.vue') },
 ]
 
 export const router = createRouter({
