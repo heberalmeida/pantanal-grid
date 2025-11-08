@@ -37,10 +37,32 @@ const escapedSource = computed(() => {
   cursor: pointer;
   font-weight: 600;
   margin-bottom: 0.75rem;
+  color: inherit;
 }
-[data-theme="dark"] .example-code {
-  background: rgba(15, 23, 42, 0.8);
-  border-color: rgba(148, 163, 184, 0.25);
-  color: #e2e8f0;
+.example-code pre {
+  margin: 0;
+  color: inherit;
+}
+.example-code code {
+  color: inherit;
+  background: transparent;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+}
+[data-theme="dark"] .example-code,
+[data-theme="midnight"] .example-code {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .example-code summary,
+[data-theme="midnight"] .example-code summary {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .example-code code,
+[data-theme="midnight"] .example-code code {
+  color: #e2e8f0 !important;
+  background: transparent !important;
 }
 </style>

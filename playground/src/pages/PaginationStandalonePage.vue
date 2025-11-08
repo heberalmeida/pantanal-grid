@@ -15,9 +15,9 @@
         Simple pagination with previous/next buttons, text labels, and icons.
       </p>
       
-      <div class="mb-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-        <p class="text-sm mb-2">Current page: {{ simplePage }} / {{ Math.ceil(simpleTotal / simplePageSize) }}</p>
-        <p class="text-sm">Showing items {{ (simplePage - 1) * simplePageSize + 1 }} to {{ Math.min(simplePage * simplePageSize, simpleTotal) }} of {{ simpleTotal }}</p>
+      <div class="mb-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg content-box">
+        <p class="text-sm mb-2 content-text">Current page: {{ simplePage }} / {{ Math.ceil(simpleTotal / simplePageSize) }}</p>
+        <p class="text-sm content-text">Showing items {{ (simplePage - 1) * simplePageSize + 1 }} to {{ Math.min(simplePage * simplePageSize, simpleTotal) }} of {{ simpleTotal }}</p>
       </div>
 
       <PantanalPagination
@@ -42,10 +42,10 @@
         Pagination with numbered page buttons. Perfect for navigating through multiple pages.
       </p>
       
-      <div class="mb-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-        <p class="text-sm mb-2">Current page: {{ pagesPage }} / {{ Math.ceil(pagesTotal / pagesPageSize) }}</p>
+      <div class="mb-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg content-box">
+        <p class="text-sm mb-2 content-text">Current page: {{ pagesPage }} / {{ Math.ceil(pagesTotal / pagesPageSize) }}</p>
         <div class="space-y-2">
-          <div v-for="item in paginatedItems" :key="item.id" class="text-sm p-2 bg-white dark:bg-slate-700 rounded">
+          <div v-for="item in paginatedItems" :key="item.id" class="text-sm p-2 bg-white dark:bg-slate-700 rounded content-item">
             Item {{ item.id }}: {{ item.name }}
           </div>
         </div>
@@ -77,10 +77,10 @@
         Pagination with first/last buttons and numbered pages. Best for large datasets.
       </p>
       
-      <div class="mb-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-        <p class="text-sm mb-2">Current page: {{ edgesPage }} / {{ Math.ceil(edgesTotal / edgesPageSize) }}</p>
+      <div class="mb-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg content-box">
+        <p class="text-sm mb-2 content-text">Current page: {{ edgesPage }} / {{ Math.ceil(edgesTotal / edgesPageSize) }}</p>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <div v-for="item in paginatedEdgesItems" :key="item.id" class="text-xs p-2 bg-white dark:bg-slate-700 rounded">
+          <div v-for="item in paginatedEdgesItems" :key="item.id" class="text-xs p-2 bg-white dark:bg-slate-700 rounded content-item">
             #{{ item.id }}
           </div>
         </div>
@@ -115,12 +115,12 @@
         <div
           v-for="product in paginatedProducts"
           :key="product.id"
-          class="p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          class="p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow content-item">
           <h4 class="font-semibold mb-2">{{ product.name }}</h4>
-          <p class="text-sm text-slate-600 dark:text-slate-400">
+          <p class="text-sm text-slate-600 dark:text-slate-400 content-text">
             Price: ${{ product.price.toFixed(2) }}
           </p>
-          <p class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+          <p class="text-xs text-slate-500 dark:text-slate-500 mt-1 content-text">
             Category: {{ product.category }}
           </p>
         </div>

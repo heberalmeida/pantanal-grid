@@ -8,34 +8,34 @@
 
     <div class="mb-8">
       <h2 class="text-2xl font-semibold mb-4">Header Shortcuts</h2>
-      <div class="bg-gray-50 p-4 rounded-lg mb-4">
+      <div class="bg-gray-50 p-4 rounded-lg mb-4 content-box">
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b">
-              <th class="text-left py-2 px-4 font-semibold">Shortcut</th>
-              <th class="text-left py-2 px-4 font-semibold">Description</th>
+              <th class="text-left py-2 px-4 font-semibold content-text">Shortcut</th>
+              <th class="text-left py-2 px-4 font-semibold content-text">Description</th>
             </tr>
           </thead>
           <tbody>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Enter</kbd></td>
-              <td class="py-2 px-4">Sort by the column</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Enter</kbd></td>
+              <td class="py-2 px-4 content-text">Sort by the column</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Alt</kbd> + <kbd class="bg-white border px-2 py-1 rounded">Down</kbd></td>
-              <td class="py-2 px-4">Opens the filter menu</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Alt</kbd> + <kbd class="bg-white border px-2 py-1 rounded content-item">Down</kbd></td>
+              <td class="py-2 px-4 content-text">Opens the filter menu</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Esc</kbd></td>
-              <td class="py-2 px-4">Closes the filter menu</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Esc</kbd></td>
+              <td class="py-2 px-4 content-text">Closes the filter menu</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Ctrl</kbd> + <kbd class="bg-white border px-2 py-1 rounded">Left Arrow</kbd></td>
-              <td class="py-2 px-4">Reorders the column with the previous one</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Ctrl</kbd> + <kbd class="bg-white border px-2 py-1 rounded content-item">Left Arrow</kbd></td>
+              <td class="py-2 px-4 content-text">Reorders the column with the previous one</td>
             </tr>
             <tr>
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Ctrl</kbd> + <kbd class="bg-white border px-2 py-1 rounded">Right Arrow</kbd></td>
-              <td class="py-2 px-4">Reorders the column with the next one</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Ctrl</kbd> + <kbd class="bg-white border px-2 py-1 rounded content-item">Right Arrow</kbd></td>
+              <td class="py-2 px-4 content-text">Reorders the column with the next one</td>
             </tr>
           </tbody>
         </table>
@@ -44,62 +44,62 @@
 
     <div class="mb-8">
       <h2 class="text-2xl font-semibold mb-4">Body Shortcuts</h2>
-      <div class="bg-gray-50 p-4 rounded-lg mb-4">
+      <div class="bg-gray-50 p-4 rounded-lg mb-4 content-box">
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b">
-              <th class="text-left py-2 px-4 font-semibold">Shortcut</th>
-              <th class="text-left py-2 px-4 font-semibold">Description</th>
+              <th class="text-left py-2 px-4 font-semibold content-text">Shortcut</th>
+              <th class="text-left py-2 px-4 font-semibold content-text">Description</th>
             </tr>
           </thead>
           <tbody>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Arrow Keys</kbd></td>
-              <td class="py-2 px-4">Navigate over the cells</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Arrow Keys</kbd></td>
+              <td class="py-2 px-4 content-text">Navigate over the cells</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Enter</kbd></td>
-              <td class="py-2 px-4">Toggles the expand and collapse state on group row</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Enter</kbd></td>
+              <td class="py-2 px-4 content-text">Toggles the expand and collapse state on group row</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Page Up</kbd></td>
-              <td class="py-2 px-4">Navigates to the previous page</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Page Up</kbd></td>
+              <td class="py-2 px-4 content-text">Navigates to the previous page</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Page Down</kbd></td>
-              <td class="py-2 px-4">Navigates to the next page</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Page Down</kbd></td>
+              <td class="py-2 px-4 content-text">Navigates to the next page</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Space</kbd></td>
-              <td class="py-2 px-4">Selects the row which holds the currently highlighted cell</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Space</kbd></td>
+              <td class="py-2 px-4 content-text">Selects the row which holds the currently highlighted cell</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Ctrl</kbd> + <kbd class="bg-white border px-2 py-1 rounded">Space</kbd></td>
-              <td class="py-2 px-4">Selects or deselects the current row while persisting the previously selected rows (only for multiple selection mode)</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Ctrl</kbd> + <kbd class="bg-white border px-2 py-1 rounded content-item">Space</kbd></td>
+              <td class="py-2 px-4 content-text">Selects or deselects the current row while persisting the previously selected rows (only for multiple selection mode)</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Shift</kbd> + <kbd class="bg-white border px-2 py-1 rounded">Space</kbd></td>
-              <td class="py-2 px-4">Performs range selection. Selects all the rows between the last selected one and the one which holds the focused cell</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Shift</kbd> + <kbd class="bg-white border px-2 py-1 rounded content-item">Space</kbd></td>
+              <td class="py-2 px-4 content-text">Performs range selection. Selects all the rows between the last selected one and the one which holds the focused cell</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Shift</kbd> + <kbd class="bg-white border px-2 py-1 rounded">Arrow Keys</kbd></td>
-              <td class="py-2 px-4">Adds the row which holds the focused cell to the selection (only for multiple selection mode)</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Shift</kbd> + <kbd class="bg-white border px-2 py-1 rounded content-item">Arrow Keys</kbd></td>
+              <td class="py-2 px-4 content-text">Adds the row which holds the focused cell to the selection (only for multiple selection mode)</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Ctrl</kbd> + <kbd class="bg-white border px-2 py-1 rounded">Home</kbd></td>
-              <td class="py-2 px-4">Focuses the first focusable element inside the body</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Ctrl</kbd> + <kbd class="bg-white border px-2 py-1 rounded content-item">Home</kbd></td>
+              <td class="py-2 px-4 content-text">Focuses the first focusable element inside the body</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Ctrl</kbd> + <kbd class="bg-white border px-2 py-1 rounded">End</kbd></td>
-              <td class="py-2 px-4">Focuses the last focusable cell in the last row</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Ctrl</kbd> + <kbd class="bg-white border px-2 py-1 rounded content-item">End</kbd></td>
+              <td class="py-2 px-4 content-text">Focuses the last focusable cell in the last row</td>
             </tr>
             <tr class="border-b">
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">Home</kbd></td>
-              <td class="py-2 px-4">Focuses the first focusable cell in the row</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">Home</kbd></td>
+              <td class="py-2 px-4 content-text">Focuses the first focusable cell in the row</td>
             </tr>
             <tr>
-              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded">End</kbd></td>
-              <td class="py-2 px-4">Focuses the last focusable cell in the row</td>
+              <td class="py-2 px-4"><kbd class="bg-white border px-2 py-1 rounded content-item">End</kbd></td>
+              <td class="py-2 px-4 content-text">Focuses the last focusable cell in the row</td>
             </tr>
           </tbody>
         </table>

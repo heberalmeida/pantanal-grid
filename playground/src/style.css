@@ -165,6 +165,261 @@ body {
   background-color: rgba(28, 32, 64, 0.85);
 }
 
+/* Dark theme fixes for code and text contrast */
+[data-theme="dark"] code,
+[data-theme="midnight"] code {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+  color: #e2e8f0 !important;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+[data-theme="dark"] .bg-gray-100,
+[data-theme="midnight"] .bg-gray-100 {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.4) !important;
+}
+
+[data-theme="dark"] .text-gray-600,
+[data-theme="midnight"] .text-gray-600,
+[data-theme="dark"] .text-gray-500,
+[data-theme="midnight"] .text-gray-500 {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .text-gray-700,
+[data-theme="midnight"] .text-gray-700 {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .text-gray-800,
+[data-theme="midnight"] .text-gray-800 {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .text-gray-900,
+[data-theme="midnight"] .text-gray-900 {
+  color: #f8fafc !important;
+}
+
+/* Fix for white backgrounds in dark theme */
+[data-theme="dark"] .bg-white,
+[data-theme="midnight"] .bg-white {
+  background-color: rgba(30, 41, 59, 0.95) !important;
+  color: #f1f5f9 !important;
+}
+
+/* Fix for list items and content areas */
+[data-theme="dark"] li,
+[data-theme="midnight"] li,
+[data-theme="dark"] .list-disc,
+[data-theme="midnight"] .list-disc {
+  color: #e2e8f0 !important;
+}
+
+/* Fix for labels and form elements */
+[data-theme="dark"] label,
+[data-theme="midnight"] label {
+  color: #e2e8f0 !important;
+}
+
+/* Fix for buttons in dark theme */
+[data-theme="dark"] button,
+[data-theme="midnight"] button {
+  color: inherit;
+}
+
+[data-theme="dark"] .bg-gray-500,
+[data-theme="midnight"] .bg-gray-500 {
+  background-color: rgba(100, 116, 139, 0.8) !important;
+}
+
+[data-theme="dark"] .bg-blue-500,
+[data-theme="midnight"] .bg-blue-500 {
+  background-color: rgba(59, 130, 246, 0.9) !important;
+}
+
+[data-theme="dark"] .bg-green-500,
+[data-theme="midnight"] .bg-green-500 {
+  background-color: rgba(34, 197, 94, 0.9) !important;
+}
+
+/* Fix for input fields */
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] select,
+[data-theme="midnight"] input[type="text"],
+[data-theme="midnight"] input[type="number"],
+[data-theme="midnight"] input[type="date"],
+[data-theme="midnight"] select {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+  color: #f1f5f9 !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+}
+
+[data-theme="dark"] input[type="checkbox"],
+[data-theme="midnight"] input[type="checkbox"] {
+  accent-color: #38bdf8;
+}
+
+/* Global fix for all text in dark theme pages */
+[data-theme="dark"] .p-6 p,
+[data-theme="midnight"] .p-6 p,
+[data-theme="dark"] .p-6 *,
+[data-theme="midnight"] .p-6 * {
+  color: inherit;
+}
+
+/* Ensure all paragraphs are readable */
+[data-theme="dark"] p,
+[data-theme="midnight"] p {
+  color: #e2e8f0 !important;
+}
+
+/* Fix for Tailwind slate colors in dark theme - more specific */
+[data-theme="dark"] .bg-slate-50,
+[data-theme="midnight"] .bg-slate-50 {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+}
+
+[data-theme="dark"] .bg-slate-50 p,
+[data-theme="midnight"] .bg-slate-50 p,
+[data-theme="dark"] .bg-slate-50 div,
+[data-theme="midnight"] .bg-slate-50 div,
+[data-theme="dark"] .bg-slate-50 span,
+[data-theme="midnight"] .bg-slate-50 span,
+[data-theme="dark"] .bg-slate-50 *,
+[data-theme="midnight"] .bg-slate-50 * {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .bg-white,
+[data-theme="midnight"] .bg-white {
+  background-color: rgba(51, 65, 85, 0.9) !important;
+}
+
+[data-theme="dark"] .bg-white p,
+[data-theme="midnight"] .bg-white p,
+[data-theme="dark"] .bg-white div,
+[data-theme="midnight"] .bg-white div,
+[data-theme="dark"] .bg-white span,
+[data-theme="midnight"] .bg-white span,
+[data-theme="dark"] .bg-white *,
+[data-theme="midnight"] .bg-white * {
+  color: #e2e8f0 !important;
+}
+
+/* Fix for text-slate classes */
+[data-theme="dark"] .text-slate-600,
+[data-theme="midnight"] .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .text-slate-500,
+[data-theme="midnight"] .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .text-slate-400,
+[data-theme="midnight"] .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .text-slate-300,
+[data-theme="midnight"] .text-slate-300 {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .text-slate-200,
+[data-theme="midnight"] .text-slate-200 {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .text-slate-100,
+[data-theme="midnight"] .text-slate-100 {
+  color: #f1f5f9 !important;
+}
+
+/* Fix for pagination component text */
+[data-theme="dark"] .pg-total,
+[data-theme="midnight"] .pg-total {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .pg-label,
+[data-theme="midnight"] .pg-label {
+  color: #e2e8f0 !important;
+}
+
+/* Fix for content boxes with explicit classes */
+[data-theme="dark"] .content-box,
+[data-theme="midnight"] .content-box {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+}
+
+[data-theme="dark"] .content-text,
+[data-theme="midnight"] .content-text,
+[data-theme="dark"] .content-box p,
+[data-theme="midnight"] .content-box p,
+[data-theme="dark"] .content-box .text-sm,
+[data-theme="midnight"] .content-box .text-sm {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .content-item,
+[data-theme="midnight"] .content-item {
+  background-color: rgba(51, 65, 85, 0.9) !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .content-item *,
+[data-theme="midnight"] .content-item * {
+  color: #e2e8f0 !important;
+}
+
+/* Override any light text colors in dark theme for content text */
+[data-theme="dark"] .text-slate-600.content-text,
+[data-theme="midnight"] .text-slate-600.content-text,
+[data-theme="dark"] .text-slate-500.content-text,
+[data-theme="midnight"] .text-slate-500.content-text,
+[data-theme="dark"] .text-slate-400.content-text,
+[data-theme="midnight"] .text-slate-400.content-text {
+  color: #e2e8f0 !important;
+}
+
+/* Fix for tables in dark theme */
+[data-theme="dark"] table,
+[data-theme="midnight"] table,
+[data-theme="dark"] table th,
+[data-theme="midnight"] table th,
+[data-theme="dark"] table td,
+[data-theme="midnight"] table td {
+  color: #e2e8f0 !important;
+}
+
+/* Fix for kbd elements */
+[data-theme="dark"] kbd,
+[data-theme="midnight"] kbd {
+  background-color: rgba(51, 65, 85, 0.9) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+}
+
+/* Fix for bg-gray-50 */
+[data-theme="dark"] .bg-gray-50,
+[data-theme="midnight"] .bg-gray-50 {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+}
+
+[data-theme="dark"] .bg-gray-50 *,
+[data-theme="midnight"] .bg-gray-50 * {
+  color: #e2e8f0 !important;
+}
+
 [data-theme="dark"] .v3grid__group,
 [data-theme="midnight"] .v3grid__group,
 [data-theme="dark"] .v3grid__groupfooter,
