@@ -62,7 +62,8 @@
             @click="handleHeaderCellClick(c, $event)"
             @keydown="props.navigatable && handleKeydown($event, undefined, c._idx)">
             <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
-              {{ c.title ?? String(c.field) }}
+              <span v-if="c.headerTemplate" v-html="renderHeaderTemplate(c)"></span>
+              <span v-else>{{ c.title ?? String(c.field) }}</span>
               <template v-if="sortIconData(c)">
                 <span v-if="props.sortableMode === 'multiple' && props.sortableShowIndexes && sortIconData(c)?.index" 
                   class="v3grid__sort-index">{{ sortIconData(c)!.index }}</span>
@@ -187,13 +188,14 @@
             />
             <template v-else-if="c.command && c.command.length > 0">
               <div class="v3grid__command-cell">
-                <template v-for="cmd in c.command" :key="cmd">
+                <template v-for="(cmd, cmdIdx) in c.command" :key="cmdIdx">
                   <button
-                    v-if="shouldShowCommand(cmd, row)"
-                    @click.stop="handleCommand(cmd, row)"
+                    v-if="shouldShowCommand(cmd, row, c)"
+                    @click.stop="handleCommand(cmd, row, c)"
                     class="v3grid__btn--command"
-                    :class="`v3grid__btn--${cmd}`">
-                    {{ getCommandLabel(cmd) }}
+                    :class="getCommandClasses(cmd, c)">
+                    <span v-if="getCommandIconClass(cmd, c)" :class="getCommandIconClass(cmd, c)"></span>
+                    <span v-html="getCommandContent(cmd, row, c)"></span>
                   </button>
                 </template>
               </div>
@@ -204,7 +206,8 @@
               :value="columnValue(row, c, (start ?? 0) + r)"
               :rowIndex="(start ?? 0) + r"
               :columnIndex="i">
-              {{ c.format ? c.format(columnValue(row, c, (start ?? 0) + r), row as any) : columnValue(row, c, (start ?? 0) + r) }}
+              <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, (start ?? 0) + r), c, row as any)"></span>
+              <span v-else>{{ formatColumnValue(columnValue(row, c, (start ?? 0) + r), c, row as any) }}</span>
             </slot>
           </div>
         </div>
@@ -314,7 +317,8 @@
                         />
                         <slot v-else name="cell" :column="c" :row="n.row" :value="columnValue(n.row, c, (start ?? 0) + r)"
                           :rowIndex="(start ?? 0) + r" :columnIndex="i">
-                          {{ c.format ? c.format(columnValue(n.row, c, (start ?? 0) + r), n.row as any) : columnValue(n.row, c, (start ?? 0) + r) }}
+                          <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(n.row, c, (start ?? 0) + r), c, n.row as any)"></span>
+                          <span v-else>{{ formatColumnValue(columnValue(n.row, c, (start ?? 0) + r), c, n.row as any) }}</span>
                         </slot>
                       </div>
                     </div>
@@ -372,7 +376,8 @@
                       />
                       <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, (start ?? 0) + r)"
                         :rowIndex="(start ?? 0) + r" :columnIndex="i">
-                        {{ c.format ? c.format(columnValue(row, c, (start ?? 0) + r), row as any) : columnValue(row, c, (start ?? 0) + r) }}
+                        <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, (start ?? 0) + r), c, row as any)"></span>
+                        <span v-else>{{ formatColumnValue(columnValue(row, c, (start ?? 0) + r), c, row as any) }}</span>
                       </slot>
                     </div>
                   </div>
@@ -412,8 +417,16 @@
               <template v-for="(c, i) in unlockedCols" :key="c._idx">
                 <div v-if="n.type === 'group'" class="v3grid__cell v3grid__group">
                   <template v-if="String(c.field) === String(n.field)">
-                    <strong>{{ n.value }}</strong>
-                    <span class="text-xs opacity-70" style="margin-left:.5rem">• {{ n.aggregates.count }}</span>
+                    <template v-if="c.groupHeaderColumnTemplate">
+                      <span v-html="renderGroupHeaderColumnTemplate(c, { field: n.field, value: n.value, items: n.items ?? [], aggregates: n.aggregates })"></span>
+                    </template>
+                    <template v-else-if="c.groupHeaderTemplate">
+                      <span v-html="renderGroupHeaderTemplate(c, { field: n.field, value: n.value, items: n.items ?? [], aggregates: n.aggregates })"></span>
+                    </template>
+                    <template v-else>
+                      <strong>{{ n.value }}</strong>
+                      <span class="text-xs opacity-70" style="margin-left:.5rem">• {{ n.aggregates?.count ?? 0 }}</span>
+                    </template>
                   </template>
                 </div>
 
@@ -445,15 +458,21 @@
                   />
                   <slot v-else name="cell" :column="c" :row="n.row" :value="columnValue(n.row, c, r)"
                     :rowIndex="r" :columnIndex="i">
-                    {{ c.format ? c.format(columnValue(n.row, c, r), n.row as any) : columnValue(n.row, c, r) }}
+                    <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(n.row, c, r), c, n.row as any)"></span>
+                    <span v-else>{{ formatColumnValue(columnValue(n.row, c, r), c, n.row as any) }}</span>
                   </slot>
                 </div>
 
                 <div v-else-if="n.type === 'footer' && (props.showGroupFooters ?? true)"
                   class="v3grid__cell v3grid__groupfooter">
-                  <span v-if="aggTextForCell(String(c.field), n.aggregates)">
-                    {{ aggTextForCell(String(c.field), n.aggregates) }}
-                  </span>
+                  <template v-if="c.groupFooterTemplate">
+                    <span v-html="renderGroupFooterTemplate(c, { field: n.field, value: n.value, items: n.items ?? [], aggregates: n.aggregates })"></span>
+                  </template>
+                  <template v-else>
+                    <span v-if="aggTextForCell(String(c.field), n.aggregates)">
+                      {{ aggTextForCell(String(c.field), n.aggregates) }}
+                    </span>
+                  </template>
                 </div>
               </template>
             </div>
@@ -496,20 +515,22 @@
                 />
                 <template v-else-if="c.command && c.command.length > 0">
                   <div class="v3grid__command-cell">
-                    <template v-for="cmd in c.command" :key="cmd">
+                    <template v-for="(cmd, cmdIdx) in c.command" :key="cmdIdx">
                       <button
-                        v-if="shouldShowCommand(cmd, row)"
-                        @click.stop="handleCommand(cmd, row)"
+                        v-if="shouldShowCommand(cmd, row, c)"
+                        @click.stop="handleCommand(cmd, row, c, $event)"
                         class="v3grid__btn--command"
-                        :class="`v3grid__btn--${cmd}`">
-                        {{ getCommandLabel(cmd) }}
+                        :class="getCommandClasses(cmd, c)">
+                        <span v-if="getCommandIconClass(cmd, c)" :class="getCommandIconClass(cmd, c)"></span>
+                        <span v-html="getCommandContent(cmd, row, c)"></span>
                       </button>
                     </template>
                   </div>
                 </template>
                 <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, r)"
                   :rowIndex="r" :columnIndex="i">
-                  {{ c.format ? c.format(columnValue(row, c, r), row as any) : columnValue(row, c, r) }}
+                  <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, r), c, row as any)"></span>
+                  <span v-else>{{ formatColumnValue(columnValue(row, c, r), c, row as any) }}</span>
                 </slot>
               </div>
             </div>
@@ -528,7 +549,8 @@
         <div v-for="(c, i) in lockedLeftCols" :key="'h-left-' + i" class="v3grid__cell v3grid__headercell"
           @click="(c.sortable !== false && (props.sortable || c.sortable === true)) && toggleSort(c)">
           <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
-            {{ c.title ?? String(c.field) }}
+            <span v-if="c.headerTemplate" v-html="renderHeaderTemplate(c)"></span>
+            <span v-else>{{ c.title ?? String(c.field) }}</span>
             <template v-if="sortIconData(c)">
               <span v-if="props.sortableMode === 'multiple' && props.sortableShowIndexes && sortIconData(c)?.index" 
                 class="v3grid__sort-index">{{ sortIconData(c)!.index }}</span>
@@ -615,7 +637,8 @@
 
       <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: lockedRightTemplate }">
         <div v-for="(c, i) in lockedRightCols" :key="'h-right-' + i" class="v3grid__cell v3grid__headercell">
-          {{ c.title ?? String(c.field) }}
+          <span v-if="c.headerTemplate" v-html="renderHeaderTemplate(c)"></span>
+          <span v-else>{{ c.title ?? String(c.field) }}</span>
         </div>
       </div>
 
@@ -1329,15 +1352,144 @@ function pinStyle(i: number) {
   if (meta.side === 'right') return { right: (meta.right || 0) + 'px' }
 }
 
-function columnValue(row: unknown, column: ColumnDef, rowIndex = -1) {
+function formatValue(value: any, format: string | ((value: any, row: any) => string) | undefined, row: any): string {
+  if (!format) return String(value ?? '')
+  
+  // If format is a function, call it
+  if (typeof format === 'function') {
+    return format(value, row)
+  }
+  
+  // If format is a string, parse it (e.g., "{0:c}" for currency, "{0:MM/dd/yyyy}" for date)
+  if (typeof format === 'string') {
+    // Simple format string parser (supports {0:format} pattern)
+    const match = format.match(/\{0:([^}]+)\}/)
+    if (match) {
+      const formatType = match[1]
+      
+      // Number formats
+      if (formatType === 'c' || formatType === 'C') {
+        // Currency
+        const num = Number(value)
+        if (!isNaN(num)) {
+          return num.toLocaleString(undefined, {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })
+        }
+      } else if (formatType === 'n' || formatType === 'N') {
+        // Number
+        const num = Number(value)
+        if (!isNaN(num)) {
+          return num.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+          })
+        }
+      } else if (formatType === 'p' || formatType === 'P') {
+        // Percentage
+        const num = Number(value)
+        if (!isNaN(num)) {
+          return (num * 100).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }) + '%'
+        }
+      } else if (formatType.includes('/') || formatType.includes('MM') || formatType.includes('dd') || formatType.includes('yyyy')) {
+        // Date format
+        if (value instanceof Date) {
+          return formatDate(value, formatType)
+        } else if (typeof value === 'string' || typeof value === 'number') {
+          const date = new Date(value)
+          if (!isNaN(date.getTime())) {
+            return formatDate(date, formatType)
+          }
+        }
+      }
+    }
+    
+    // If no pattern matched, replace {0} with the value
+    return format.replace(/\{0\}/g, String(value ?? ''))
+  }
+  
+  return String(value ?? '')
+}
+
+function formatDate(date: Date, format: string): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  
+  const replacements: Record<string, string> = {
+    'yyyy': String(date.getFullYear()),
+    'MM': pad(date.getMonth() + 1),
+    'dd': pad(date.getDate()),
+    'HH': pad(date.getHours()),
+    'mm': pad(date.getMinutes()),
+    'ss': pad(date.getSeconds()),
+  }
+  
+  let result = format
+  Object.entries(replacements).forEach(([key, value]) => {
+    result = result.replace(new RegExp(key, 'g'), value)
+  })
+  
+  // Handle common date formats
+  if (format === 'MM/dd/yyyy') {
+    return `${pad(date.getMonth() + 1)}/${pad(date.getDate())}/${date.getFullYear()}`
+  } else if (format === 'dd/MM/yyyy') {
+    return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`
+  } else if (format === 'yyyy-MM-dd') {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+  }
+  
+  return result
+}
+
+function applyValuesTransform(value: any, values?: Array<{ text: string; value: any }>): any {
+  if (!values || values.length === 0) return value
+  
+  const match = values.find(v => v.value === value)
+  return match ? match.text : value
+}
+
+function columnValue(row: unknown, column: ColumnDef, rowIndex = -1): any {
   if (!column) return undefined
   const record = (row ?? {}) as Record<string, unknown>
   const field = column.field
-  const raw = field != null ? (record as any)[field as any] : undefined
+  
+  // If no field, return undefined (for group columns)
+  if (field == null) return undefined
+  
+  const raw = (record as any)[field as any]
+  
+  // Apply values transform (enum/transform)
+  let transformed = applyValuesTransform(raw, column.values)
+  
+  // Apply cell function if provided
   if (typeof column.cell === 'function') {
-    return column.cell({ value: raw, row: row as any, rowIndex })
+    return column.cell({ value: transformed, row: row as any, rowIndex })
   }
-  return raw
+  
+  return transformed
+}
+
+function formatColumnValue(value: any, column: ColumnDef, row: any): string {
+  // Apply format if provided
+  let formatted = formatValue(value, column.format, row)
+  
+  // Apply encoding if needed (default: true)
+  if (column.encoded !== false) {
+    // HTML encode (basic implementation)
+    formatted = formatted
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+  }
+  
+  return formatted
 }
 
 function columnSlotCandidates(column: ColumnDef): string[] {
@@ -1363,6 +1515,81 @@ function columnSlotPrimary(column: ColumnDef) {
 
 function columnSlotSecondary(column: ColumnDef) {
   return columnSlotCandidates(column)[1] ?? null
+}
+
+// Helper functions for column templates
+function renderHeaderTemplate(column: ColumnDef): string {
+  if (!column.headerTemplate) return column.title ?? String(column.field ?? '')
+  if (typeof column.headerTemplate === 'function') {
+    const result = column.headerTemplate(column)
+    return typeof result === 'string' ? result : (column.title ?? String(column.field ?? ''))
+  }
+  return column.headerTemplate
+}
+
+// Footer template rendering (not yet used, reserved for future implementation)
+// function renderFooterTemplate(column: ColumnDef, aggregates?: Record<string, any>): string {
+//   if (!column.footerTemplate) {
+//     // Default: show aggregate if available
+//     if (aggregates && column.field) {
+//       const agg = aggregates[String(column.field)]
+//       if (agg) {
+//         return Object.entries(agg).map(([key, value]) => `${key}: ${value}`).join(', ')
+//       }
+//     }
+//     return ''
+//   }
+//   if (typeof column.footerTemplate === 'function') {
+//     const result = column.footerTemplate(aggregates ?? {})
+//     return typeof result === 'string' ? result : ''
+//   }
+//   return column.footerTemplate
+// }
+
+function renderGroupHeaderTemplate(_column: ColumnDef, group: { field: string; value: any; items: any[]; aggregates?: Record<string, any> }): string {
+  // Note: column parameter is reserved for future use
+  if (!_column.groupHeaderTemplate) {
+    // Default: show group value
+    return String(group.value ?? '')
+  }
+  if (typeof _column.groupHeaderTemplate === 'function') {
+    const result = _column.groupHeaderTemplate(group)
+    return typeof result === 'string' ? result : String(group.value ?? '')
+  }
+  return _column.groupHeaderTemplate
+}
+
+function renderGroupHeaderColumnTemplate(column: ColumnDef, group: { field: string; value: any; items: any[]; aggregates?: Record<string, any> }): string {
+  if (!column.groupHeaderColumnTemplate) {
+    // Default: show group value if this column matches the group field
+    if (String(column.field) === String(group.field)) {
+      return String(group.value ?? '')
+    }
+    return ''
+  }
+  if (typeof column.groupHeaderColumnTemplate === 'function') {
+    const result = column.groupHeaderColumnTemplate(group, column)
+    return typeof result === 'string' ? result : ''
+  }
+  return column.groupHeaderColumnTemplate
+}
+
+function renderGroupFooterTemplate(column: ColumnDef, group: { field: string; value: any; items: any[]; aggregates?: Record<string, any> }): string {
+  if (!column.groupFooterTemplate) {
+    // Default: show aggregate if available
+    if (group.aggregates && column.field) {
+      const agg = group.aggregates[String(column.field)]
+      if (agg) {
+        return Object.entries(agg).map(([key, value]) => `${key}: ${value}`).join(', ')
+      }
+    }
+    return ''
+  }
+  if (typeof column.groupFooterTemplate === 'function') {
+    const result = column.groupFooterTemplate(group)
+    return typeof result === 'string' ? result : ''
+  }
+  return column.groupFooterTemplate
 }
 
 /** DATA PIPELINE  DataProvider */
@@ -1917,10 +2144,49 @@ const lockedRightTemplate = computed(() =>
     effW(c._orderIndex, c) + 'px').join(' ')
 )
 
+// Check if column should be visible based on hidden, media, minScreenWidth
+function isColumnHidden(col: ColumnDef): boolean {
+  // Check hidden prop
+  if (col.hidden === true) return true
+  
+  // Check minScreenWidth
+  if (col.minScreenWidth != null && hostWidth.value < col.minScreenWidth) {
+    return true
+  }
+  
+  // Check media query
+  if (col.media) {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      try {
+        const mq = window.matchMedia(col.media)
+        if (!mq.matches) return true
+      } catch (e) {
+        // Invalid media query, ignore
+      }
+    }
+  }
+  
+  return false
+}
+
 const unlockedCols = computed(() =>
   orderedCols.value
     .map((c, i) => ({ ...c, _idx: i, _orderIndex: order.value[i] ?? i })) 
-    .filter(c => !c.locked && (c.field ? isColumnVisible(c) : true))
+    .filter(c => {
+      // Filter out locked columns
+      if (c.locked) return false
+      
+      // Filter out hidden columns
+      if (isColumnHidden(c)) return false
+      
+      // Filter based on column menu visibility (if column menu is used)
+      if (c.field && !isColumnVisible(c)) return false
+      
+      // Filter out columns not in menu (if menu prop is false)
+      if (c.menu === false && props.columnMenu) return false
+      
+      return true
+    })
 )
 const footerEl = ref<HTMLElement | null>(null)
 const footerH = ref(0)
@@ -2440,20 +2706,77 @@ const confirmDeleteDialog = ref<{ open: boolean; row: any; message: string }>({
   message: '',
 })
 
-function getCommandLabel(cmd: string): string {
+function isCommandObject(cmd: any): cmd is { name: string; text?: string; iconClass?: string; className?: string; template?: string | ((row: any) => string); click?: (e: MouseEvent, row: any) => void; visible?: (row: any) => boolean } {
+  return typeof cmd === 'object' && cmd !== null && 'name' in cmd
+}
+
+function getCommandName(cmd: string | { name: string }): string {
+  return typeof cmd === 'string' ? cmd : cmd.name
+}
+
+function getCommandLabel(cmd: string | { name: string; text?: string }): string {
+  if (isCommandObject(cmd)) {
+    return cmd.text || cmd.name || ''
+  }
   switch (cmd) {
     case 'edit': return msgs.value.edit
     case 'destroy': return msgs.value.destroy
     case 'save': return msgs.value.save
     case 'cancel': return msgs.value.cancel
-    default: return cmd
+    default: return String(cmd)
   }
 }
 
-function shouldShowCommand(cmd: string, row: any): boolean {
-  if (cmd === 'destroy' && props.editableDestroy === false) return false
-  if (cmd === 'edit' && props.editableUpdate === false) return false
-  if (cmd === 'save' || cmd === 'cancel') {
+function getCommandContent(cmd: string | { name: string; text?: string; template?: string | ((row: any) => string) }, row: any, column?: ColumnDef): string {
+  if (isCommandObject(cmd)) {
+    if (cmd.template) {
+      if (typeof cmd.template === 'function') {
+        const result = cmd.template(row)
+        return typeof result === 'string' ? result : String(result)
+      }
+      return cmd.template
+    }
+    return cmd.text || cmd.name || ''
+  }
+  return getCommandLabel(cmd)
+}
+
+function getCommandIconClass(cmd: string | { name: string; iconClass?: string }, column?: ColumnDef): string | undefined {
+  if (isCommandObject(cmd)) {
+    return cmd.iconClass
+  }
+  // Default icon classes for built-in commands (can be styled with CSS)
+  switch (cmd) {
+    case 'edit': return 'v3grid__icon--edit'
+    case 'destroy': return 'v3grid__icon--destroy'
+    case 'save': return 'v3grid__icon--save'
+    case 'cancel': return 'v3grid__icon--cancel'
+    default: return undefined
+  }
+}
+
+function getCommandClasses(cmd: string | { name: string; className?: string }, column?: ColumnDef): string {
+  const baseClass = 'v3grid__btn--command'
+  if (isCommandObject(cmd)) {
+    const cmdName = cmd.name
+    const customClass = cmd.className
+    return customClass ? `${baseClass} ${baseClass}--${cmdName} ${customClass}` : `${baseClass} ${baseClass}--${cmdName}`
+  }
+  return `${baseClass} ${baseClass}--${cmd}`
+}
+
+function shouldShowCommand(cmd: string | { name: string; visible?: (row: any) => boolean }, row: any, column?: ColumnDef): boolean {
+  // Check custom visible function
+  if (isCommandObject(cmd) && cmd.visible) {
+    return cmd.visible(row)
+  }
+  
+  const cmdName = getCommandName(cmd)
+  
+  // Built-in command visibility checks
+  if (cmdName === 'destroy' && props.editableDestroy === false) return false
+  if (cmdName === 'edit' && props.editableUpdate === false) return false
+  if (cmdName === 'save' || cmdName === 'cancel') {
     // Only show in inline/popup mode when row is being edited
     const rowKey = row[keyFieldStr.value]
     return editingState.isRowEditing(rowKey)
@@ -2461,14 +2784,23 @@ function shouldShowCommand(cmd: string, row: any): boolean {
   return true
 }
 
-function handleCommand(cmd: string, row: any) {
-  if (cmd === 'edit') {
+function handleCommand(cmd: string | { name: string; click?: (e: MouseEvent, row: any) => void }, row: any, column?: ColumnDef, event?: MouseEvent) {
+  // Check for custom click handler
+  if (isCommandObject(cmd) && cmd.click) {
+    cmd.click(event || new MouseEvent('click'), row)
+    return
+  }
+  
+  const cmdName = getCommandName(cmd)
+  
+  // Built-in command handlers
+  if (cmdName === 'edit') {
     handleEdit(row)
-  } else if (cmd === 'destroy') {
+  } else if (cmdName === 'destroy') {
     handleDestroy(row)
-  } else if (cmd === 'save') {
+  } else if (cmdName === 'save') {
     handleEditSave(row)
-  } else if (cmd === 'cancel') {
+  } else if (cmdName === 'cancel') {
     handleEditCancel(row)
   }
 }
@@ -2896,7 +3228,8 @@ async function exportToExcel() {
     
     // Set column widths (optional, but improves readability)
     const colWidths = colsToExport.map(col => {
-      return { wch: Math.max((col.title || String(col.field)).length, col.width ? col.width / 7 : 10) }
+      const widthNum = typeof col.width === 'number' ? col.width : (typeof col.width === 'string' ? parseFloat(col.width) || 0 : 0)
+      return { wch: Math.max((col.title || String(col.field)).length, widthNum ? widthNum / 7 : 10) }
     })
     worksheet['!cols'] = colWidths
     

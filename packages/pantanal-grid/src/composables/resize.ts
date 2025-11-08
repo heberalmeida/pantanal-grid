@@ -6,7 +6,10 @@ export function useColumnResize(columns: () => ColumnDef[]) {
 
   function ensureWidths() {
     if (!widths.value.length || widths.value.length !== columns().length) {
-      widths.value = columns().map(c => c.width ?? 0)
+      widths.value = columns().map(c => {
+        const w = c.width ?? 0
+        return typeof w === 'number' ? w : (typeof w === 'string' ? parseFloat(w) || 0 : 0)
+      })
     }
   }
 

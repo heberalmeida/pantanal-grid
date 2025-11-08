@@ -84,18 +84,19 @@ export type ColumnTemplateResult = VNodeChild | string | null | undefined
 export type ColumnTemplateFn<T = Row> = (ctx?: ColumnTemplateContext<T>) => ColumnTemplateResult
 
 export interface ColumnDef<T = Row> {
-  field: keyof T | string
+  field?: keyof T | string  // Made optional for group columns
   title?: string
-  width?: number
+  width?: number | string
   sortable?: boolean
   filterable?: boolean
-  editable?: boolean
+  editable?: boolean | ((row: T) => boolean)
   resizable?: boolean
   reorderable?: boolean
-  format?: (value: any, row: T) => string
+  format?: string | ((value: any, row: T) => string)  // Support both string format and function
   cell?: (ctx: { value: any; row: T; rowIndex: number }) => any
   pinned?: boolean | 'left' | 'right'
   locked?: boolean | 'left' | 'right'
+  lockable?: boolean  // If false, column cannot be locked/unlocked
   slot?: string
   template?: ColumnTemplateFn<T>
   editor?: (container: HTMLElement, options: { field: string; value: any; row: T }) => void | HTMLElement
@@ -107,12 +108,69 @@ export interface ColumnDef<T = Row> {
     validator?: (value: any, row: T) => boolean | string
     [key: string]: any
   }
-  command?: ('edit' | 'destroy' | 'save' | 'cancel')[]
+  command?: ('edit' | 'destroy' | 'save' | 'cancel')[] | Array<{
+    name: string
+    text?: string
+    iconClass?: string
+    className?: string
+    template?: string | ((row: T) => string)
+    click?: (e: MouseEvent, row: T) => void
+    visible?: (row: T) => boolean
+  }>
   type?: 'string' | 'number' | 'boolean' | 'date'
+  
+  // Aggregates
+  aggregates?: AggregateName[]
+  
+  // HTML attributes
+  attributes?: Record<string, string | number | boolean>
+  headerAttributes?: Record<string, string | number | boolean>
+  footerAttributes?: Record<string, string | number | boolean>
+  
+  // Column groups (sub-columns)
+  columns?: ColumnDef<T>[]
+  
+  // Encoding
+  encoded?: boolean  // HTML encode column value (default: true)
+  
+  // Visibility
+  hidden?: boolean
+  media?: string  // Media query string (e.g., "(min-width: 768px)")
+  minScreenWidth?: number  // Hide column below this width
+  
+  // Resizing
+  minResizableWidth?: number  // Minimum width for resizing
+  
+  // Sorting options
+  sortableAllowUnsort?: boolean
+  sortableCompare?: (a: any, b: any, descending?: boolean) => number
+  sortableInitialDirection?: 'asc' | 'desc'
+  
+  // Grouping options
+  groupable?: boolean  // If false, column cannot be grouped
+  groupableSortCompare?: (a: any, b: any) => number
+  groupableSortDir?: 'asc' | 'desc'
+  
+  // Templates
+  headerTemplate?: string | ((column: ColumnDef<T>) => string)
+  footerTemplate?: string | ((aggregates: Record<string, any>) => string)
+  groupHeaderTemplate?: string | ((group: { field: string; value: any; items: T[]; aggregates?: Record<string, any> }) => string)
+  groupHeaderColumnTemplate?: string | ((group: { field: string; value: any; items: T[]; aggregates?: Record<string, any> }, column: ColumnDef<T>) => string)
+  groupFooterTemplate?: string | ((group: { field: string; value: any; items: T[]; aggregates?: Record<string, any> }) => string)
+  
+  // Selectable column (checkbox column)
+  selectable?: boolean
+  
+  // Values (enum/transform)
+  values?: Array<{ text: string; value: any }>
+  
+  // Column menu
+  menu?: boolean  // If false, column won't appear in column menu
   
   // Filtering options
   filterableMode?: 'row' | 'menu' | false
   filterableMulti?: boolean
+  filterableExtra?: boolean  // Allow second filter criterion
   filterableOperator?: FilterDescriptor['operator']
   filterableDefaultOperator?: FilterDescriptor['operator']
   filterableDataSource?: any[] | (() => any[])
@@ -128,6 +186,17 @@ export interface ColumnDef<T = Row> {
   }
   // Custom filter options for boolean/dropdown
   filterableOptions?: Array<{ value: any; label: string }> | (() => Array<{ value: any; label: string }>)
+  filterableIgnoreCase?: boolean  // Case-insensitive filtering
+  filterableCellDelay?: number  // Delay for AutoComplete in cell filter
+  filterableCellMinLength?: number  // Min length for AutoComplete
+  filterableCellOperator?: string  // Default operator for cell filter
+  filterableCellShowOperators?: boolean  // Show operator dropdown in cell filter
+  filterableCellDataSource?: any[] | (() => any[]) | Record<string, any>  // DataSource for AutoComplete
+  filterableCellDataTextField?: string  // Text field for AutoComplete
+  filterableCellInputWidth?: number  // Width of filter input
+  filterableCellSuggestionOperator?: 'startswith' | 'endswith' | 'contains'  // Operator for AutoComplete
+  filterableCellEnabled?: boolean  // Enable/disable cell filter widget
+  filterableCellTemplate?: (element: HTMLElement, options: { field: string; dataSource: any }) => void  // Custom template for filter cell
 }
 
 export type PaginationVariant = 'simple' | 'pages' | 'edges'
