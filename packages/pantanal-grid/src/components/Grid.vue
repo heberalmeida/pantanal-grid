@@ -176,6 +176,19 @@
               :template="c.template!"
               :payload="{ column: c, row, value: columnValue(row, c, (start ?? 0) + r), rowIndex: (start ?? 0) + r, columnIndex: i }"
             />
+            <template v-else-if="c.command && c.command.length > 0">
+              <div class="v3grid__command-cell">
+                <template v-for="cmd in c.command" :key="cmd">
+                  <button
+                    v-if="shouldShowCommand(cmd, row)"
+                    @click.stop="handleCommand(cmd, row)"
+                    class="v3grid__btn--command"
+                    :class="`v3grid__btn--${cmd}`">
+                    {{ getCommandLabel(cmd) }}
+                  </button>
+                </template>
+              </div>
+            </template>
             <slot v-else name="cell"
               :column="c"
               :row="row"
@@ -472,6 +485,19 @@
                   :template="c.template!"
                   :payload="{ column: c, row, value: columnValue(row, c, r), rowIndex: r, columnIndex: i }"
                 />
+                <template v-else-if="c.command && c.command.length > 0">
+                  <div class="v3grid__command-cell">
+                    <template v-for="cmd in c.command" :key="cmd">
+                      <button
+                        v-if="shouldShowCommand(cmd, row)"
+                        @click.stop="handleCommand(cmd, row)"
+                        class="v3grid__btn--command"
+                        :class="`v3grid__btn--${cmd}`">
+                        {{ getCommandLabel(cmd) }}
+                      </button>
+                    </template>
+                  </div>
+                </template>
                 <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, r)"
                   :rowIndex="r" :columnIndex="i">
                   {{ c.format ? c.format(columnValue(row, c, r), row as any) : columnValue(row, c, r) }}
@@ -772,6 +798,33 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirmation Dialog -->
+    <div
+      v-if="confirmDeleteDialog.open"
+      class="v3grid__confirm-dialog-overlay"
+      @click="cancelDelete">
+      <div class="v3grid__confirm-dialog" @click.stop>
+        <div class="v3grid__confirm-dialog-header">
+          <h3>{{ msgs.confirmDeleteTitle || 'Confirm Delete' }}</h3>
+        </div>
+        <div class="v3grid__confirm-dialog-body">
+          <p>{{ confirmDeleteDialog.message }}</p>
+        </div>
+        <div class="v3grid__confirm-dialog-footer">
+          <button
+            @click="cancelDelete"
+            class="v3grid__btn--dialog-cancel">
+            {{ props.editableCancelDelete || msgs.cancelDelete || 'Cancel' }}
+          </button>
+          <button
+            @click="confirmDelete"
+            class="v3grid__btn--dialog-confirm">
+            {{ props.editableConfirmDelete || msgs.destroy || 'Delete' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -856,6 +909,15 @@ const props = withDefaults(defineProps<GridProps>(), {
   columnMenuColumns: true,
   columnMenuFilterable: undefined,
   columnMenuSortable: undefined,
+  editableConfirmation: false,
+  editableCancelDelete: undefined,
+  editableConfirmDelete: undefined,
+  editableCreateAt: 'top',
+  editableDestroy: true,
+  editableMode: undefined,
+  editableTemplate: undefined,
+  editableUpdate: true,
+  editableWindow: undefined,
 })
 const emit = defineEmits<GridEmits>()
 const slots = useSlots()
@@ -2348,9 +2410,65 @@ function fallbackCopyToClipboard(text: string) {
 }
 
 // Editing handlers
+const confirmDeleteDialog = ref<{ open: boolean; row: any; message: string }>({
+  open: false,
+  row: null,
+  message: '',
+})
+
+function getCommandLabel(cmd: string): string {
+  switch (cmd) {
+    case 'edit': return msgs.value.edit
+    case 'destroy': return msgs.value.destroy
+    case 'save': return msgs.value.save
+    case 'cancel': return msgs.value.cancel
+    default: return cmd
+  }
+}
+
+function shouldShowCommand(cmd: string, row: any): boolean {
+  if (cmd === 'destroy' && props.editableDestroy === false) return false
+  if (cmd === 'edit' && props.editableUpdate === false) return false
+  if (cmd === 'save' || cmd === 'cancel') {
+    // Only show in inline/popup mode when row is being edited
+    const rowKey = row[keyFieldStr.value]
+    return editingState.isRowEditing(rowKey)
+  }
+  return true
+}
+
+function handleCommand(cmd: string, row: any) {
+  if (cmd === 'edit') {
+    handleEdit(row)
+  } else if (cmd === 'destroy') {
+    handleDestroy(row)
+  } else if (cmd === 'save') {
+    handleEditSave(row)
+  } else if (cmd === 'cancel') {
+    handleEditCancel(row)
+  }
+}
+
+function getConfirmationMessage(row: any): string {
+  if (typeof props.editableConfirmation === 'string') {
+    return props.editableConfirmation
+  } else if (typeof props.editableConfirmation === 'function') {
+    return props.editableConfirmation(row)
+  } else {
+    return msgs.value.confirmDelete || 'Are you sure you want to delete this record?'
+  }
+}
+
 function handleCreate() {
   console.log('handleCreate called')
   const newRow: Record<string, any> = {}
+  
+  // Handle createAt position
+  if (props.editableCreateAt === 'bottom') {
+    // In a full implementation, this would insert at the bottom
+    // For now, we just add to the newRows array normally
+  }
+  
   editingState.addNewRow(newRow)
   emit('create', { row: newRow })
   
@@ -2416,24 +2534,70 @@ function findRowByKey(key: string | number): any {
 }
 
 // Editing functions (currently not used but reserved for future editing features)
-// @ts-ignore - Reserved for future editing implementation
-function handleEdit(_row: any, _field?: string) {
-  // Reserved for future editing implementation
+function handleEdit(row: any, field?: string) {
+  if (!props.editable) return
+  const rowKey = row[keyFieldStr.value]
+  
+  if (editMode.value === 'inline' || editMode.value === 'popup') {
+    editingState.startEditingRow(rowKey)
+  }
+  
+  emit('edit', { row, field })
 }
 
-// @ts-ignore - Reserved for future editing implementation
-function handleEditSave(_row: any) {
-  // Reserved for future editing implementation
+function handleEditSave(row: any) {
+  const rowKey = row[keyFieldStr.value]
+  editingState.stopEditingRow(rowKey)
+  
+  // Apply pending changes
+  const changes = editingState.pendingChanges.value.get(rowKey)
+  if (changes) {
+    Object.keys(changes).forEach(field => {
+      if (field !== '__isNew__') {
+        row[field] = changes[field]
+      }
+    })
+  }
+  
+  emit('editSave', { row })
+  editingState.clearPendingChanges(rowKey)
 }
 
-// @ts-ignore - Reserved for future editing implementation
-function handleEditCancel(_row: any) {
-  // Reserved for future editing implementation
+function handleEditCancel(row: any) {
+  const rowKey = row[keyFieldStr.value]
+  editingState.stopEditingRow(rowKey)
+  editingState.clearPendingChanges(rowKey)
+  emit('editCancel', { row })
 }
 
-// @ts-ignore - Reserved for future editing implementation
-function handleDestroy(_row: any) {
-  // Reserved for future editing implementation
+function handleDestroy(row: any) {
+  if (props.editableConfirmation) {
+    const message = getConfirmationMessage(row)
+    confirmDeleteDialog.value = {
+      open: true,
+      row,
+      message,
+    }
+  } else {
+    performDestroy(row)
+  }
+}
+
+function performDestroy(row: any) {
+  const rowKey = row[keyFieldStr.value]
+  editingState.markAsDeleted(rowKey)
+  emit('destroy', { row })
+}
+
+function confirmDelete() {
+  if (confirmDeleteDialog.value.row) {
+    performDestroy(confirmDeleteDialog.value.row)
+  }
+  confirmDeleteDialog.value = { open: false, row: null, message: '' }
+}
+
+function cancelDelete() {
+  confirmDeleteDialog.value = { open: false, row: null, message: '' }
 }
 
 // @ts-ignore - Reserved for future editing implementation

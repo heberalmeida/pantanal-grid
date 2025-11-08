@@ -873,3 +873,150 @@
 [data-theme="midnight"] .v3grid__column-menu-action:hover {
   background-color: #334155 !important;
 }
+
+/* Command Buttons */
+.v3grid__command-cell {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.v3grid__btn--command {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--grid-border, #e5e7eb);
+  border-radius: 0.25rem;
+  background: var(--grid-bg, #fff);
+  color: var(--grid-text, #374151);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.v3grid__btn--command:hover {
+  background-color: var(--grid-header, #f8fafc);
+}
+
+.v3grid__btn--destroy {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.v3grid__btn--destroy:hover {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.v3grid__btn--edit {
+  color: var(--grid-accent, #18a058);
+  border-color: var(--grid-accent, #18a058);
+}
+
+.v3grid__btn--edit:hover {
+  background-color: rgba(24, 160, 88, 0.1);
+}
+
+/* Delete Confirmation Dialog */
+.v3grid__confirm-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.v3grid__confirm-dialog {
+  background: var(--grid-bg, #fff);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  min-width: 300px;
+  max-width: 500px;
+  overflow: hidden;
+}
+
+.v3grid__confirm-dialog-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--grid-border, #e5e7eb);
+}
+
+.v3grid__confirm-dialog-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--grid-text, #374151);
+}
+
+.v3grid__confirm-dialog-body {
+  padding: 1rem;
+  color: var(--grid-text, #374151);
+}
+
+.v3grid__confirm-dialog-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--grid-border, #e5e7eb);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.v3grid__btn--dialog-cancel,
+.v3grid__btn--dialog-confirm {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.v3grid__btn--dialog-cancel {
+  background: transparent;
+  border: 1px solid var(--grid-border, #e5e7eb);
+  color: var(--grid-text, #374151);
+}
+
+.v3grid__btn--dialog-cancel:hover {
+  background-color: var(--grid-header, #f8fafc);
+}
+
+.v3grid__btn--dialog-confirm {
+  background: #dc2626;
+  border: 1px solid #dc2626;
+  color: #fff;
+}
+
+.v3grid__btn--dialog-confirm:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+[data-theme="dark"] .v3grid__confirm-dialog,
+[data-theme="midnight"] .v3grid__confirm-dialog {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .v3grid__confirm-dialog-header h3,
+[data-theme="midnight"] .v3grid__confirm-dialog-header h3 {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .v3grid__confirm-dialog-body,
+[data-theme="midnight"] .v3grid__confirm-dialog-body {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .v3grid__btn--dialog-cancel,
+[data-theme="midnight"] .v3grid__btn--dialog-cancel {
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .v3grid__btn--dialog-cancel:hover,
+[data-theme="midnight"] .v3grid__btn--dialog-cancel:hover {
+  background-color: #334155 !important;
+}

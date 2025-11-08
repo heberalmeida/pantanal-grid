@@ -33,6 +33,9 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     columnMenuDone: 'Concluído',
     columnMenuLock: 'Travar',
     columnMenuUnlock: 'Destravar',
+    confirmDelete: 'Tem certeza que deseja excluir este registro?',
+    cancelDelete: 'Cancelar',
+    confirmDeleteTitle: 'Confirmar Exclusão',
   },
   en: {
     total: 'Total',
@@ -66,6 +69,9 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     columnMenuDone: 'Done',
     columnMenuLock: 'Lock',
     columnMenuUnlock: 'Unlock',
+    confirmDelete: 'Are you sure you want to delete this record?',
+    cancelDelete: 'Cancel',
+    confirmDeleteTitle: 'Confirm Delete',
   },
   es: {
     total: 'Total',
@@ -99,6 +105,9 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     columnMenuDone: 'Hecho',
     columnMenuLock: 'Bloquear',
     columnMenuUnlock: 'Desbloquear',
+    confirmDelete: '¿Está seguro de que desea eliminar este registro?',
+    cancelDelete: 'Cancelar',
+    confirmDeleteTitle: 'Confirmar Eliminación',
   },
 }
 

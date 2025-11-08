@@ -50,6 +50,9 @@ export interface Messages {
   columnMenuDone?: string
   columnMenuLock?: string
   columnMenuUnlock?: string
+  confirmDelete?: string
+  cancelDelete?: string
+  confirmDeleteTitle?: string
 }
 
 export interface ColumnTemplateContext<T = Row> {
@@ -195,6 +198,22 @@ export interface GridProps<T = Row> {
   columnMenuColumns?: boolean
   columnMenuFilterable?: boolean
   columnMenuSortable?: boolean
+
+  editableConfirmation?: boolean | string | ((row: T) => string)
+  editableCancelDelete?: string
+  editableConfirmDelete?: string
+  editableCreateAt?: 'top' | 'bottom'
+  editableDestroy?: boolean
+  editableMode?: 'incell' | 'inline' | 'popup'
+  editableTemplate?: string | ((row: T) => string)
+  editableUpdate?: boolean
+  editableWindow?: Record<string, any>
+
+  excelAllPages?: boolean
+  excelFileName?: string
+  excelFilterable?: boolean
+  excelForceProxy?: boolean
+  excelProxyUrl?: string
 }
 export interface GridEmits {
   (e: 'update:sort', value: SortDescriptor[]): void
