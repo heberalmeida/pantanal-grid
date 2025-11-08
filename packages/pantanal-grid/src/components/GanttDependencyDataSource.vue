@@ -36,12 +36,10 @@ import DataSource from './DataSource.vue'
 import type { 
   GanttDependency, 
   GanttDependencyDataSourceProps, 
-  GanttDependencyDataSourceSchema,
   GanttDependencyDataSourceInstance,
   DataSourceInstance,
   DataSourceSchema,
-  DataSourceTransport,
-  GanttTaskFieldConfig
+  DataSourceTransport
 } from '../types'
 import type { SortDescriptor, FilterDescriptor } from '../types'
 

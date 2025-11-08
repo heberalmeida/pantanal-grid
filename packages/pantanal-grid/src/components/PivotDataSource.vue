@@ -7,8 +7,6 @@ import { computed, ref, watch, onMounted } from 'vue'
 import type { 
   PivotDataSourceProps,
   PivotDataSourceInstance,
-  PivotDataSourceSchema,
-  PivotDataSourceTransport,
   PivotColumn,
   PivotRow,
   PivotMeasure,
@@ -102,7 +100,6 @@ function processLocalPivotData(
   }
 
   // Get dimension and measure configurations
-  const dimensions = cube.dimensions || {}
   const measureConfigs = cube.measures || {}
 
   // Process columns - get unique values from first column dimension

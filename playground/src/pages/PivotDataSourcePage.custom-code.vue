@@ -19,7 +19,6 @@ import {
   type PivotDataSourceSchema,
   type PivotColumn,
   type PivotRow,
-  type PivotMeasure,
   type PivotResult
 } from '@pantanal/grid'
 

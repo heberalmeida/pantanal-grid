@@ -5,7 +5,7 @@
   />
   <PantanalGrid
     :rows="data"
-    :columns="columns"
+    :columns="columns as any"
     key-field="id"
   />
 </template>
@@ -40,5 +40,13 @@ const data = ref<TreeListNode[]>([])
 function handleChange(newData: TreeListNode[]) {
   data.value = newData
 }
+
+const columns: any[] = [
+  { field: 'id', title: 'ID', width: 60 },
+  { field: 'firstName', title: 'First Name', width: 150 },
+  { field: 'lastName', title: 'Last Name', width: 150 },
+  { field: 'position', title: 'Position', width: 150 },
+  { field: 'phone', title: 'Phone', width: 120 },
+]
 </script>
 

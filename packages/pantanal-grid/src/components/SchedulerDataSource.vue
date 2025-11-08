@@ -36,7 +36,6 @@ import DataSource from './DataSource.vue'
 import type { 
   SchedulerEvent, 
   SchedulerDataSourceProps, 
-  SchedulerDataSourceSchema,
   SchedulerDataSourceSchemaModel,
   SchedulerEventFieldConfig,
   SchedulerDataSourceInstance,

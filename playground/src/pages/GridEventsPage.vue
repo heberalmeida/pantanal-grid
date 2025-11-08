@@ -51,7 +51,7 @@
         v-model:page="page"
         v-model:pageSize="pageSize"
         v-model:group="group"
-        :selectable="true"
+        :selectable="'multiple'"
         :sortable="true"
         :filterable="true"
         :groupable="true"
@@ -82,7 +82,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { PantanalGrid, type SortDescriptor, type FilterDescriptor, type GroupDescriptor } from '@pantanal/grid'
+import { PantanalGrid, type SortDescriptor, type FilterDescriptor, type GroupDescriptor, type AggregateName } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
 import exampleSource from './GridEventsPage.vue?raw'
 
@@ -131,9 +131,9 @@ const page = ref(1)
 const pageSize = ref(10)
 const group = ref<GroupDescriptor[]>([])
 
-const aggregates = {
-  unitPrice: ['sum', 'avg'] as const,
-  unitsInStock: ['sum', 'avg', 'min', 'max'] as const,
+const aggregates: Record<string, AggregateName[]> = {
+  unitPrice: ['sum', 'avg'],
+  unitsInStock: ['sum', 'avg', 'min', 'max'],
 }
 
 // Event handlers

@@ -245,7 +245,7 @@ const customEditorColumns: ColumnDef[] = [
       select.style.width = '100%'
       categories.forEach(cat => {
         const option = document.createElement('option')
-        option.value = cat.categoryID
+        option.value = String(cat.categoryID)
         option.textContent = cat.categoryName
         if (cat.categoryID === options.value) {
           option.selected = true
@@ -436,7 +436,7 @@ const columns = [
       const select = document.createElement('select')
       categories.forEach(cat => {
         const option = document.createElement('option')
-        option.value = cat.categoryID
+        option.value = String(cat.categoryID)
         option.textContent = cat.categoryName
         select.appendChild(option)
       })

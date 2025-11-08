@@ -222,7 +222,7 @@ function handleImageError(imageId: number) {
   imageErrorStates.value[imageId] = true
 }
 
-function openImagePreview(imageUrl: string, imageName: string) {
+function openImagePreview(imageUrl: string, _imageName: string) {
   // Open image in new tab/window for full preview
   window.open(imageUrl, '_blank', 'noopener,noreferrer')
 }

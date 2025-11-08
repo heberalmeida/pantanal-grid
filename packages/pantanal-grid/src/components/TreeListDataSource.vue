@@ -36,7 +36,6 @@ import DataSource from './DataSource.vue'
 import type { 
   TreeListNode, 
   TreeListDataSourceProps, 
-  TreeListDataSourceSchema,
   TreeListDataSourceSchemaModel,
   TreeListFieldConfig,
   TreeListDataSourceInstance,

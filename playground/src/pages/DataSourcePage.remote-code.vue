@@ -54,7 +54,7 @@ const columns: ColumnDef<Product>[] = [
 ]
 
 const transport: DataSourceTransport = {
-  read: async (options) => {
+  read: async (_options) => {
     const url = new URL('https://api.example.com/products')
     // Configure URL with pagination, filtering, sorting
     const res = await fetch(url.toString())

@@ -4,7 +4,7 @@
 
 <script setup lang="ts" generic="T extends Row = Row">
 import { computed, ref, watch, onMounted, provide } from 'vue'
-import type { DataSourceProps, DataSourceEmits, DataSourceInstance, DataSourceTransport, DataSourceSchema } from '../types'
+import type { DataSourceProps, DataSourceEmits, DataSourceInstance, DataSourceSchema } from '../types'
 import type { Row, SortDescriptor, FilterDescriptor, GroupDescriptor } from '../types'
 import { applyFilter, applySort, paginate } from '../composables/data'
 import { buildGroupTree, flattenTree } from '../composables/group'

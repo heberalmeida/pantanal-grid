@@ -6,7 +6,7 @@
   />
   <PantanalGrid
     :rows="data"
-    :columns="columns"
+    :columns="columns as any"
     key-field="id"
   />
 </template>
@@ -20,7 +20,8 @@ import {
   type TreeListDataSourceSchema
 } from '@pantanal/grid'
 
-const nodes = ref([
+// @ts-ignore - Example code showing raw data that will be mapped by schema
+const nodes: any[] = [
   {
     EmployeeID: 1,
     ReportsTo: null,
@@ -39,7 +40,7 @@ const nodes = ref([
     Phone: '555-0102',
     Extension: 1002,
   },
-])
+]
 
 const schema: TreeListDataSourceSchema = {
   model: {
@@ -61,5 +62,13 @@ const data = ref<TreeListNode[]>([])
 function handleChange(newData: TreeListNode[]) {
   data.value = newData
 }
+
+const columns: any[] = [
+  { field: 'id', title: 'ID', width: 60 },
+  { field: 'firstName', title: 'First Name', width: 150 },
+  { field: 'lastName', title: 'Last Name', width: 150 },
+  { field: 'position', title: 'Position', width: 150 },
+  { field: 'phone', title: 'Phone', width: 120 },
+]
 </script>
 

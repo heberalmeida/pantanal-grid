@@ -58,6 +58,7 @@ function handleChange(result: PivotResult) {
 }
 
 // Update columns programmatically
+// @ts-ignore - Example code
 async function updateColumns() {
   columns.value = [{ name: 'Product' }]
   rows.value = [{ name: 'Region' }]
@@ -65,11 +66,13 @@ async function updateColumns() {
 }
 
 // Get axes
+// @ts-ignore - Example code
 function getAxes() {
   return pivotDataSource.value?.axes()
 }
 
 // Get measures
+// @ts-ignore - Example code
 function getMeasures() {
   return pivotDataSource.value?.measures()
 }

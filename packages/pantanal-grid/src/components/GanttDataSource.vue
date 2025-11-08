@@ -36,7 +36,6 @@ import DataSource from './DataSource.vue'
 import type { 
   GanttTask, 
   GanttDataSourceProps, 
-  GanttDataSourceSchema,
   GanttDataSourceInstance,
   DataSourceInstance,
   DataSourceSchema,

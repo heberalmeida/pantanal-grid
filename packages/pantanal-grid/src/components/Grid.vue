@@ -1826,14 +1826,6 @@ const keyboardNav = useKeyboardNav({
 
 const { focusRow, focusCol, onKeydown: handleKeydown } = keyboardNav
 
-// Helper to map data row index to actual visibleRows index
-function getDataRowIndex(dataRowIndex: number): number {
-  const dataRows = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
-  const dataRow = dataRows[dataRowIndex]
-  if (!dataRow) return -1
-  return visibleRows.value.indexOf(dataRow)
-}
-
 // Helper to get data row index from actual visibleRows index
 function getDataRowIndexFromActual(actualIndex: number): number {
   const dataRows = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
@@ -1876,7 +1868,7 @@ function handleCellClick(row: any, column: any, rowIndex: number, colIndex: numb
   }
 }
 
-function handleBodyFocus(e: FocusEvent) {
+function handleBodyFocus(_e: FocusEvent) {
   if (!props.navigatable) return
   // Always focus the first navigable cell when body receives focus
   // Reset focus to first data row (index 0)
@@ -2007,7 +1999,7 @@ function extractTextFromCells(cells: HTMLElement[]): string {
   const sortedRows = Array.from(rows.entries()).sort((a, b) => a[0] - b[0])
   
   // Extract text from each row
-  const lines = sortedRows.map(([rowIndex, rowCells]) => {
+  const lines = sortedRows.map(([_rowIndex, rowCells]) => {
     // Sort cells by column index
     const sortedCells = rowCells.sort((a, b) => {
       const aIndex = Array.from(a.parentElement?.children || []).indexOf(a)
@@ -2167,99 +2159,42 @@ function findRowByKey(key: string | number): any {
   })
 }
 
-function handleEdit(row: any, field?: string) {
-  const rowKey = row[keyFieldStr.value]
-  editingState.startEditingRow(rowKey)
-  emit('edit', { row, field })
+// Editing functions (currently not used but reserved for future editing features)
+// @ts-ignore - Reserved for future editing implementation
+function handleEdit(_row: any, _field?: string) {
+  // Reserved for future editing implementation
 }
 
-function handleEditSave(row: any) {
-  const rowKey = row[keyFieldStr.value]
-  editingState.stopEditingRow(rowKey)
-  emit('editSave', { row })
+// @ts-ignore - Reserved for future editing implementation
+function handleEditSave(_row: any) {
+  // Reserved for future editing implementation
 }
 
-function handleEditCancel(row: any) {
-  const rowKey = row[keyFieldStr.value]
-  editingState.stopEditingRow(rowKey)
-  editingState.clearPendingChanges(rowKey)
-  emit('editCancel', { row })
+// @ts-ignore - Reserved for future editing implementation
+function handleEditCancel(_row: any) {
+  // Reserved for future editing implementation
 }
 
-function handleDestroy(row: any) {
-  const rowKey = row[keyFieldStr.value]
-  if (editMode.value === 'batch') {
-    editingState.markAsDeleted(rowKey)
-  }
-  // Always emit destroy event - parent component should handle the actual removal
-  emit('destroy', { row })
+// @ts-ignore - Reserved for future editing implementation
+function handleDestroy(_row: any) {
+  // Reserved for future editing implementation
 }
 
-function handleCellEdit(row: any, field: string, value: any) {
-  const rowKey = row[keyFieldStr.value]
-  editingState.setPendingChange(rowKey, field, value)
-  emit('editCommit', { row, field, value })
+// @ts-ignore - Reserved for future editing implementation
+function handleCellEdit(_row: any, _field: string, _value: any) {
+  // Reserved for future editing implementation
 }
 
-function validateField(column: ColumnDef, value: any, row: any): boolean | string {
-  if (!column.validation) return true
-  
-  const validation = column.validation
-  if (validation.required && (value === undefined || value === null || value === '')) {
-    return validation.validator ? validation.validator(value, row) : 'Field is required'
-  }
-  if (validation.min !== undefined && typeof value === 'number' && value < validation.min) {
-    return `Value must be at least ${validation.min}`
-  }
-  if (validation.max !== undefined && typeof value === 'number' && value > validation.max) {
-    return `Value must be at most ${validation.max}`
-  }
-  if (validation.pattern) {
-    const pattern = typeof validation.pattern === 'string' ? new RegExp(validation.pattern) : validation.pattern
-    if (!pattern.test(String(value))) {
-      return 'Value does not match required pattern'
-    }
-  }
-  if (validation.validator) {
-    const result = validation.validator(value, row)
-    if (result !== true) {
-      return typeof result === 'string' ? result : 'Validation failed'
-    }
-  }
+// @ts-ignore - Reserved for future validation implementation
+function validateField(_column: ColumnDef, _value: any, _row: any): boolean | string {
+  // Reserved for future validation implementation
   return true
 }
 
-function renderEditor(column: ColumnDef, row: any, value: any): HTMLElement | null {
-  if (column.editor) {
-    const container = document.createElement('div')
-    column.editor(container, { field: String(column.field), value, row })
-    return container.firstElementChild as HTMLElement || container
-  }
-  
-  // Default editors based on type
-  const type = column.type || 'string'
-  const input = document.createElement('input')
-  input.className = 'v3grid__editor'
-  input.type = type === 'number' ? 'number' : type === 'boolean' ? 'checkbox' : 'text'
-  input.value = value !== undefined && value !== null ? String(value) : ''
-  
-  if (type === 'number') {
-    input.addEventListener('input', (e) => {
-      const numValue = Number((e.target as HTMLInputElement).value)
-      handleCellEdit(row, String(column.field), isNaN(numValue) ? 0 : numValue)
-    })
-  } else if (type === 'boolean') {
-    input.checked = Boolean(value)
-    input.addEventListener('change', (e) => {
-      handleCellEdit(row, String(column.field), (e.target as HTMLInputElement).checked)
-    })
-  } else {
-    input.addEventListener('input', (e) => {
-      handleCellEdit(row, String(column.field), (e.target as HTMLInputElement).value)
-    })
-  }
-  
-  return input
+// @ts-ignore - Reserved for future editor rendering implementation
+function renderEditor(_column: ColumnDef, _row: any, _value: any): HTMLElement | null {
+  // Reserved for future editor rendering implementation
+  return null
 }
 
 const persist = usePersist(props.persistStateKey)

@@ -11,7 +11,7 @@
   />
   <PantanalGrid
     :rows="data"
-    :columns="columns"
+    :columns="columns as any"
     key-field="id"
     server-side
     :total="total"

@@ -272,8 +272,8 @@ const remoteTransport: DataSourceTransport = {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500))
     
-    const page = options.page || 1
-    const pageSize = options.pageSize || 10
+    const page = (options as any).page || 1
+    const pageSize = (options as any).pageSize || 10
     
     const allNodes: TreeListNode[] = Array.from({ length: 25 }, (_, i) => ({
       id: i + 1,

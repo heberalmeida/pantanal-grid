@@ -34,6 +34,7 @@ function handleChange(newData: HierarchicalNode[]) {
 }
 
 // Expand a node
+// @ts-ignore - Example code
 async function expandNode(nodeId: number | string) {
   if (hierarchicalDataSource.value) {
     await hierarchicalDataSource.value.expand(nodeId)
@@ -41,6 +42,7 @@ async function expandNode(nodeId: number | string) {
 }
 
 // Collapse a node
+// @ts-ignore - Example code
 function collapseNode(nodeId: number | string) {
   if (hierarchicalDataSource.value) {
     hierarchicalDataSource.value.collapse(nodeId)
@@ -48,6 +50,7 @@ function collapseNode(nodeId: number | string) {
 }
 
 // Load children for a node
+// @ts-ignore - Example code
 async function loadChildren(nodeId: number | string) {
   if (hierarchicalDataSource.value) {
     const children = await hierarchicalDataSource.value.loadChildren(nodeId)
@@ -57,6 +60,7 @@ async function loadChildren(nodeId: number | string) {
 }
 
 // Get a specific node
+// @ts-ignore - Example code
 function getNode(nodeId: number | string) {
   if (hierarchicalDataSource.value) {
     return hierarchicalDataSource.value.getNode(nodeId)
@@ -65,6 +69,7 @@ function getNode(nodeId: number | string) {
 }
 
 // Get root nodes
+// @ts-ignore - Example code
 function getRootNodes() {
   if (hierarchicalDataSource.value) {
     return hierarchicalDataSource.value.rootNodes()

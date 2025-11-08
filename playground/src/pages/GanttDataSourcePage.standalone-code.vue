@@ -33,6 +33,7 @@ function handleChange(newData: GanttTask[]) {
 }
 
 // Add a task
+// @ts-ignore - Example code
 function addTask() {
   if (ganttDataSource.value) {
     ganttDataSource.value.add({
@@ -45,6 +46,7 @@ function addTask() {
 }
 
 // Remove a task
+// @ts-ignore - Example code
 function removeTask() {
   if (ganttDataSource.value && data.value.length > 0) {
     ganttDataSource.value.remove(data.value[0].id)
@@ -52,6 +54,7 @@ function removeTask() {
 }
 
 // Update a task
+// @ts-ignore - Example code
 function updateTask() {
   if (ganttDataSource.value && data.value.length > 0) {
     const task = data.value[0]
@@ -63,6 +66,7 @@ function updateTask() {
 }
 
 // Get all tasks
+// @ts-ignore - Example code
 function getAllTasks() {
   if (ganttDataSource.value) {
     return ganttDataSource.value.tasks()

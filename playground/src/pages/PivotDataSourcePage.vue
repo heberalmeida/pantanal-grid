@@ -175,7 +175,6 @@ import {
   type PivotDataSourceTransport,
   type PivotColumn,
   type PivotRow,
-  type PivotMeasure,
   type PivotResult
 } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
@@ -343,7 +342,7 @@ function handleCustomChange(result: PivotResult) {
 
 // Remote PivotDataSource
 const remotePivotTransport: PivotDataSourceTransport = {
-  read: async (options: any) => {
+  read: async (_options: any) => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500))
     return {

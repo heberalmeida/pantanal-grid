@@ -31,6 +31,7 @@ function handleChange(newData: GanttDependency[]) {
 }
 
 // Add a dependency
+// @ts-ignore - Example code
 function addDependency() {
   if (dependencyDataSource.value) {
     dependencyDataSource.value.add({
@@ -42,6 +43,7 @@ function addDependency() {
 }
 
 // Remove a dependency
+// @ts-ignore - Example code
 function removeDependency(id: number | string) {
   if (dependencyDataSource.value) {
     dependencyDataSource.value.remove(id)
@@ -49,6 +51,7 @@ function removeDependency(id: number | string) {
 }
 
 // Update a dependency
+// @ts-ignore - Example code
 function updateDependency(dependency: GanttDependency) {
   if (dependencyDataSource.value) {
     dependencyDataSource.value.update(dependency)
@@ -56,6 +59,7 @@ function updateDependency(dependency: GanttDependency) {
 }
 
 // Get all dependencies
+// @ts-ignore - Example code
 function getAllDependencies() {
   if (dependencyDataSource.value) {
     return dependencyDataSource.value.dependencies()

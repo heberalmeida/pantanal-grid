@@ -6,7 +6,7 @@
   />
   <PantanalGrid
     :rows="data"
-    :columns="columns"
+    :columns="columns as any"
     key-field="id"
   />
 </template>

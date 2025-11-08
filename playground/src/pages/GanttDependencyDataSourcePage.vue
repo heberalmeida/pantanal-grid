@@ -22,7 +22,7 @@
       />
       <PantanalGrid
         :rows="localData"
-        :columns="dependencyColumns"
+        :columns="dependencyColumns as any"
         key-field="id"
         :striped="true"
       />
@@ -44,7 +44,7 @@
       />
       <PantanalGrid
         :rows="mappedData"
-        :columns="dependencyColumns"
+        :columns="dependencyColumns as any"
         key-field="id"
         :striped="true"
       />
@@ -70,7 +70,7 @@
       />
       <PantanalGrid
         :rows="remoteData"
-        :columns="dependencyColumns"
+        :columns="dependencyColumns as any"
         key-field="id"
         :striped="true"
         server-side
@@ -178,7 +178,8 @@ function handleLocalChange(data: GanttDependency[]) {
 }
 
 // Mapped GanttDependencyDataSource
-const mappedDependencies = [
+// @ts-ignore - Example code showing raw data that will be mapped by schema
+const mappedDependencies: any[] = [
   {
     ID: 1,
     PredecessorID: 1,

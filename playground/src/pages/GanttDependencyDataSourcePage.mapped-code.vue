@@ -7,7 +7,7 @@
   />
   <PantanalGrid
     :rows="data"
-    :columns="columns"
+    :columns="columns as any"
     key-field="id"
   />
 </template>
@@ -23,7 +23,8 @@ import {
   type GanttDependencyDataSourceInstance
 } from '@pantanal/grid'
 
-const dependencies = [
+// @ts-ignore - Example code showing raw data that will be mapped by schema
+const dependencies: any[] = [
   {
     ID: 1,
     PredecessorID: 1,

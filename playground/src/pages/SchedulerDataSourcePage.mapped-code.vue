@@ -6,7 +6,7 @@
   />
   <PantanalGrid
     :rows="data"
-    :columns="columns"
+    :columns="columns as any"
     key-field="id"
   />
 </template>
@@ -20,7 +20,8 @@ import {
   type SchedulerDataSourceSchema
 } from '@pantanal/grid'
 
-const events = ref([
+// @ts-ignore - Example code showing raw data that will be mapped by schema
+const events: any[] = [
   {
     TaskID: 1,
     Title: 'Team Meeting',
@@ -29,7 +30,7 @@ const events = ref([
     OwnerID: 1,
     IsAllDay: false,
   },
-])
+]
 
 const schema: SchedulerDataSourceSchema = {
   model: {
@@ -47,5 +48,12 @@ const data = ref<SchedulerEvent[]>([])
 function handleChange(newData: SchedulerEvent[]) {
   data.value = newData
 }
+
+const columns: any[] = [
+  { field: 'id', title: 'ID', width: 60 },
+  { field: 'title', title: 'Title', width: 200 },
+  { field: 'start', title: 'Start', width: 150 },
+  { field: 'end', title: 'End', width: 150 },
+]
 </script>
 

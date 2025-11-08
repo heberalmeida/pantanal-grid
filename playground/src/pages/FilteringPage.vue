@@ -366,7 +366,7 @@ const serverFilterColumns: ColumnDef[] = [
   { field: 'category', title: 'Category', width: 150, filterable: true, sortable: true },
 ]
 
-const serverFilterProvider: DataProvider = async ({ page, pageSize, filter, signal }: DataProviderArgs) => {
+const serverFilterProvider: DataProvider = async ({ page, pageSize, filter }: DataProviderArgs) => {
   // Simulate server-side filtering
   let filteredData = [...allServerData.value]
   

@@ -36,7 +36,6 @@ import DataSource from './DataSource.vue'
 import type { 
   HierarchicalNode, 
   HierarchicalDataSourceProps, 
-  HierarchicalDataSourceSchema,
   HierarchicalDataSourceInstance,
   DataSourceInstance,
   DataSourceSchema,

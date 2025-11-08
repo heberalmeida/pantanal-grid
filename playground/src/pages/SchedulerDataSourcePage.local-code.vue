@@ -5,7 +5,7 @@
   />
   <PantanalGrid
     :rows="data"
-    :columns="columns"
+    :columns="columns as any"
     key-field="id"
   />
 </template>
@@ -31,5 +31,12 @@ const data = ref<SchedulerEvent[]>([])
 function handleChange(newData: SchedulerEvent[]) {
   data.value = newData
 }
+
+const columns: any[] = [
+  { field: 'id', title: 'ID', width: 60 },
+  { field: 'title', title: 'Title', width: 200 },
+  { field: 'start', title: 'Start', width: 150 },
+  { field: 'end', title: 'End', width: 150 },
+]
 </script>
 

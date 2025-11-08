@@ -142,7 +142,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { PantanalGrid, type ColumnDef, type FilterDescriptor } from '@pantanal/grid'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
 
 interface Employee {

@@ -245,6 +245,11 @@ export interface DataSourceTransportOptions {
   data?: any
   type?: string
   url?: string
+  page?: number
+  pageSize?: number
+  sort?: SortDescriptor[]
+  filter?: FilterDescriptor[]
+  group?: GroupDescriptor[]
 }
 
 export interface DataSourceSchema {

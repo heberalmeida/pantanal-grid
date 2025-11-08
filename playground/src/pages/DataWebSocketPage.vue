@@ -48,7 +48,7 @@
       key-field="productID"
       :sortable="true"
       :filterable="true"
-      :selectable="true"
+      :selectable="'multiple'"
       v-model:sort="sort"
       v-model:filter="filter"
       v-model:page="page"
