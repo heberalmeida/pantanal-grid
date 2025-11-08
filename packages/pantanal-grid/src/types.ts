@@ -116,6 +116,14 @@ export interface ColumnDef<T = Row> {
     template?: string | ((row: T) => string)
     click?: (e: MouseEvent, row: T) => void
     visible?: (row: T) => boolean
+    // Specific text for edit command states
+    textEdit?: string
+    textUpdate?: string
+    textCancel?: string
+    // Specific icon classes for edit command states
+    iconClassEdit?: string
+    iconClassUpdate?: string
+    iconClassCancel?: string
   }>
   type?: 'string' | 'number' | 'boolean' | 'date'
   

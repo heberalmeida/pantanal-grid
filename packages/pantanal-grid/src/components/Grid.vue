@@ -49,6 +49,7 @@
       :style="{ marginLeft: lockedLeftWidth + 'px', marginRight: lockedRightWidth + 'px' }">
       <!-- HEADER -->
       <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
+        <!-- Global selectable column (from Grid prop) -->
         <div v-if="props.selectable" class="v3grid__cell">
           <input class="v3grid__checkbox" type="checkbox" :checked="allVisibleSelected"
             :indeterminate="someVisibleSelected" @change="toggleAllVisible(selectableRowsOnPage)" />
@@ -57,7 +58,12 @@
         <div v-if="isGrouped" class="v3grid__cell"></div>
 
         <template v-for="c in unlockedCols" :key="c._idx">
-          <div class="v3grid__cell v3grid__headercell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]" 
+          <!-- Column-level selectable checkbox (from column.selectable prop) -->
+          <div v-if="c.selectable" class="v3grid__cell" @click.stop>
+            <input class="v3grid__checkbox" type="checkbox" :checked="allVisibleSelected"
+              :indeterminate="someVisibleSelected" @change="toggleAllVisible(selectableRowsOnPage)" />
+          </div>
+          <div v-if="!c.selectable" class="v3grid__cell v3grid__headercell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]" 
             :draggable="props.enableColumnReorder"
             :tabindex="props.navigatable ? 0 : undefined"
             :ref="(el) => { if (el) (el as any).__column = c }"
@@ -102,8 +108,11 @@
         class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
         <div v-if="props.selectable" class="v3grid__cell"></div>
         <div v-if="isGrouped" class="v3grid__cell"></div>
-        <div v-for="c in unlockedCols" :key="c._idx" class="v3grid__cell v3grid__cell--header" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]">
-          <!-- Text input for string/default -->
+        <template v-for="c in unlockedCols" :key="c._idx">
+          <!-- Column-level selectable checkbox (from column.selectable prop) -->
+          <div v-if="c.selectable" class="v3grid__cell"></div>
+          <div v-if="!c.selectable" class="v3grid__cell v3grid__cell--header" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]">
+            <!-- Text input for string/default -->
           <input 
             v-if="c.filterable && (!c.filterableUI || c.filterableUI === 'textbox') && c.type !== 'number' && c.type !== 'boolean' && c.type !== 'date'"
             class="v3grid__input" 
@@ -148,7 +157,8 @@
             :placeholder="`${msgs.filterPlaceholder} ${c.title ?? c.field}`" 
             :value="getFilterValue(String(c.field))"
             @input="setFilterValue(String(c.field), ($event.target as HTMLInputElement).value)" />
-        </div>
+          </div>
+        </template>
       </div>
 
       <!-- BODY (VIRTUAL) -->
@@ -199,7 +209,7 @@
                     @click.stop="handleCommand(cmd, row, c)"
                     class="v3grid__btn--command"
                     :class="getCommandClasses(cmd, c)">
-                    <span v-if="getCommandIconClass(cmd, c)" :class="getCommandIconClass(cmd, c)"></span>
+                    <span v-if="getCommandIconClass(cmd, row, c)" :class="getCommandIconClass(cmd, row, c)"></span>
                     <span v-html="getCommandContent(cmd, row, c)"></span>
                   </button>
                 </template>
@@ -516,19 +526,24 @@
                       {{ expandedRows.includes((row as any)[keyFieldStr]) ? '▼' : '▶' }}
                     </span>
                   </div>
-                  <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
-                    :style="[pinStyle(c._idx)]" 
-                    :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
-                    :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
-                    @click="handleCellClick(row, c, r, i)"
-                    @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
-                    @focus="props.navigatable && handleCellFocus(r, c._idx)">
-                    <!-- Expand/collapse button for master-detail (if first column and no selectable) -->
-                    <span v-if="props.detailTemplate && i === 0 && !props.selectable" 
-                      @click.stop="toggleDetailRow(row)"
-                      style="cursor: pointer; user-select: none; margin-right: 8px; display: inline-block; width: 16px; text-align: center;">
-                      {{ expandedRows.includes((row as any)[keyFieldStr]) ? '▼' : '▶' }}
-                    </span>
+                  <template v-for="(c, i) in unlockedCols" :key="c._idx">
+                    <!-- Column-level selectable checkbox (from column.selectable prop) -->
+                    <div v-if="c.selectable" class="v3grid__cell" @click.stop>
+                      <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
+                    </div>
+                    <div v-else class="v3grid__cell" :class="[pinClass(c._idx)]"
+                      :style="[pinStyle(c._idx)]" 
+                      :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
+                      :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
+                      @click="handleCellClick(row, c, r, i)"
+                      @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
+                      @focus="props.navigatable && handleCellFocus(r, c._idx)">
+                      <!-- Expand/collapse button for master-detail (if first column and no selectable) -->
+                      <span v-if="props.detailTemplate && i === 0 && !props.selectable && !c.selectable" 
+                        @click.stop="toggleDetailRow(row)"
+                        style="cursor: pointer; user-select: none; margin-right: 8px; display: inline-block; width: 16px; text-align: center;">
+                        {{ expandedRows.includes((row as any)[keyFieldStr]) ? '▼' : '▶' }}
+                      </span>
                     <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
                       :name="columnSlotPrimary(c)"
                       :column="c"
@@ -569,6 +584,7 @@
                       <span v-else>{{ formatColumnValue(columnValue(row, c, r), c, row as any) }}</span>
                     </slot>
                   </div>
+                  </template>
                 </div>
                 <!-- Detail row (master-detail) - rendered outside the grid row -->
                 <div v-if="props.detailTemplate && expandedRows.includes((row as any)[keyFieldStr])" 
@@ -591,6 +607,7 @@
       <!-- Cabeçalho (agora com gridTemplateColumns) -->
       <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: lockedLeftTemplate }">
         <div v-for="(c, i) in lockedLeftCols" :key="'h-left-' + i" class="v3grid__cell v3grid__headercell"
+          v-bind="c.headerAttributes || {}"
           @click="(c.sortable !== false && (props.sortable || c.sortable === true)) && toggleSort(c)">
           <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
             <span v-if="c.headerTemplate" v-html="renderHeaderTemplate(c)"></span>
@@ -680,7 +697,8 @@
       :style="{ width: lockedRightWidth + 'px', gridTemplateColumns: lockedRightTemplate }">
 
       <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: lockedRightTemplate }">
-        <div v-for="(c, i) in lockedRightCols" :key="'h-right-' + i" class="v3grid__cell v3grid__headercell">
+        <div v-for="(c, i) in lockedRightCols" :key="'h-right-' + i" class="v3grid__cell v3grid__headercell"
+          v-bind="c.headerAttributes || {}">
           <span v-if="c.headerTemplate" v-html="renderHeaderTemplate(c)"></span>
           <span v-else>{{ c.title ?? String(c.field) }}</span>
         </div>
@@ -1249,11 +1267,25 @@ function sortColumnAscending() {
     closeColumnMenu()
     return
   }
-  // Remove existing sort for this field and add ascending sort
-  const newSort = sortState.value.filter(s => s.field !== field)
-  newSort.push({ field, dir: 'asc' })
-  sortState.value = newSort
-  emit('update:sort', newSort)
+  
+  const isMultiple = props.sortableMode === 'multiple'
+  if (isMultiple) {
+    // In multiple mode, add or update the sort
+    const currentIdx = sortState.value.findIndex(s => s.field === field)
+    if (currentIdx === -1) {
+      // Add new sort
+      sortState.value = [...sortState.value, { field, dir: 'asc' }]
+    } else {
+      // Update existing sort
+      sortState.value = sortState.value.map((s, i) =>
+        i === currentIdx ? { ...s, dir: 'asc' } : s
+      )
+    }
+  } else {
+    // In single mode, replace all sorts
+    sortState.value = [{ field, dir: 'asc' }]
+  }
+  emit('update:sort', [...sortState.value])
   closeColumnMenu()
 }
 
@@ -1266,11 +1298,25 @@ function sortColumnDescending() {
     closeColumnMenu()
     return
   }
-  // Remove existing sort for this field and add descending sort
-  const newSort = sortState.value.filter(s => s.field !== field)
-  newSort.push({ field, dir: 'desc' })
-  sortState.value = newSort
-  emit('update:sort', newSort)
+  
+  const isMultiple = props.sortableMode === 'multiple'
+  if (isMultiple) {
+    // In multiple mode, add or update the sort
+    const currentIdx = sortState.value.findIndex(s => s.field === field)
+    if (currentIdx === -1) {
+      // Add new sort
+      sortState.value = [...sortState.value, { field, dir: 'desc' }]
+    } else {
+      // Update existing sort
+      sortState.value = sortState.value.map((s, i) =>
+        i === currentIdx ? { ...s, dir: 'desc' } : s
+      )
+    }
+  } else {
+    // In single mode, replace all sorts
+    sortState.value = [{ field, dir: 'desc' }]
+  }
+  emit('update:sort', [...sortState.value])
   closeColumnMenu()
 }
 
@@ -1887,15 +1933,25 @@ function headerTemplate(cols: any[]) {
 
   const unlocked = ordered.filter(c => !c.locked)
 
-  const tracksUnlocked = unlocked.map((c) => {
+  const tracksUnlocked = unlocked.flatMap((c) => {
     const idx = ordered.findIndex(o => o.field === c.field)
     const orderIdx = order.value[idx] ?? idx
 
-    if (!hasPinnedOrLocked && (c.width == null)) {
-      return 'minmax(0px, 1fr)'
+    // If column is selectable, add a checkbox column (52px) before the data column
+    if (c.selectable) {
+      const checkboxCol = '52px'
+      const dataCol = !hasPinnedOrLocked && (c.width == null)
+        ? 'minmax(0px, 1fr)'
+        : `${effW(orderIdx, c)}px`
+      return [checkboxCol, dataCol]
     }
 
-    return `${effW(orderIdx, c)}px`
+    // Regular column
+    if (!hasPinnedOrLocked && (c.width == null)) {
+      return ['minmax(0px, 1fr)']
+    }
+
+    return [`${effW(orderIdx, c)}px`]
   })
 
   const sel = props.selectable ? ['52px'] : []
@@ -2825,7 +2881,21 @@ const confirmDeleteDialog = ref<{ open: boolean; row: any; message: string }>({
   message: '',
 })
 
-function isCommandObject(cmd: any): cmd is { name: string; text?: string; iconClass?: string; className?: string; template?: string | ((row: any) => string); click?: (e: MouseEvent, row: any) => void; visible?: (row: any) => boolean } {
+function isCommandObject(cmd: any): cmd is { 
+  name: string; 
+  text?: string; 
+  iconClass?: string; 
+  className?: string; 
+  template?: string | ((row: any) => string); 
+  click?: (e: MouseEvent, row: any) => void; 
+  visible?: (row: any) => boolean;
+  textEdit?: string;
+  textUpdate?: string;
+  textCancel?: string;
+  iconClassEdit?: string;
+  iconClassUpdate?: string;
+  iconClassCancel?: string;
+} {
   return typeof cmd === 'object' && cmd !== null && 'name' in cmd
 }
 
@@ -2833,12 +2903,24 @@ function getCommandName(cmd: string | { name: string }): string {
   return typeof cmd === 'string' ? cmd : cmd.name
 }
 
-function getCommandLabel(cmd: string | { name: string; text?: string }): string {
+function getCommandLabel(cmd: string | { name: string; text?: string; textEdit?: string; textUpdate?: string; textCancel?: string }, row?: any, isEditing?: boolean): string {
   if (isCommandObject(cmd)) {
+    const cmdName = cmd.name
+    // Check if row is being edited and use specific text for edit command states
+    if (cmdName === 'edit' && isEditing) {
+      if (cmd.textUpdate) return cmd.textUpdate
+      if (cmd.text) return cmd.text
+    }
+    if (cmdName === 'edit' && !isEditing && cmd.textEdit) {
+      return cmd.textEdit
+    }
+    if (cmdName === 'cancel' && cmd.textCancel) {
+      return cmd.textCancel
+    }
     return cmd.text || cmd.name || ''
   }
   switch (cmd) {
-    case 'edit': return msgs.value.edit
+    case 'edit': return isEditing ? (msgs.value.save || 'Save') : msgs.value.edit
     case 'destroy': return msgs.value.destroy
     case 'save': return msgs.value.save
     case 'cancel': return msgs.value.cancel
@@ -2846,7 +2928,7 @@ function getCommandLabel(cmd: string | { name: string; text?: string }): string 
   }
 }
 
-function getCommandContent(cmd: string | { name: string; text?: string; template?: string | ((row: any) => string) }, row: any, _column?: ColumnDef): string {
+function getCommandContent(cmd: string | { name: string; text?: string; template?: string | ((row: any) => string); textEdit?: string; textUpdate?: string; textCancel?: string }, row: any, column?: ColumnDef): string {
   if (isCommandObject(cmd)) {
     if (cmd.template) {
       if (typeof cmd.template === 'function') {
@@ -2855,18 +2937,44 @@ function getCommandContent(cmd: string | { name: string; text?: string; template
       }
       return cmd.template
     }
-    return cmd.text || cmd.name || ''
+    // Check if row is being edited
+    const rowKey = row[keyFieldStr.value]
+    const isEditing = editingState.isRowEditing(rowKey)
+    return getCommandLabel(cmd, row, isEditing)
   }
-  return getCommandLabel(cmd)
+  const rowKey = row[keyFieldStr.value]
+  const isEditing = editingState.isRowEditing(rowKey)
+  return getCommandLabel(cmd, row, isEditing)
 }
 
-function getCommandIconClass(cmd: string | { name: string; iconClass?: string }, _column?: ColumnDef): string | undefined {
+function getCommandIconClass(cmd: string | { name: string; iconClass?: string; iconClassEdit?: string; iconClassUpdate?: string; iconClassCancel?: string }, row?: any, _column?: ColumnDef): string | undefined {
   if (isCommandObject(cmd)) {
+    const cmdName = cmd.name
+    // Check if row is being edited and use specific icon for edit command states
+    if (row) {
+      const rowKey = row[keyFieldStr.value]
+      const isEditing = editingState.isRowEditing(rowKey)
+      
+      if (cmdName === 'edit') {
+        if (isEditing && cmd.iconClassUpdate) return cmd.iconClassUpdate
+        if (!isEditing && cmd.iconClassEdit) return cmd.iconClassEdit
+      }
+      if (cmdName === 'cancel' && cmd.iconClassCancel) {
+        return cmd.iconClassCancel
+      }
+    }
     return cmd.iconClass
   }
   // Default icon classes for built-in commands (can be styled with CSS)
   switch (cmd) {
-    case 'edit': return 'v3grid__icon--edit'
+    case 'edit': {
+      if (row) {
+        const rowKey = row[keyFieldStr.value]
+        const isEditing = editingState.isRowEditing(rowKey)
+        return isEditing ? 'v3grid__icon--save' : 'v3grid__icon--edit'
+      }
+      return 'v3grid__icon--edit'
+    }
     case 'destroy': return 'v3grid__icon--destroy'
     case 'save': return 'v3grid__icon--save'
     case 'cancel': return 'v3grid__icon--cancel'

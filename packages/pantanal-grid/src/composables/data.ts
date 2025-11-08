@@ -7,9 +7,40 @@ export function applySort<T extends Row>(rows: T[], sort?: SortDescriptor[]) {
     for (const s of sort) {
       const av = (a as any)[s.field]
       const bv = (b as any)[s.field]
+      
+      // Handle null/undefined values - null values go to the end
+      if (av == null && bv == null) continue
+      if (av == null) return 1
+      if (bv == null) return -1
+      
+      // If values are equal, continue to next sort descriptor
       if (av === bv) continue
+      
       const dir = s.dir === 'asc' ? 1 : -1
-      return av > bv ? dir : -dir
+      
+      // Compare values based on type
+      let result: number
+      if (typeof av === 'string' && typeof bv === 'string') {
+        // Use localeCompare for proper string comparison
+        result = av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' })
+      } else if (typeof av === 'number' && typeof bv === 'number') {
+        result = av - bv
+      } else if (av instanceof Date && bv instanceof Date) {
+        result = av.getTime() - bv.getTime()
+      } else if (typeof av === 'string' && /^\d{4}-\d{2}-\d{2}/.test(av) && typeof bv === 'string' && /^\d{4}-\d{2}-\d{2}/.test(bv)) {
+        // Compare date strings
+        const dateA = new Date(av).getTime()
+        const dateB = new Date(bv).getTime()
+        result = dateA - dateB
+      } else {
+        // Fallback to generic comparison
+        result = av > bv ? 1 : -1
+      }
+      
+      // Apply sort direction and return if values differ
+      if (result !== 0) {
+        return result * dir
+      }
     }
     return 0
   })
