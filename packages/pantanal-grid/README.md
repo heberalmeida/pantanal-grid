@@ -165,7 +165,7 @@ const total = ref(100)
 - Adaptive body height via `autoHeight`/`maxBodyHeight`
 - Column-specific slots via `column.slot`
 - Pinned and locked columns (left/right) with optional sticky shadows
-- Persisted state (sort, filter, page, order, widths) via `persistStateKey`
+- Persisted state (sort, filter, page, order, widths) via `persistStateKey` or manual `getOptions()`/`setOptions()` methods
 - Internationalization (en, es, pt) with pluggable messages
 - Grouping with aggregations and expandable tree nodes
 - Comprehensive event system for data operations and user interactions
@@ -3280,6 +3280,116 @@ function clearSelection() {
 - `false` (default) - Selection disabled
 - `"single"` - Single-row selection
 - `"multiple"` - Multiple-row selection with checkboxes
+
+---
+
+## Persisting the State
+
+You can save and restore the Grid's current state (sorting, filtering, pagination, column order, widths, etc.) using either automatic persistence via the `persistStateKey` prop or manual methods `getOptions()` and `setOptions()`.
+
+### Automatic Persistence
+
+Use the `persistStateKey` prop to automatically save and restore the grid state using localStorage:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :persist-state-key="'my-grid-state'"
+    key-field="id"
+  />
+</template>
+```
+
+The grid will automatically:
+- Save state changes (sort, filter, page, pageSize, column order, widths, selection if `persistSelection` is enabled) to localStorage
+- Restore the saved state when the component mounts
+
+### Manual State Management
+
+For more control over when and how state is saved, use the `getOptions()` and `setOptions()` methods:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const gridRef = ref<InstanceType<typeof PantanalGrid> | null>(null)
+
+const rows = ref([
+  { id: 1, ContactName: 'Maria Anders', ContactTitle: 'Sales Representative', CompanyName: 'Alfreds Futterkiste', Country: 'Germany' },
+  { id: 2, ContactName: 'Ana Trujillo', ContactTitle: 'Owner', CompanyName: 'Ana Trujillo Emparedados y helados', Country: 'Mexico' },
+  // ... more data
+])
+
+const columns: ColumnDef[] = [
+  { field: 'ContactName', title: 'Contact Name', width: 250, locked: true },
+  { field: 'ContactTitle', title: 'Contact Title', width: 350 },
+  { field: 'CompanyName', title: 'Company Name', width: 350 },
+  { field: 'Country', title: 'Country', width: 450 },
+]
+
+const saveState = () => {
+  if (!gridRef.value) return
+  const options = gridRef.value.getOptions()
+  localStorage.setItem('pantanal-grid-options', JSON.stringify(options))
+  alert('Grid state saved successfully!')
+}
+
+const loadState = () => {
+  if (!gridRef.value) return
+  const saved = localStorage.getItem('pantanal-grid-options')
+  if (saved) {
+    const options = JSON.parse(saved)
+    gridRef.value.setOptions(options)
+    alert('Grid state loaded successfully!')
+  } else {
+    alert('No saved state found')
+  }
+}
+</script>
+
+<template>
+  <div>
+    <button @click="saveState">Save State</button>
+    <button @click="loadState">Load State</button>
+    
+    <PantanalGrid
+      ref="gridRef"
+      :rows="rows"
+      :columns="columns"
+      key-field="id"
+      :groupable="true"
+      :sortable="true"
+      :enable-column-reorder="true"
+      :enable-column-resize="true"
+      :column-menu="true"
+      :filterable-mode="'row'"
+      :pageable="true"
+      :pageable-page-sizes="true"
+    />
+  </div>
+</template>
+```
+
+### State Options
+
+The `getOptions()` method returns an object with the following properties:
+
+- `sort?: SortDescriptor[]` - Current sorting configuration
+- `filter?: FilterDescriptor[]` - Current filtering configuration
+- `page?: number` - Current page number
+- `pageSize?: number` - Current page size
+- `order?: number[]` - Column order (from reordering)
+- `widths?: (number | undefined)[]` - Column widths (from resizing)
+- `selectedKeys?: any[]` - Selected row keys (if `persistSelection` is enabled)
+
+### Notes
+
+- State persistence only works for client-side operations. Server-side sorting, filtering, and pagination should be managed by your data provider.
+- Column grouping is controlled via props and cannot be set via `setOptions()`. Manage grouping state separately if needed.
+- The `persistSelection` prop enables automatic persistence of selected rows across page navigation.
 
 ---
 

@@ -3550,6 +3550,96 @@ if (props.persistSelection) {
   }, { deep: true })
 }
 
+// Grid options API - getOptions() and setOptions()
+interface GridOptions {
+  sort?: SortDescriptor[]
+  filter?: FilterDescriptor[]
+  page?: number
+  pageSize?: number
+  order?: number[]
+  widths?: (number | undefined)[]
+  selectedKeys?: any[]
+  // Note: group is not included as it's controlled via props
+}
+
+function getOptions(): GridOptions {
+  const options: GridOptions = {}
+  
+  if (!props.serverSide && sortState.value.length > 0) {
+    options.sort = [...sortState.value]
+  }
+  
+  if (filters.value.length > 0) {
+    options.filter = [...filters.value]
+  }
+  
+  if (page.value !== props.page) {
+    options.page = page.value
+  }
+  
+  if (pageSize.value !== props.pageSize) {
+    options.pageSize = pageSize.value
+  }
+  
+  if (order.value.length > 0) {
+    options.order = [...order.value]
+  }
+  
+  if (widths.value.length > 0) {
+    options.widths = [...widths.value]
+  }
+  
+  if (props.persistSelection && selectedKeys.value.size > 0) {
+    options.selectedKeys = Array.from(selectedKeys.value)
+  }
+  
+  // Note: group is controlled via props, so we don't include it in getOptions
+  // The parent component should manage group state separately if needed
+  
+  return options
+}
+
+function setOptions(options: GridOptions): void {
+  if (options.sort !== undefined && !props.serverSide) {
+    sortState.value = [...options.sort]
+  }
+  
+  if (options.filter !== undefined && !props.serverSide) {
+    filters.value = [...options.filter]
+  }
+  
+  if (options.page !== undefined) {
+    page.value = options.page
+  }
+  
+  if (options.pageSize !== undefined) {
+    pageSize.value = options.pageSize
+  }
+  
+  if (options.order !== undefined) {
+    order.value = [...options.order]
+  }
+  
+  if (options.widths !== undefined) {
+    widths.value = options.widths.map((x: number | undefined) =>
+      (x != null && x > 0) ? x : undefined
+    ) as any
+  }
+  
+  if (options.selectedKeys !== undefined && props.persistSelection) {
+    selectedKeys.value = new Set(options.selectedKeys)
+  }
+  
+  // Note: group state is controlled via props, so it cannot be set via setOptions
+  // To change grouping, update the group prop in the parent component
+}
+
+// Expose methods for parent component access
+defineExpose({
+  getOptions,
+  setOptions,
+})
+
 onBeforeUnmount(() => {
   rootObserver?.disconnect()
   footerObserver?.disconnect()

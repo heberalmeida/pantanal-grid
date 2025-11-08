@@ -47,6 +47,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/filterable-props', component: () => import('./pages/FilterablePropsPage.vue') },
   { path: '/grid-column', component: () => import('./pages/GridColumnPage.vue') },
   { path: '/templates', component: () => import('./pages/TemplatesPage.vue') },
+  { path: '/persist-state', component: () => import('./pages/PersistStatePage.vue') },
 ]
 
 export const router = createRouter({
