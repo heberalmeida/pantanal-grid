@@ -201,9 +201,9 @@
               :template="c.template!"
               :payload="{ column: c, row, value: columnValue(row, c, (start ?? 0) + r), rowIndex: (start ?? 0) + r, columnIndex: i }"
             />
-            <template v-else-if="c.command && c.command.length > 0">
+            <template v-else-if="hasCommands(c.command)">
               <div class="v3grid__command-cell">
-                <template v-for="(cmd, cmdIdx) in c.command" :key="cmdIdx">
+                <template v-for="(cmd, cmdIdx) in getCommandArray(c.command)" :key="cmdIdx">
                   <button
                     v-if="shouldShowCommand(cmd, row, c)"
                     @click.stop="handleCommand(cmd, row, c)"
@@ -564,9 +564,9 @@
                       :template="c.template!"
                       :payload="{ column: c, row, value: columnValue(row, c, r), rowIndex: r, columnIndex: i }"
                     />
-                    <template v-else-if="c.command && c.command.length > 0">
+                    <template v-else-if="hasCommands(c.command)">
                       <div class="v3grid__command-cell">
-                        <template v-for="(cmd, cmdIdx) in c.command" :key="cmdIdx">
+                        <template v-for="(cmd, cmdIdx) in getCommandArray(c.command)" :key="cmdIdx">
                           <button
                             v-if="shouldShowCommand(cmd, row, c)"
                             @click.stop="handleCommand(cmd, row, c, $event)"
@@ -1157,10 +1157,52 @@ const slotColumnDefs = computed<ColumnDef[]>(() => {
   collectSlotColumns(children as any, acc)
   return acc
 })
+// Normalize command: convert single object to array for consistency
+function normalizeCommand(command: ColumnDef['command']): ColumnDef['command'] {
+  if (!command) return undefined
+  if (Array.isArray(command)) return command
+  // Single object: convert to array and ensure it has a name property
+  const cmdObj = command as any
+  if (typeof cmdObj === 'object' && cmdObj !== null) {
+    // Create a copy to avoid modifying the original object
+    const normalizedCmd = { ...cmdObj }
+    // If no name is provided, use a default name
+    if (!normalizedCmd.name) {
+      normalizedCmd.name = 'custom'
+    }
+    return [normalizedCmd] as ColumnDef['command']
+  }
+  return undefined
+}
+
 const columns = computed<ColumnDef[]>(() => {
-  if (slotColumnDefs.value.length > 0) return slotColumnDefs.value
-  return (props.columns ?? []) as ColumnDef[]
+  const cols = (slotColumnDefs.value.length > 0 ? slotColumnDefs.value : (props.columns ?? [])) as ColumnDef[]
+  // Normalize command property for each column
+  return cols.map(col => {
+    if (col.command) {
+      return { ...col, command: normalizeCommand(col.command) } as ColumnDef
+    }
+    return col
+  })
 })
+
+// Helper function to check if a column has commands
+function hasCommands(command: ColumnDef['command']): boolean {
+  if (!command) return false
+  if (Array.isArray(command)) return command.length > 0
+  // Single object is considered as having commands (will be normalized)
+  return typeof command === 'object' && command !== null
+}
+
+// Helper function to get commands as an array
+// Since columns are already normalized in the computed, this should always return an array when hasCommands returns true
+function getCommandArray(command: ColumnDef['command']): Array<string | { name: string; [key: string]: any }> {
+  if (!command) return []
+  if (Array.isArray(command)) return command as Array<string | { name: string; [key: string]: any }>
+  // Single object: normalize it (though this shouldn't happen after normalization in computed)
+  const normalized = normalizeCommand(command)
+  return Array.isArray(normalized) ? (normalized as Array<string | { name: string; [key: string]: any }>) : []
+}
 
 /** COLUMN MENU */
 const columnMenuOpen = ref(false)

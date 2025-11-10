@@ -108,6 +108,7 @@ const navSections = [
       { to: '/filterable-props', label: 'Filterable Props', icon: 'filter' },
       { to: '/grid-column', label: 'Grid Column API', icon: 'table-columns' },
       { to: '/templates', label: 'Templates', icon: 'file-code' },
+      { to: '/custom-commands', label: 'Custom Commands', icon: 'code' },
       { to: '/persist-state', label: 'Persist State', icon: 'floppy-disk' },
       { to: '/rtl', label: 'RTL Support', icon: 'arrow-right-arrow-left' },
       { to: '/table-only', label: 'Table-only layout', icon: 'table-list' },

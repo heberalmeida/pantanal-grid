@@ -3393,6 +3393,232 @@ The `getOptions()` method returns an object with the following properties:
 
 ---
 
+## Custom Commands
+
+The Grid allows you to implement custom command columns with custom buttons and click handlers. You can create buttons with custom text, icons, classes, templates, and click handlers for each row.
+
+### Basic Usage
+
+Add a custom command column by setting the `command` property on a column definition:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+interface Product {
+  productID: number
+  productName: string
+  unitPrice: number
+  unitsInStock: number
+}
+
+const rows = ref<Product[]>([
+  { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39 },
+  { productID: 2, productName: 'Chang', unitPrice: 19, unitsInStock: 17 },
+])
+
+const columns: ColumnDef[] = [
+  { field: 'productName', title: 'Product Name' },
+  { field: 'unitPrice', title: 'Unit Price', width: 120 },
+  { field: 'unitsInStock', title: 'Units In Stock', width: 120 },
+  {
+    command: {
+      text: 'View Details',
+      click: (e: MouseEvent, row: Product) => {
+        e.preventDefault()
+        alert(`Viewing details for: ${row.productName}`)
+        console.log(row)
+      },
+    },
+    title: ' ',
+    width: 120,
+  },
+]
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :resizable="true"
+  />
+</template>
+```
+
+### Multiple Commands
+
+You can add multiple custom commands in a single column by using an array:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef[] = [
+  { field: 'productName', title: 'Product Name' },
+  {
+    command: [
+      {
+        name: 'view',
+        text: 'View',
+        click: (e: MouseEvent, row: Product) => {
+          alert(`Viewing: ${row.productName}`)
+        },
+      },
+      {
+        name: 'edit',
+        text: 'Edit',
+        click: (e: MouseEvent, row: Product) => {
+          alert(`Editing: ${row.productName}`)
+        },
+      },
+      {
+        name: 'delete',
+        text: 'Delete',
+        className: 'text-red-600',
+        click: (e: MouseEvent, row: Product) => {
+          if (confirm(`Delete ${row.productName}?`)) {
+            alert(`${row.productName} deleted`)
+          }
+        },
+      },
+    ],
+    title: 'Actions',
+    width: 200,
+  },
+]
+</script>
+```
+
+### Command Properties
+
+Each command object supports the following properties:
+
+- `name?: string` - Command name (required for array commands, optional for single object)
+- `text?: string` - Button text
+- `iconClass?: string` - CSS class for icon (or Unicode character/emoji)
+- `className?: string` - Additional CSS classes for the button
+- `template?: string | ((row: T) => string)` - Custom HTML template for the button content
+- `click?: (e: MouseEvent, row: T) => void` - Click handler function
+- `visible?: (row: T) => boolean` - Function to conditionally show/hide the command
+
+### Commands with Icons
+
+You can add icons to commands using CSS classes or Unicode characters:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef[] = [
+  {
+    command: [
+      {
+        name: 'view',
+        text: ' View',
+        iconClass: '🔍',
+        click: (e: MouseEvent, row: Product) => {
+          alert(`Viewing: ${row.productName}`)
+        },
+      },
+      {
+        name: 'edit',
+        text: ' Edit',
+        iconClass: '✏️',
+        click: (e: MouseEvent, row: Product) => {
+          alert(`Editing: ${row.productName}`)
+        },
+      },
+    ],
+    title: 'Actions',
+    width: 180,
+  },
+]
+</script>
+```
+
+### Conditional Commands
+
+Commands can be conditionally visible based on row data:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef[] = [
+  {
+    command: [
+      {
+        name: 'restock',
+        text: 'Restock',
+        visible: (row: Product) => row.unitsInStock < 20,
+        click: (e: MouseEvent, row: Product) => {
+          alert(`Restocking ${row.productName}`)
+        },
+      },
+      {
+        name: 'discontinue',
+        text: 'Discontinue',
+        visible: (row: Product) => !row.discontinued,
+        click: (e: MouseEvent, row: Product) => {
+          if (confirm(`Discontinue ${row.productName}?`)) {
+            alert(`${row.productName} discontinued`)
+          }
+        },
+      },
+    ],
+    title: 'Actions',
+    width: 150,
+  },
+]
+</script>
+```
+
+### Custom Templates
+
+Commands can use custom templates for more complex button rendering:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef[] = [
+  {
+    command: {
+      name: 'custom',
+      template: (row: Product) => {
+        const stockStatus = row.unitsInStock > 20 ? '✅ In Stock' : '⚠️ Low Stock'
+        return `<span style="color: ${row.unitsInStock > 20 ? 'green' : 'orange'}; font-weight: bold;">${stockStatus}</span>`
+      },
+      click: (e: MouseEvent, row: Product) => {
+        alert(`Stock status for ${row.productName}: ${row.unitsInStock} units`)
+      },
+    },
+    title: 'Stock Status',
+    width: 150,
+  },
+]
+</script>
+```
+
+### Built-in Commands
+
+The Grid also supports built-in commands for editing:
+
+- `'edit'` - Edit button (switches between Edit/Update/Cancel based on editing state)
+- `'destroy'` - Delete button
+- `'save'` - Save button
+- `'cancel'` - Cancel button
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef[] = [
+  { field: 'productName', title: 'Product Name' },
+  {
+    command: ['edit', 'destroy'],
+    title: 'Actions',
+    width: 120,
+  },
+]
+</script>
+```
+
+Built-in commands work with the Grid's editing functionality. See the [Editing](#editing) section for more details.
+
+---
+
 ## Column Menu
 
 The Grid supports a column menu that provides quick access to column operations such as showing/hiding columns, filtering, sorting, and locking/unlocking columns.
