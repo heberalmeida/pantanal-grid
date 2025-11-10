@@ -109,6 +109,7 @@ const navSections = [
       { to: '/grid-column', label: 'Grid Column API', icon: 'table-columns' },
       { to: '/templates', label: 'Templates', icon: 'file-code' },
       { to: '/custom-commands', label: 'Custom Commands', icon: 'code' },
+      { to: '/foreign-key-columns', label: 'Foreign-Key Columns', icon: 'link' },
       { to: '/persist-state', label: 'Persist State', icon: 'floppy-disk' },
       { to: '/rtl', label: 'RTL Support', icon: 'arrow-right-arrow-left' },
       { to: '/table-only', label: 'Table-only layout', icon: 'table-list' },

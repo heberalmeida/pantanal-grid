@@ -49,6 +49,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/templates', component: () => import('./pages/TemplatesPage.vue') },
   { path: '/persist-state', component: () => import('./pages/PersistStatePage.vue') },
   { path: '/custom-commands', component: () => import('./pages/CustomCommandsPage.vue') },
+  { path: '/foreign-key-columns', component: () => import('./pages/ForeignKeyColumnsPage.vue') },
 ]
 
 export const router = createRouter({

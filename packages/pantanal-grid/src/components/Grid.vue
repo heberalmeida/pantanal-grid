@@ -3650,9 +3650,47 @@ function validateField(_column: ColumnDef, _value: any, _row: any): boolean | st
   return true
 }
 
-// @ts-ignore - Reserved for future editor rendering implementation
-function renderEditor(_column: ColumnDef, _row: any, _value: any): HTMLElement | null {
-  // Reserved for future editor rendering implementation
+// Render editor for a column
+function renderEditor(column: ColumnDef, row: any, value: any): HTMLElement | null {
+  // If column has a custom editor function, use it
+  if (column.editor && typeof column.editor === 'function') {
+    const container = document.createElement('div')
+    const result = column.editor(container, { field: String(column.field ?? ''), value, row })
+    if (result && result instanceof HTMLElement) {
+      return result
+    }
+    // If editor function added element to container, return the container
+    if (container.children.length > 0) {
+      return container
+    }
+  }
+  
+  // If column has values property, create a dropdown automatically
+  if (column.values && Array.isArray(column.values) && column.values.length > 0) {
+    const select = document.createElement('select')
+    select.className = 'v3grid__editor'
+    select.style.width = '100%'
+    select.style.padding = '4px 8px'
+    select.style.border = '1px solid #ccc'
+    select.style.borderRadius = '4px'
+    select.style.boxSizing = 'border-box'
+    
+    // Add options from values
+    column.values.forEach(item => {
+      const option = document.createElement('option')
+      option.value = String(item.value)
+      option.textContent = item.text
+      // Check if this value matches the current value
+      if (item.value === value) {
+        option.selected = true
+      }
+      select.appendChild(option)
+    })
+    
+    return select
+  }
+  
+  // Default: return null (no editor)
   return null
 }
 
