@@ -65,8 +65,6 @@ import '@pantanal/grid/styles.css'
 createApp(App).mount('#app')
 ```
 
-### Grid Component
-
 Minimal usage example:
 
 ```vue
@@ -90,67 +88,6 @@ const columns: ColumnDef[] = [
 </template>
 ```
 
-### DataSource Component
-
-Use DataSource for managing local or remote data with filtering, sorting, and pagination:
-
-```vue
-<script setup lang="ts">
-import { PantanalDataSource } from '@pantanal/grid'
-import { ref } from 'vue'
-
-const data = ref([
-  { id: 1, name: 'Product 1', price: 99.99 },
-  { id: 2, name: 'Product 2', price: 49.99 },
-])
-
-const displayData = ref([])
-const page = ref(1)
-const pageSize = ref(10)
-
-function handleChange(items: any[]) {
-  displayData.value = items
-}
-</script>
-
-<template>
-  <PantanalDataSource
-    type="local"
-    :data="data"
-    v-model:page="page"
-    v-model:pageSize="pageSize"
-    @change="handleChange"
-  />
-  <!-- Use displayData in your UI -->
-</template>
-```
-
-### Pagination Component
-
-Use Pagination standalone for any paginated content:
-
-```vue
-<script setup lang="ts">
-import { Pagination as PantanalPagination } from '@pantanal/grid'
-import { ref } from 'vue'
-
-const page = ref(1)
-const pageSize = ref(10)
-const total = ref(100)
-</script>
-
-<template>
-  <PantanalPagination
-    :page="page"
-    :pageSize="pageSize"
-    :total="total"
-    variant="pages"
-    @update:page="page = $event"
-    @update:pageSize="pageSize = $event"
-  />
-</template>
-```
-
 ---
 
 ## Core capabilities
@@ -162,13 +99,10 @@ const total = ref(100)
 - Column resize and reorder (drag & drop)
 - Keyboard navigation (arrow keys + focus outline)
 - Virtual scroll for large datasets
-- Adaptive body height via `autoHeight`/`maxBodyHeight`
-- Column-specific slots via `column.slot`
 - Pinned and locked columns (left/right) with optional sticky shadows
-- Persisted state (sort, filter, page, order, widths) via `persistStateKey` or manual `getOptions()`/`setOptions()` methods
+- Persisted state (sort, filter, page, order, widths) via `persistStateKey`
 - Internationalization (en, es, pt) with pluggable messages
 - Grouping with aggregations and expandable tree nodes
-- Comprehensive event system for data operations and user interactions
 
 ---
 
@@ -202,77 +136,6 @@ Enable `:virtual="true"` to render only the visible portion of the grid. Control
   :row-height="44"
 />
 ```
-
-## Flexible height
-
-When virtualization is disabled you can let the grid compute its body height automatically:
-
-```vue
-<PantanalGrid
-  :rows="items"
-  :columns="columns"
-  auto-height
-  :max-body-height="480"
-/>
-```
-
-`autoHeight` multiplies the number of visible rows by `rowHeight` and stretches the body accordingly. Provide `maxBodyHeight` to cap the growth and re-enable vertical scrolling when the content exceeds that limit. The virtual mode keeps precedence—if `virtual` is `true`, the grid will honor the fixed `height` instead of auto-sizing.
-
-## Column slots
-
-Each column can point to its own slot without resorting to long `v-if` chains inside `#cell`:
-
-```vue
-const columns = [
-  { field: 'status', title: 'Status', width: 140, slot: 'status' },
-  { field: 'owner', title: 'Owner', width: 220, slot: 'ownerCard' },
-  { field: 'goal', title: 'Goal', width: 120 },
-]
-```
-
-```vue
-<PantanalGrid :rows="rows" :columns="columns">
-  <template #status="{ value }">
-    <StatusBadge :status="value" />
-  </template>
-
-  <template #ownerCard="{ row }">
-    <OwnerAvatar :name="row.owner" :region="row.region" />
-  </template>
-</PantanalGrid>
-```
-
-For each column the grid tries both `#col-{slot}` and `#{slot}` (for example, `#col-status` and `#status`). The payload matches the generic `#cell` slot: `value`, `row`, `column`, `rowIndex` and `columnIndex`. The default `#cell` continues to work as a fallback when no named slot is provided.
-
----
-
-## Declarative columns
-
-Prefer a template-driven API? Declare columns as children and the grid will build the configuration for you:
-
-```vue
-<script setup lang="ts">
-import { PantanalGrid, PantanalColumn } from '@pantanal/grid'
-</script>
-
-<PantanalGrid :rows="rows" auto-height>
-  <PantanalColumn field="product" title="Product" :width="220" />
-  <PantanalColumn field="status" title="Status" :template="renderStatus" />
-  <PantanalColumn field="price" title="Price" :format="currency" :width="140" />
-</PantanalGrid>
-```
-
-```ts
-import { h } from 'vue'
-
-function renderStatus({ value }) {
-  return h('span', { class: 'status-badge' }, value)
-}
-```
-
-You can also forward shared renderers by returning a function, e.g. `:template="({ row }) => renderShared(row)"`.
-
-As soon as at least one `<PantanalColumn>` is present, the grid ignores the `columns` prop and relies entirely on the declarative definitions. Both styles can coexist across different grids—pick the approach that feels more natural for each view.
 
 ---
 
@@ -325,510 +188,6 @@ const aggregates = { price: ['sum', 'avg'], id: ['count'] } as const
 - Group headers render full-width rows with the field/value and aggregate count.
 - Use the built-in footer buttons (or `toggleGroup` event) to expand/collapse all groups at once.
 - For server-side grouping, compute aggregates on the backend and feed the grid with pre-grouped rows.
-
----
-
-## Sorting
-
-Pantanal Grid supports sorting by one or multiple columns. Enable sorting by setting the `sortable` prop to `true` and configure individual columns with `sortable: true`.
-
-### Basic Usage (Single Column)
-
-Enable single-column sorting by setting `sortable` to `true` and `sortableMode` to `'single'`:
-
-```vue
-<template>
-  <PantanalGrid
-    :rows="rows"
-    :columns="columns"
-    :sortable="true"
-    :sortableMode="'single'"
-    :sort="sort"
-    @update:sort="sort = $event"
-    key-field="id"
-  />
-</template>
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import { PantanalGrid, type ColumnDef, type SortDescriptor } from '@pantanal/grid'
-
-const rows = ref([
-  { id: 1, name: 'Alpha', price: 9.9 },
-  { id: 2, name: 'Beta', price: 19.5 },
-  { id: 3, name: 'Gamma', price: 29.9 },
-])
-
-const columns: ColumnDef[] = [
-  { field: 'id', title: 'ID', width: 80, sortable: true },
-  { field: 'name', title: 'Name', width: 200, sortable: true },
-  { field: 'price', title: 'Price', width: 120, sortable: true },
-]
-
-const sort = ref<SortDescriptor[]>([])
-</script>
-```
-
-### Multi-Column Sorting
-
-Enable multi-column sorting by setting `sortableMode` to `'multiple'`. You can sort by multiple columns by clicking on different column headers:
-
-```vue
-<template>
-  <PantanalGrid
-    :rows="rows"
-    :columns="columns"
-    :sortable="true"
-    :sortableMode="'multiple'"
-    :sortableShowIndexes="true"
-    :sort="sort"
-    @update:sort="sort = $event"
-    key-field="id"
-  />
-</template>
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import { PantanalGrid, type ColumnDef, type SortDescriptor } from '@pantanal/grid'
-
-const sort = ref<SortDescriptor[]>([])
-// ... rows and columns
-</script>
-```
-
-### Sorting Options
-
-- `sortable` - Enable/disable sorting globally (default: `false`)
-- `sortableMode` - Sorting mode: `'single'` or `'multiple'` (default: `'single'`)
-- `sortableAllowUnsort` - Allow users to remove sorting by clicking a sorted column (default: `true`)
-- `sortableShowIndexes` - Show sorting order indices in multi-column mode (default: `false`)
-
-### Column-Level Sortable
-
-Control sorting per column by setting `sortable` on individual columns. Only columns with `sortable: true` will be sortable:
-
-```vue
-<script setup lang="ts">
-const columns: ColumnDef[] = [
-  { field: 'id', title: 'ID', width: 80, sortable: true },
-  { field: 'name', title: 'Name', width: 200, sortable: false },
-  { field: 'price', title: 'Price', width: 120, sortable: true },
-]
-</script>
-```
-
-### Server-Side Sorting
-
-For large datasets, use server-side sorting by setting `serverSide` to `true` and providing a `dataProvider` function that handles sorting:
-
-```vue
-<template>
-  <PantanalGrid
-    :rows="[]"
-    :columns="columns"
-    :sortable="true"
-    :sortableMode="'multiple'"
-    :serverSide="true"
-    :sort="sort"
-    :dataProvider="dataProvider"
-    @update:sort="sort = $event"
-    key-field="id"
-  />
-</template>
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import { PantanalGrid, type ColumnDef, type SortDescriptor, type DataProvider } from '@pantanal/grid'
-
-const sort = ref<SortDescriptor[]>([])
-
-const dataProvider: DataProvider = async (args) => {
-  // Apply sorting on server
-  let data = [...allData]
-  if (args.sort && args.sort.length > 0) {
-    data.sort((a, b) => {
-      for (const s of args.sort!) {
-        const av = (a as any)[s.field]
-        const bv = (b as any)[s.field]
-        if (av === bv) continue
-        const dir = s.dir === 'asc' ? 1 : -1
-        return av > bv ? dir : -dir
-      }
-      return 0
-    })
-  }
-  
-  // Apply pagination
-  const start = (args.page - 1) * args.pageSize
-  const end = start + args.pageSize
-  
-  return {
-    rows: data.slice(start, end),
-    total: data.length,
-  }
-}
-</script>
-```
-
----
-
-## Grid Events
-
-The Grid component emits various events that allow you to react to user interactions and data operations.
-
-### Available Events
-
-#### Data Events
-
-- `@databinding` - Fired before data is loaded/bound
-  ```typescript
-  (options: { 
-    sort?: SortDescriptor[]; 
-    filter?: FilterDescriptor[]; 
-    group?: GroupDescriptor[]; 
-    page?: number; 
-    pageSize?: number 
-  }) => void
-  ```
-
-- `@databound` - Fired after data is loaded/bound
-  ```typescript
-  (data: unknown[]) => void
-  ```
-
-#### Operation Events
-
-- `@sort` - Fired when sorting changes
-  ```typescript
-  (options: { sort: SortDescriptor[] }) => void
-  ```
-
-- `@filter` - Fired when filtering changes
-  ```typescript
-  (options: { filter: FilterDescriptor[] }) => void
-  ```
-
-- `@group` - Fired when grouping changes
-  ```typescript
-  (options: { groups: GroupDescriptor[] }) => void
-  ```
-
-- `@groupexpand` - Fired when a group is expanded
-  ```typescript
-  (options: { group: { field: string; value: unknown; aggregates?: Record<string, any> } }) => void
-  ```
-
-- `@groupcollapse` - Fired when a group is collapsed
-  ```typescript
-  (options: { group: { field: string; value: unknown; aggregates?: Record<string, any> } }) => void
-  ```
-
-#### Interaction Events
-
-- `@selectionChange` - Fired when selection changes
-  ```typescript
-  (selected: unknown[]) => void
-  ```
-
-- `@rowClick` - Fired when a row is clicked
-  ```typescript
-  (row: unknown) => void
-  ```
-
-- `@columnResize` - Fired when a column is resized
-  ```typescript
-  (options: { field: string; width: number }) => void
-  ```
-
-- `@columnReorder` - Fired when columns are reordered
-  ```typescript
-  (options: { from: number; to: number }) => void
-  ```
-
-#### Status Events
-
-- `@loading` - Fired when loading state changes
-  ```typescript
-  (loading: boolean) => void
-  ```
-
-- `@error` - Fired when an error occurs
-  ```typescript
-  (error: unknown) => void
-  ```
-
-### Example: Using Grid Events
-
-```vue
-<template>
-  <PantanalGrid
-    :rows="rows"
-    :columns="columns"
-    key-field="id"
-    :sortable="true"
-    :filterable="true"
-    :groupable="true"
-    :selectable="true"
-    @databinding="onDataBinding"
-    @databound="onDataBound"
-    @sort="onSort"
-    @filter="onFilter"
-    @group="onGroup"
-    @groupexpand="onGroupExpand"
-    @groupcollapse="onGroupCollapse"
-    @selectionChange="onSelectionChange"
-    @rowClick="onRowClick"
-    @columnResize="onColumnResize"
-    @columnReorder="onColumnReorder"
-    @loading="onLoading"
-    @error="onError"
-  />
-</template>
-
-<script setup lang="ts">
-import { PantanalGrid, type SortDescriptor, type FilterDescriptor, type GroupDescriptor } from '@pantanal/grid'
-
-function onDataBinding(options: any) {
-  console.log('Data binding:', options)
-}
-
-function onDataBound(data: unknown[]) {
-  console.log('Data bound:', data.length, 'items')
-}
-
-function onSort(options: { sort: SortDescriptor[] }) {
-  console.log('Sort:', options.sort)
-}
-
-function onFilter(options: { filter: FilterDescriptor[] }) {
-  console.log('Filter:', options.filter)
-}
-
-function onGroup(options: { groups: GroupDescriptor[] }) {
-  console.log('Group:', options.groups)
-}
-
-function onGroupExpand(options: { group: { field: string; value: unknown } }) {
-  console.log('Group expanded:', options.group)
-}
-
-function onGroupCollapse(options: { group: { field: string; value: unknown } }) {
-  console.log('Group collapsed:', options.group)
-}
-
-function onSelectionChange(selected: unknown[]) {
-  console.log('Selection changed:', selected.length, 'items')
-}
-
-function onRowClick(row: unknown) {
-  console.log('Row clicked:', row)
-}
-
-function onColumnResize(options: { field: string; width: number }) {
-  console.log('Column resized:', options.field, options.width)
-}
-
-function onColumnReorder(options: { from: number; to: number }) {
-  console.log('Column reordered:', options.from, 'to', options.to)
-}
-
-function onLoading(loading: boolean) {
-  console.log('Loading:', loading)
-}
-
-function onError(error: unknown) {
-  console.error('Error:', error)
-}
-</script>
-```
-
----
-
-## Data Binding
-
-The Grid supports various data binding methods to connect to different data sources.
-
-### Local Data Arrays
-
-Bind the Grid to local data arrays for client-side operations:
-
-```vue
-<template>
-  <PantanalGrid
-    :rows="products"
-    :columns="columns"
-    key-field="productID"
-  />
-</template>
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
-
-const products = ref([
-  { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39 },
-  { productID: 2, productName: 'Chang', unitPrice: 17, unitsInStock: 40 },
-])
-
-const columns: ColumnDef[] = [
-  { field: 'productID', title: 'ID', width: 80 },
-  { field: 'productName', title: 'Product Name', width: 200 },
-  { field: 'unitPrice', title: 'Unit Price', width: 120 },
-]
-</script>
-```
-
-### Remote Data Services (REST API)
-
-Use the `dataProvider` prop to connect to REST APIs:
-
-```vue
-<template>
-  <PantanalGrid
-    :rows="[]"
-    :columns="columns"
-    key-field="productID"
-    :data-provider="dataProvider"
-    :auto-bind="true"
-    v-model:page="page"
-    v-model:pageSize="pageSize"
-  />
-</template>
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import { PantanalGrid, type DataProvider, type DataProviderArgs } from '@pantanal/grid'
-
-const page = ref(1)
-const pageSize = ref(10)
-
-const dataProvider: DataProvider = async ({ page, pageSize, signal }: DataProviderArgs) => {
-  const response = await fetch(`/api/products?page=${page}&pageSize=${pageSize}`, { signal })
-  const json = await response.json()
-  return {
-    rows: json.data,
-    total: json.total,
-  }
-}
-</script>
-```
-
-### GraphQL Services
-
-Connect to GraphQL services using the `dataProvider` prop:
-
-```vue
-<template>
-  <PantanalGrid
-    :rows="[]"
-    :columns="columns"
-    key-field="productID"
-    :data-provider="graphQLProvider"
-    :auto-bind="true"
-  />
-</template>
-
-<script setup lang="ts">
-import { PantanalGrid, type DataProvider, type DataProviderArgs } from '@pantanal/grid'
-
-const graphQLProvider: DataProvider = async ({ page, pageSize, signal }: DataProviderArgs) => {
-  const query = `
-    query ($page: Int!, $limit: Int!) {
-      products(page: $page, limit: $limit) {
-        data { id name price }
-        total
-      }
-    }
-  `
-  
-  const response = await fetch('/graphql', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, variables: { page, limit: pageSize } }),
-    signal,
-  })
-  
-  const json = await response.json()
-  return {
-    rows: json.data.products.data,
-    total: json.data.products.total,
-  }
-}
-</script>
-```
-
-### WebSocket Connections
-
-For real-time data updates, you can integrate WebSocket connections:
-
-```vue
-<template>
-  <PantanalGrid
-    :rows="rows"
-    :columns="columns"
-    key-field="productID"
-  />
-</template>
-
-<script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { PantanalGrid } from '@pantanal/grid'
-
-const rows = ref([])
-const ws = ref<WebSocket | null>(null)
-
-onMounted(() => {
-  ws.value = new WebSocket('wss://your-server.com')
-  
-  ws.value.onmessage = (event) => {
-    const data = JSON.parse(event.data)
-    if (data.type === 'update') {
-      // Update rows based on WebSocket message
-      rows.value = data.products
-    }
-  }
-})
-
-onBeforeUnmount(() => {
-  ws.value?.close()
-})
-</script>
-```
-
-### Offline Mode
-
-The Grid can work offline by storing data and changes in local storage:
-
-```vue
-<template>
-  <PantanalGrid
-    :rows="rows"
-    :columns="columns"
-    key-field="productID"
-  />
-</template>
-
-<script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { PantanalGrid } from '@pantanal/grid'
-
-const rows = ref([])
-const STORAGE_KEY = 'grid-offline-data'
-
-// Load from local storage
-onMounted(() => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    rows.value = JSON.parse(stored)
-  }
-})
-
-// Save to local storage on changes
-watch(rows, (newRows) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(newRows))
-}, { deep: true })
-</script>
-```
 
 ---
 
@@ -3619,6 +2978,154 @@ Built-in commands work with the Grid's editing functionality. See the [Editing](
 
 ---
 
+## Foreign-Key Columns
+
+Foreign-key columns allow you to display and edit relationships between data using dropdown lists. The grid automatically creates a dropdown editor when you define the `values` property on a column.
+
+### Basic Usage
+
+Define a foreign-key column by setting the `values` property with an array of `{ value, text }` objects:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+interface Product {
+  productID: number
+  productName: string
+  unitPrice: number
+  categoryID: number
+  discontinued: boolean
+}
+
+const rows = ref<Product[]>([
+  { productID: 1, productName: 'Chai', unitPrice: 18, categoryID: 1, discontinued: false },
+  { productID: 4, productName: 'Chef Anton', unitPrice: 22, categoryID: 2, discontinued: false },
+])
+
+const categories = [
+  { value: 1, text: 'Beverages' },
+  { value: 2, text: 'Condiments' },
+  { value: 3, text: 'Confections' },
+  { value: 4, text: 'Dairy Products' },
+  { value: 5, text: 'Grains/Cereals' },
+]
+
+const columns: ColumnDef<Product>[] = [
+  { field: 'productName', title: 'Product Name', width: 180 },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, format: '{0:c}' },
+  {
+    field: 'categoryID',
+    title: 'Category',
+    width: 180,
+    values: categories,
+    editable: true,
+  },
+  { field: 'discontinued', title: 'Discontinued', width: 120 },
+  { field: 'command', title: ' ', width: 100, command: ['destroy'] },
+]
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :editable="true"
+    :toolbar="['create', 'save', 'cancel']"
+  />
+</template>
+```
+
+### How It Works
+
+1. **Display**: The grid automatically displays the `text` from the `values` array that matches the `value` stored in the data.
+2. **Editing**: When editing, the grid automatically creates a dropdown (`<select>`) with all available options from the `values` array.
+3. **Storage**: The grid stores the `value` (not the `text`) in the data when a selection is made.
+
+### Custom Editor
+
+You can also provide a custom editor function for more control over the dropdown rendering:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Product>[] = [
+  {
+    field: 'categoryID',
+    title: 'Category',
+    width: 180,
+    editable: true,
+    editor: (container: HTMLElement, options: { field: string; value: any; row: Product }) => {
+      const select = document.createElement('select')
+      select.className = 'v3grid__editor'
+      select.style.width = '100%'
+      
+      categories.forEach(cat => {
+        const option = document.createElement('option')
+        option.value = String(cat.value)
+        option.textContent = cat.text
+        if (cat.value === options.value) {
+          option.selected = true
+        }
+        select.appendChild(option)
+      })
+      
+      container.appendChild(select)
+      return select
+    },
+  },
+]
+</script>
+```
+
+### Validation
+
+Foreign-key columns can include validation to ensure the selected value is valid:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Product>[] = [
+  {
+    field: 'categoryID',
+    title: 'Category',
+    width: 180,
+    values: categories,
+    editable: true,
+    validation: {
+      required: true,
+      validator: (value: any) => {
+        if (value == null || value === '') {
+          return 'Category is required'
+        }
+        const validValues = categories.map(c => c.value)
+        if (!validValues.includes(value)) {
+          return 'Invalid category selected'
+        }
+        return true
+      },
+    },
+  },
+]
+</script>
+```
+
+### Value Types
+
+The `value` property in the `values` array should match the type of the field in your data. For example:
+
+- **Numbers**: `{ value: 1, text: 'Beverages' }` for `categoryID: number`
+- **Strings**: `{ value: 'active', text: 'Active' }` for `status: string`
+- **Mixed types**: The grid will handle type conversion automatically when possible
+
+### Notes
+
+- The `values` property is optional. If not provided, the column will display the raw value.
+- When `values` is provided, the grid automatically transforms the display value (shows `text` instead of `value`).
+- The grid creates a dropdown editor automatically when `values` is defined and the column is editable.
+- You can override the automatic dropdown by providing a custom `editor` function.
+
+---
+
 ## Column Menu
 
 The Grid supports a column menu that provides quick access to column operations such as showing/hiding columns, filtering, sorting, and locking/unlocking columns.
@@ -4252,35 +3759,13 @@ The focused cell will be highlighted with a green outline. You can navigate thro
 
 Pantanal Grid emits the following events for integration with parent components:
 
-### v-model Events
-- `update:sort` — Sort descriptors array
-- `update:page` — Current page number
-- `update:pageSize` — Page size
-- `update:filter` — Filter descriptors array
-
-### Data Events
-- `databinding` — Fired before data is loaded/bound
-- `databound` — Fired after data is loaded/bound
-
-### Operation Events
-- `sort` — Fired when sorting changes
-- `filter` — Fired when filtering changes
-- `group` — Fired when grouping changes
-- `groupexpand` — Fired when a group is expanded
-- `groupcollapse` — Fired when a group is collapsed
-
-### Interaction Events
-- `selectionChange` — Array of selected rows
-- `rowClick` — Emits the clicked row
+- `update:sort`, `update:page`, `update:pageSize`, `update:filter` — v-model bindings
+- `selectionChange` — array of key values for selected rows
 - `columnResize` — `{ field, width }`
 - `columnReorder` — `{ from, to }`
 - `toggleGroup` — `(key, expanded)`
-
-### Status Events
-- `loading` — Boolean flag around asynchronous data-provider calls
-- `error` — Fired when an error occurs
-
-For detailed information about Grid events, see the [Grid Events](#grid-events) section above.
+- `rowClick` — emits the clicked row
+- `loading` — boolean flag around asynchronous data-provider calls
 
 ---
 
