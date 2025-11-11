@@ -3323,6 +3323,229 @@ function unlockColumn(field: string) {
 
 ---
 
+## Column Menu
+
+The Column Menu allows users to perform column operations such as sorting, filtering, showing/hiding columns, and locking/unlocking columns. Enable it by setting the `columnMenu` prop to `true`.
+
+### Basic Usage
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :column-menu="true"
+    :sortable="true"
+    :filterable="true"
+    key-field="id"
+  />
+</template>
+```
+
+### Column Menu Features
+
+The column menu includes the following features:
+
+1. **Show/Hide Columns**: Users can show or hide columns by checking/unchecking them in the menu.
+2. **Sorting**: Users can sort columns ascending, descending, or remove sorting (if `sortableAllowUnsort` is enabled).
+3. **Filtering**: Users can filter columns (opens filter dialog).
+4. **Lock/Unlock**: Users can lock or unlock columns (if `lockable` is not `false`).
+
+### Configuration Options
+
+#### `columnMenu`
+
+- **Type**: `boolean`
+- **Default**: `false`
+- **Description**: Enable or disable the column menu.
+
+```vue
+<PantanalGrid :column-menu="true" />
+```
+
+#### `columnMenuColumns`
+
+- **Type**: `boolean`
+- **Default**: `true`
+- **Description**: Show or hide the column visibility section in the menu.
+
+```vue
+<PantanalGrid :column-menu="true" :column-menu-columns="true" />
+```
+
+#### `columnMenuSortable`
+
+- **Type**: `boolean`
+- **Default**: `undefined` (inherits from `sortable`)
+- **Description**: Show or hide sorting options in the menu. If `undefined`, it inherits from the `sortable` prop.
+
+```vue
+<PantanalGrid :column-menu="true" :sortable="true" :column-menu-sortable="true" />
+```
+
+#### `columnMenuFilterable`
+
+- **Type**: `boolean`
+- **Default**: `undefined` (inherits from `filterable`)
+- **Description**: Show or hide filtering options in the menu. If `undefined`, it inherits from the `filterable` prop.
+
+```vue
+<PantanalGrid :column-menu="true" :filterable="true" :column-menu-filterable="true" />
+```
+
+### Column-Level Configuration
+
+You can disable specific operations for individual columns:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Product>[] = [
+  { field: 'productName', title: 'Product Name', filterable: false }, // Filtering disabled
+  { field: 'unitPrice', title: 'Unit Price', sortable: false }, // Sorting disabled
+  { field: 'category', title: 'Category', lockable: false }, // Locking disabled
+]
+</script>
+```
+
+### Disabled Operations
+
+The column menu automatically detects when a column operation is disabled and excludes the corresponding UI:
+
+- If `column.filterable === false`, the filter option is not shown for that column.
+- If `column.sortable === false`, the sort options are not shown for that column.
+- If `column.lockable === false`, the lock/unlock option is not shown for that column.
+
+### Events
+
+The column menu emits the following events:
+
+- `columnmenuopen`: Fired when the column menu is opened.
+- `columnmenuinit`: Fired when the column menu is initialized (allows customization).
+- `columnlock`: Fired when a column is locked.
+- `columnunlock`: Fired when a column is unlocked.
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :column-menu="true"
+    @columnmenuopen="handleColumnMenuOpen"
+    @columnlock="handleColumnLock"
+    @columnunlock="handleColumnUnlock"
+  />
+</template>
+
+<script setup lang="ts">
+function handleColumnMenuOpen(event: { column: ColumnDef; field: string }) {
+  console.log('Column menu opened for:', event.field)
+}
+
+function handleColumnLock(event: { column: ColumnDef; field: string }) {
+  console.log('Column locked:', event.field)
+}
+
+function handleColumnUnlock(event: { column: ColumnDef; field: string }) {
+  console.log('Column unlocked:', event.field)
+}
+</script>
+```
+
+### Customization
+
+You can customize the column menu by listening to the `columnmenuinit` event and modifying the menu container:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :column-menu="true"
+    @columnmenuinit="handleColumnMenuInit"
+  />
+</template>
+
+<script setup lang="ts">
+function handleColumnMenuInit(event: { column: ColumnDef; field: string; container: HTMLElement }) {
+  // Add custom menu items or modify the menu
+  const customButton = document.createElement('button')
+  customButton.textContent = 'Custom Action'
+  customButton.onclick = () => {
+    console.log('Custom action for column:', event.field)
+  }
+  event.container.appendChild(customButton)
+}
+</script>
+```
+
+### Examples
+
+#### Basic Column Menu
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :column-menu="true"
+    :sortable="true"
+    :filterable="true"
+    key-field="productID"
+  />
+</template>
+```
+
+#### Column Menu with Disabled Filtering
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Product>[] = [
+  { field: 'productName', title: 'Product Name', width: 180 },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, format: '{0:c}' },
+  { field: 'category', title: 'Category', width: 180, filterable: false },
+  { field: 'discontinued', title: 'Discontinued', width: 120 },
+]
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :column-menu="true"
+    :sortable="true"
+    :filterable="true"
+    key-field="productID"
+  />
+</template>
+```
+
+#### Custom Column Menu Configuration
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :column-menu="true"
+    :column-menu-columns="true"
+    :sortable="true"
+    :column-menu-sortable="true"
+    :filterable="true"
+    :column-menu-filterable="false"
+    key-field="productID"
+  />
+</template>
+```
+
+### Notes
+
+- The column menu button appears in the column header when `columnMenu` is enabled.
+- The menu respects column-level configurations (e.g., `filterable: false`, `sortable: false`, `lockable: false`).
+- You can customize the menu by listening to events and modifying the menu container.
+- The menu automatically closes when clicking outside of it.
+
+---
+
 ## Pinned Columns
 
 Pinned columns stick to the viewport while scrolling horizontally. They remain visible at all times and can overlap the footer. This is different from locked columns, which do not overlap the footer.

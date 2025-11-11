@@ -848,7 +848,11 @@
 
         <!-- Filter -->
         <div
-          v-if="(props.columnMenuFilterable !== false && (props.filterable || columnMenuColumn.filterable)) && (props.columnMenuFilterable === true || (props.columnMenuFilterable === undefined && props.filterable))"
+          v-if="props.columnMenuFilterable !== false && 
+                columnMenuColumn.filterable !== false && 
+                (props.columnMenuFilterable === true || 
+                 (props.columnMenuFilterable === undefined && 
+                  (props.filterable || columnMenuColumn.filterable === true)))"
           class="v3grid__column-menu-section">
           <div class="v3grid__column-menu-title">{{ msgs.columnMenuFilter || 'Filter' }}</div>
           <div class="v3grid__column-menu-items">
