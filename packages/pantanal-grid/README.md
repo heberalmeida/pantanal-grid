@@ -3546,6 +3546,123 @@ const columns: ColumnDef<Product>[] = [
 
 ---
 
+## Column Reordering
+
+The Grid supports column reordering functionality. Users can drag and drop column headers to reorder columns.
+
+### Basic Usage
+
+Enable column reordering by setting the `enableColumnReorder` prop to `true`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :enable-column-reorder="true"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+interface Product {
+  productID: number
+  productName: string
+  unitPrice: number
+  unitsInStock: number
+}
+
+const rows = ref<Product[]>([
+  { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39 },
+  { productID: 2, productName: 'Chang', unitPrice: 19, unitsInStock: 17 },
+])
+
+const columns: ColumnDef<Product>[] = [
+  { field: 'productName', title: 'Product Name', width: 180 },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, format: '{0:c}' },
+  { field: 'unitsInStock', title: 'Units In Stock', width: 120 },
+]
+</script>
+```
+
+### How It Works
+
+- **Drag and Drop**: Users can drag any column header and drop it at a new position to reorder columns.
+- **Visual Feedback**: The grid provides visual feedback during dragging.
+- **Persistence**: Column order can be persisted using the `columnReorder` event and state persistence.
+
+### Column Reordering Events
+
+Listen to the `columnReorder` event to track column reordering changes:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :enable-column-reorder="true"
+    @column-reorder="handleColumnReorder"
+  />
+</template>
+
+<script setup lang="ts">
+function handleColumnReorder(event: { from: number; to: number }) {
+  console.log('Column moved from index', event.from, 'to index', event.to)
+  // Persist the new order or update your state
+}
+</script>
+```
+
+### Column Reordering with Other Features
+
+Column reordering works seamlessly with other grid features:
+
+- **Sorting**: You can reorder columns and sort by any column independently.
+- **Filtering**: Column reordering works with filtering.
+- **Resizing**: Combine column reordering with column resizing.
+- **Locked Columns**: Locked columns cannot be reordered. Only unlocked columns can be moved.
+
+### Locked Columns and Reordering
+
+Locked columns (columns with `locked: true`) cannot be reordered. Only unlocked columns can be moved:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="orderID"
+    :enable-column-reorder="true"
+  />
+</template>
+
+<script setup lang="ts">
+const columns: ColumnDef<Order>[] = [
+  { field: 'orderID', title: 'Order ID', width: 120, locked: true }, // Cannot be reordered
+  { field: 'shipCountry', title: 'Ship Country', width: 180 }, // Can be reordered
+  { field: 'shipCity', title: 'Ship City', width: 180 }, // Can be reordered
+]
+</script>
+```
+
+### Keyboard Navigation
+
+When keyboard navigation is enabled, you can use keyboard shortcuts to reorder columns:
+
+- **Ctrl+Left Arrow**: Move column left
+- **Ctrl+Right Arrow**: Move column right
+
+### Notes
+
+- Column reordering is enabled by default when `enableColumnReorder` is `true`.
+- Locked columns cannot be reordered.
+- Multi-column headers: Only leaf columns (columns with `field` property) can be reordered. Group columns cannot be reordered.
+- The `columnReorder` event provides `from` and `to` indices indicating the old and new positions of the column.
+
 ## Multi-Column Headers
 
 The Grid supports multi-column headers by specifying column groups which incorporate inner column structures. You can nest columns by using the `columns` property of a column definition.
