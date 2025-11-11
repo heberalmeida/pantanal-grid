@@ -3126,6 +3126,308 @@ The `value` property in the `values` array should match the type of the field in
 
 ---
 
+## Locked Columns
+
+Locked columns allow you to display a grid with a large number of columns on limited viewports. A small subset of columns can be made static (locked) while scrolling the rest horizontally to make them visible.
+
+### Basic Usage
+
+To lock a column, set the `locked` property to `true` or `'left'` for left-side locks, or `'right'` for right-side locks:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+interface Order {
+  orderID: number
+  shipCountry: string
+  shipCity: string
+  shipName: string
+  shipAddress: string
+  freight: number
+  orderDate: string
+}
+
+const rows = ref<Order[]>([
+  { orderID: 10248, shipCountry: 'France', shipCity: 'Reims', shipName: 'Vins et alcools Chevalier', shipAddress: '59 rue de l\'Abbaye', freight: 32.38, orderDate: '1996-07-04' },
+  { orderID: 10249, shipCountry: 'Germany', shipCity: 'München', shipName: 'Toms Spezialitäten', shipAddress: 'Luisenstr. 48', freight: 11.61, orderDate: '1996-07-05' },
+])
+
+const columns: ColumnDef<Order>[] = [
+  {
+    field: 'orderID',
+    title: 'Order ID',
+    locked: true, // Lock on left side
+    lockable: false, // Cannot be unlocked
+    width: 120,
+  },
+  {
+    field: 'shipCountry',
+    title: 'Ship Country',
+    width: 180,
+  },
+  {
+    field: 'shipCity',
+    title: 'Ship City',
+    width: 180,
+  },
+  {
+    field: 'shipName',
+    title: 'Ship Name',
+    locked: true, // Lock on left side
+    width: 240,
+  },
+  {
+    field: 'shipAddress',
+    title: 'Ship Address',
+    lockable: false, // Cannot be locked (even if user tries via column menu)
+    width: 240,
+  },
+  {
+    field: 'freight',
+    title: 'Freight',
+    width: 120,
+    format: '{0:c}',
+  },
+  {
+    field: 'orderDate',
+    title: 'Order Date',
+    format: '{0:MM/dd/yyyy}',
+    width: 180,
+  },
+]
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="orderID"
+    :sortable="true"
+    :pageable="true"
+    :column-menu="true"
+    :filterable="true"
+    :enable-column-resize="true"
+    :groupable="true"
+    :enable-column-reorder="true"
+    :height="600"
+  />
+</template>
+```
+
+### Locked Left and Right
+
+You can lock columns on both the left and right sides of the grid:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Order>[] = [
+  {
+    field: 'orderID',
+    title: 'Order ID',
+    locked: 'left', // Lock on left side
+    width: 120,
+  },
+  {
+    field: 'shipCountry',
+    title: 'Ship Country',
+    width: 180,
+  },
+  {
+    field: 'orderDate',
+    title: 'Order Date',
+    format: '{0:MM/dd/yyyy}',
+    width: 180,
+    locked: 'right', // Lock on right side
+  },
+]
+</script>
+```
+
+### Lockable Property
+
+The `lockable` property controls whether a column can be locked or unlocked by the user via the column menu:
+
+- `lockable: true` (default): The column can be locked/unlocked by the user
+- `lockable: false`: The column cannot be locked/unlocked by the user (useful for primary keys that should always remain locked)
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Order>[] = [
+  {
+    field: 'orderID',
+    title: 'Order ID',
+    locked: true,
+    lockable: false, // Cannot be unlocked
+    width: 120,
+  },
+  {
+    field: 'shipName',
+    title: 'Ship Name',
+    locked: true,
+    lockable: true, // Can be unlocked via column menu
+    width: 240,
+  },
+]
+</script>
+```
+
+### How It Works
+
+1. **Locked Left Columns**: Columns with `locked: true` or `locked: 'left'` are rendered in a fixed left panel that doesn't scroll horizontally.
+2. **Locked Right Columns**: Columns with `locked: 'right'` are rendered in a fixed right panel that doesn't scroll horizontally.
+3. **Unlocked Columns**: Columns without the `locked` property are rendered in the scrollable middle section.
+4. **Synchronized Scrolling**: Locked columns scroll vertically in sync with the unlocked columns.
+5. **Column Menu**: Users can lock/unlock columns via the column menu (if `lockable: true`).
+
+### Unlocking Columns
+
+To unlock a locked column:
+
+1. **Via Column Menu**: Click the column menu button (three dots) in the column header, then click the "Unlock" button.
+2. **Programmatically**: Update the column definition to remove the `locked` property or set it to `false`.
+
+**Note**: Columns with `lockable: false` cannot be unlocked via the column menu.
+
+```vue
+<script setup lang="ts">
+// To unlock programmatically, update the columns array
+const columns = ref<ColumnDef<Order>[]>([
+  {
+    field: 'orderID',
+    title: 'Order ID',
+    locked: true, // Initially locked
+    lockable: true, // Can be unlocked
+    width: 120,
+  },
+  // ... other columns
+])
+
+// To unlock a column programmatically:
+function unlockColumn(field: string) {
+  const col = columns.value.find(c => c.field === field)
+  if (col && col.lockable !== false) {
+    col.locked = undefined // Remove locked property
+  }
+}
+</script>
+```
+
+### Notes
+
+- Locked columns are useful for displaying key data (like IDs or names) that should always be visible while scrolling through many columns.
+- The `lockable` property prevents users from changing the lock state of certain columns (useful for primary keys).
+- Locked columns work independently of pinned columns (`pinned` property).
+- Locked columns do not overlap the footer, making them ideal for financial dashboards and reports with summaries.
+- To unlock a column via UI, use the column menu (three dots button) and click "Unlock".
+
+---
+
+## Pinned Columns
+
+Pinned columns stick to the viewport while scrolling horizontally. They remain visible at all times and can overlap the footer. This is different from locked columns, which do not overlap the footer.
+
+### Basic Usage
+
+To pin a column, set the `pinned` property to `true`, `'left'`, or `'right'`:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+interface Row {
+  id: number
+  name: string
+  email: string
+  phone: string
+  department: string
+  position: string
+  salary: number
+  status: string
+}
+
+const rows = ref<Row[]>([
+  { id: 1, name: 'John Doe', email: 'john@example.com', phone: '555-0101', department: 'Engineering', position: 'Senior Developer', salary: 95000, status: 'Active' },
+  { id: 2, name: 'Jane Smith', email: 'jane@example.com', phone: '555-0102', department: 'Engineering', position: 'Tech Lead', salary: 120000, status: 'Active' },
+])
+
+const columns: ColumnDef<Row>[] = [
+  { field: 'id', title: 'ID', pinned: 'left', width: 80 },
+  { field: 'name', title: 'Name', pinned: 'left', width: 150 },
+  { field: 'email', title: 'Email', width: 200 },
+  { field: 'phone', title: 'Phone', width: 120 },
+  { field: 'department', title: 'Department', width: 130 },
+  { field: 'position', title: 'Position', width: 150 },
+  { field: 'salary', title: 'Salary', width: 100, format: '{0:c}' },
+  { field: 'status', title: 'Status', width: 100 },
+]
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="id"
+    :sortable="true"
+    :pageable="true"
+    :pinned-shadows="true"
+    :height="500"
+  />
+</template>
+```
+
+### Pinned Left and Right
+
+You can pin columns on both the left and right sides of the grid:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Row>[] = [
+  { field: 'id', title: 'ID', pinned: 'left', width: 80 },
+  { field: 'name', title: 'Name', pinned: 'left', width: 150 },
+  { field: 'email', title: 'Email', width: 200 },
+  { field: 'status', title: 'Status', pinned: 'right', width: 100 },
+]
+</script>
+```
+
+### Pinned Shadows
+
+Enable shadows on pinned columns to create a visual separation between pinned and scrollable columns:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="id"
+    :pinned-shadows="true"
+    :height="500"
+  />
+</template>
+```
+
+### How It Works
+
+1. **Pinned Left Columns**: Columns with `pinned: true` or `pinned: 'left'` are rendered with `position: sticky` and stick to the left side of the viewport.
+2. **Pinned Right Columns**: Columns with `pinned: 'right'` are rendered with `position: sticky` and stick to the right side of the viewport.
+3. **Overlapping Footer**: Pinned columns can overlap the footer when scrolling, unlike locked columns.
+4. **Shadows**: The `pinned-shadows` prop adds visual shadows to indicate the pinned columns.
+
+### Pinned vs Locked Columns
+
+- **Pinned Columns**: Use CSS `position: sticky`, can overlap footer, simpler implementation, better for general use cases.
+- **Locked Columns**: Use separate containers, never overlap footer, more complex implementation, better for financial dashboards with summaries.
+
+### Notes
+
+- Pinned columns are useful for keeping important data visible while scrolling through many columns.
+- Pinned columns work with all grid features (sorting, filtering, grouping, etc.).
+- The `pinned-shadows` prop adds visual separation between pinned and scrollable columns.
+- Pinned columns can overlap the footer, which may not be desirable for dashboards with summaries.
+
+---
+
 ## Column Menu
 
 The Grid supports a column menu that provides quick access to column operations such as showing/hiding columns, filtering, sorting, and locking/unlocking columns.

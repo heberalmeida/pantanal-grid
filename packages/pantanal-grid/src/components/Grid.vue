@@ -887,21 +887,25 @@
 
         <!-- Lock/Unlock -->
         <div
-          v-if="columnMenuColumn.locked !== undefined || columnMenuColumn.pinned !== undefined"
+          v-if="columnMenuColumn && columnMenuColumn.field"
           class="v3grid__column-menu-section">
+          <div class="v3grid__column-menu-title">{{ msgs.columnMenuLock || 'Lock Column' }}</div>
           <div class="v3grid__column-menu-items">
             <button
-              v-if="!columnMenuColumn.locked && columnMenuColumn.pinned !== 'left' && columnMenuColumn.pinned !== 'right'"
+              v-if="!columnMenuColumn.locked && !columnMenuColumn.pinned && (columnMenuColumn.lockable !== false)"
               @click="lockColumn"
               class="v3grid__column-menu-action">
               {{ msgs.columnMenuLock || 'Lock' }}
             </button>
             <button
-              v-else
+              v-else-if="(columnMenuColumn.locked || columnMenuColumn.pinned) && (columnMenuColumn.lockable !== false)"
               @click="unlockColumn"
               class="v3grid__column-menu-action">
               {{ msgs.columnMenuUnlock || 'Unlock' }}
             </button>
+            <div v-else-if="columnMenuColumn.lockable === false" class="v3grid__column-menu-item text-sm text-slate-500 dark:text-slate-400">
+              This column cannot be locked/unlocked
+            </div>
           </div>
         </div>
       </div>
@@ -1175,14 +1179,26 @@ function normalizeCommand(command: ColumnDef['command']): ColumnDef['command'] {
   return undefined
 }
 
+// Enhanced columns computed that applies internal state (locked, visibility)
 const columns = computed<ColumnDef[]>(() => {
   const cols = (slotColumnDefs.value.length > 0 ? slotColumnDefs.value : (props.columns ?? [])) as ColumnDef[]
-  // Normalize command property for each column
+  // Normalize command property and apply internal state
   return cols.map(col => {
+    const fieldStr = col.field ? String(col.field) : null
+    const enhancedCol = { ...col } as ColumnDef
+    
+    // Apply normalized command
     if (col.command) {
-      return { ...col, command: normalizeCommand(col.command) } as ColumnDef
+      enhancedCol.command = normalizeCommand(col.command)
     }
-    return col
+    
+    // Apply locked state from internal state if available, otherwise use prop
+    if (fieldStr && columnLockedState.value.has(fieldStr)) {
+      const lockedValue = columnLockedState.value.get(fieldStr)
+      enhancedCol.locked = lockedValue === false ? undefined : lockedValue
+    }
+    
+    return enhancedCol
   })
 })
 
@@ -1210,15 +1226,47 @@ const columnMenuColumn = ref<ColumnDef | null>(null)
 const columnMenuEl = ref<HTMLElement | null>(null)
 const columnMenuPosition = ref<{ top: number; left: number }>({ top: 0, left: 0 })
 const visibleColumns = ref<Set<string>>(new Set())
+// Internal state for column locked status (overrides props when user changes via menu)
+const columnLockedState = ref<Map<string, boolean | 'left' | 'right'>>(new Map())
 
-// Initialize visible columns
+// Initialize visible columns and locked state
 watch(() => columns.value, (cols) => {
-  if (visibleColumns.value.size === 0) {
-    cols.forEach(col => {
-      if (col.field) {
-        visibleColumns.value.add(String(col.field))
+  const newVisibleColumns = new Set<string>()
+  const newLockedState = new Map<string, boolean | 'left' | 'right'>(columnLockedState.value)
+  
+  cols.forEach(col => {
+    if (col.field) {
+      const fieldStr = String(col.field)
+      // Initialize visible columns - always add if not explicitly hidden
+      if (col.hidden !== true) {
+        newVisibleColumns.add(fieldStr)
       }
-    })
+      // Initialize locked state from column definition if not already set by user
+      if (!newLockedState.has(fieldStr)) {
+        if (col.locked !== undefined) {
+          newLockedState.set(fieldStr, col.locked)
+        } else {
+          // If column doesn't have locked prop, set to false (unlocked)
+          newLockedState.set(fieldStr, false)
+        }
+      }
+    }
+  })
+  
+  // Update visible columns if changed
+  const visibleChanged = newVisibleColumns.size !== visibleColumns.value.size || 
+    Array.from(newVisibleColumns).some(f => !visibleColumns.value.has(f)) ||
+    Array.from(visibleColumns.value).some(f => !newVisibleColumns.has(f))
+  if (visibleChanged || visibleColumns.value.size === 0) {
+    visibleColumns.value = newVisibleColumns
+  }
+  
+  // Update locked state if changed (only add new columns, don't remove user changes)
+  const lockedChanged = Array.from(newLockedState.entries()).some(([k, v]) => 
+    !columnLockedState.value.has(k) || columnLockedState.value.get(k) !== v
+  )
+  if (lockedChanged || columnLockedState.value.size === 0) {
+    columnLockedState.value = newLockedState
   }
 }, { immediate: true })
 
@@ -1238,18 +1286,36 @@ function isColumnVisible(col: ColumnDef): boolean {
 function toggleColumnVisibility(col: ColumnDef, visible: boolean) {
   if (!col.field) return
   const fieldStr = String(col.field)
+  // Create a new Set to trigger reactivity
+  const newVisibleColumns = new Set(visibleColumns.value)
   if (visible) {
-    visibleColumns.value.add(fieldStr)
+    newVisibleColumns.add(fieldStr)
     emit('columnshow', { column: col, field: fieldStr })
   } else {
-    visibleColumns.value.delete(fieldStr)
+    newVisibleColumns.delete(fieldStr)
     emit('columnhide', { column: col, field: fieldStr })
   }
+  visibleColumns.value = newVisibleColumns
 }
 
 function openColumnMenu(col: ColumnDef, event: MouseEvent) {
   event.stopPropagation()
-  columnMenuColumn.value = col
+  // Create a copy of the column with current state applied
+  const fieldStr = col.field ? String(col.field) : null
+  const currentCol = { ...col } as ColumnDef
+  // Apply current locked state if available
+  if (fieldStr && columnLockedState.value.has(fieldStr)) {
+    const lockedValue = columnLockedState.value.get(fieldStr)
+    currentCol.locked = lockedValue === false ? undefined : lockedValue
+  } else if (fieldStr && col.locked !== undefined) {
+    // If column has locked prop but not in state, use the prop value
+    currentCol.locked = col.locked
+  }
+  // Ensure lockable is set (default to true if not explicitly false)
+  if (currentCol.lockable === undefined) {
+    currentCol.lockable = true
+  }
+  columnMenuColumn.value = currentCol
   columnMenuOpen.value = true
   const button = event.currentTarget as HTMLElement
   
@@ -1381,20 +1447,53 @@ function lockColumn() {
   if (!columnMenuColumn.value || !columnMenuColumn.value.field) return
   const col = columnMenuColumn.value
   const fieldStr = String(col.field)
-  // In a full implementation, this would update column.pinned or column.locked
-  // For now, just emit the event
+  
+  // Check if column is lockable
+  if (col.lockable === false) return
+  
+  // Determine lock side: if pinned, use the same side, otherwise default to 'left'
+  const lockSide = col.pinned === 'right' ? 'right' : (col.pinned === 'left' ? 'left' : 'left')
+  
+  // Update internal locked state
+  const newLockedState = new Map(columnLockedState.value)
+  newLockedState.set(fieldStr, lockSide)
+  columnLockedState.value = newLockedState
+  
+  // Update columnMenuColumn to reflect the change immediately
+  columnMenuColumn.value = { ...col, locked: lockSide } as ColumnDef
+  
+  // Emit event
   emit('columnlock', { column: col, field: fieldStr })
-  closeColumnMenu()
+  
+  // Close menu after a brief delay to allow UI to update
+  nextTick(() => {
+    closeColumnMenu()
+  })
 }
 
 function unlockColumn() {
   if (!columnMenuColumn.value || !columnMenuColumn.value.field) return
   const col = columnMenuColumn.value
   const fieldStr = String(col.field)
-  // In a full implementation, this would update column.pinned or column.locked
-  // For now, just emit the event
+  
+  // Check if column is lockable
+  if (col.lockable === false) return
+  
+  // Update internal locked state (set to false to indicate unlocked)
+  const newLockedState = new Map(columnLockedState.value)
+  newLockedState.set(fieldStr, false)
+  columnLockedState.value = newLockedState
+  
+  // Update columnMenuColumn to reflect the change immediately
+  columnMenuColumn.value = { ...col, locked: undefined, pinned: undefined } as ColumnDef
+  
+  // Emit event
   emit('columnunlock', { column: col, field: fieldStr })
-  closeColumnMenu()
+  
+  // Close menu after a brief delay to allow UI to update
+  nextTick(() => {
+    closeColumnMenu()
+  })
 }
 
 onBeforeUnmount(() => {

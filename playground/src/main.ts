@@ -50,6 +50,8 @@ import {
   faFileExcel,
   faFileCode,
   faCode,
+  faLock,
+  faThumbTack,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -99,6 +101,8 @@ library.add(
   faFileExcel,
   faFileCode,
   faCode,
+  faLock,
+  faThumbTack,
 )
 
 createApp(App)

@@ -110,6 +110,8 @@ const navSections = [
       { to: '/templates', label: 'Templates', icon: 'file-code' },
       { to: '/custom-commands', label: 'Custom Commands', icon: 'code' },
       { to: '/foreign-key-columns', label: 'Foreign-Key Columns', icon: 'link' },
+      { to: '/locked', label: 'Locked Columns', icon: 'lock' },
+      { to: '/pinned-columns', label: 'Pinned Columns', icon: 'thumbtack' },
       { to: '/persist-state', label: 'Persist State', icon: 'floppy-disk' },
       { to: '/rtl', label: 'RTL Support', icon: 'arrow-right-arrow-left' },
       { to: '/table-only', label: 'Table-only layout', icon: 'table-list' },
