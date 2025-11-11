@@ -51,6 +51,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/custom-commands', component: () => import('./pages/CustomCommandsPage.vue') },
   { path: '/foreign-key-columns', component: () => import('./pages/ForeignKeyColumnsPage.vue') },
   { path: '/pinned-columns', component: () => import('./pages/PinnedColumnsPage.vue') },
+  { path: '/multi-column-headers', component: () => import('./pages/MultiColumnHeadersPage.vue') },
 ]
 
 export const router = createRouter({

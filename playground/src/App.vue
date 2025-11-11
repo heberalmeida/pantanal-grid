@@ -104,6 +104,7 @@ const navSections = [
       { to: '/selection', label: 'Selection', icon: 'check-square' },
       { to: '/copy', label: 'Copy to Clipboard', icon: 'copy' },
       { to: '/column-menu', label: 'Column Menu', icon: 'bars' },
+      { to: '/multi-column-headers', label: 'Multi-Column Headers', icon: 'table-columns' },
       { to: '/excel-export', label: 'Excel Export', icon: 'file-excel' },
       { to: '/filterable-props', label: 'Filterable Props', icon: 'filter' },
       { to: '/grid-column', label: 'Grid Column API', icon: 'table-columns' },

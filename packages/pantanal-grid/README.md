@@ -3546,6 +3546,110 @@ const columns: ColumnDef<Product>[] = [
 
 ---
 
+## Multi-Column Headers
+
+The Grid supports multi-column headers by specifying column groups which incorporate inner column structures. You can nest columns by using the `columns` property of a column definition.
+
+### Basic Usage
+
+To create multi-column headers, nest column definitions using the `columns` property:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+interface Product {
+  productID: number
+  productName: string
+  unitPrice: number
+  unitsInStock: number
+  discontinued: boolean
+}
+
+const columns: ColumnDef<Product>[] = [
+  { field: 'productName', title: 'Product Name', width: 180 },
+  {
+    title: 'Product Details',
+    columns: [
+      { field: 'unitPrice', title: 'Unit Price', format: '{0:c}', width: 120 },
+      { field: 'unitsInStock', title: 'Units In Stock', width: 120 },
+      { field: 'discontinued', title: 'Discontinued', width: 120 },
+    ]
+  },
+]
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :sortable="true"
+    :filterable="true"
+    :height="400"
+  />
+</template>
+```
+
+### How It Works
+
+1. **Column Groups**: Columns with a `columns` property are treated as group columns and don't have a `field` property.
+2. **Leaf Columns**: Columns with a `field` property are leaf columns that display actual data.
+3. **Header Levels**: The grid automatically calculates the number of header levels based on the nesting depth.
+4. **Header Rendering**: Multi-level headers are rendered using HTML table structure with proper `colspan` and `rowspan` attributes.
+
+### Nested Column Groups
+
+You can nest column groups to create multiple levels of headers:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Product>[] = [
+  { field: 'productName', title: 'Product Name', width: 180 },
+  {
+    title: 'Product Details',
+    columns: [
+      {
+        title: 'Pricing',
+        columns: [
+          { field: 'unitPrice', title: 'Unit Price', format: '{0:c}', width: 120 },
+        ]
+      },
+      {
+        title: 'Inventory',
+        columns: [
+          { field: 'unitsInStock', title: 'Units In Stock', width: 120 },
+          { field: 'unitsOnOrder', title: 'Units On Order', width: 120 },
+        ]
+      },
+      { field: 'discontinued', title: 'Discontinued', width: 120 },
+    ]
+  },
+]
+</script>
+```
+
+### Features
+
+Multi-column headers support all standard grid features:
+
+- **Sorting**: You can sort by leaf columns (columns with `field` property).
+- **Filtering**: You can filter by leaf columns.
+- **Column Menu**: Column menu works with leaf columns.
+- **Column Resize**: You can resize leaf columns.
+- **Column Reorder**: Column reordering works with leaf columns.
+- **Grouping**: You can group by leaf columns.
+
+### Notes
+
+- Only columns with a `field` property are rendered in the grid body (leaf columns).
+- Group columns (columns with `columns` property) are only displayed in the header.
+- The grid automatically calculates the header structure based on the nesting depth.
+- Multi-column headers work with all grid features (sorting, filtering, grouping, etc.).
+- Column operations (sort, filter, etc.) only apply to leaf columns.
+
+---
+
 ## Pinned Columns
 
 Pinned columns stick to the viewport while scrolling horizontally. They remain visible at all times and can overlap the footer. This is different from locked columns, which do not overlap the footer.

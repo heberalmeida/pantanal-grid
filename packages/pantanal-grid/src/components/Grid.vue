@@ -48,7 +48,84 @@
     <div class="v3grid__scroll" ref="hScrollEl" @scroll="onHScroll"
       :style="{ marginLeft: lockedLeftWidth + 'px', marginRight: lockedRightWidth + 'px' }">
       <!-- HEADER -->
-      <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
+      <!-- Multi-column headers using HTML table structure -->
+      <table v-if="headerLevels.hasMultiLevel" class="v3grid__head-multi">
+        <colgroup>
+          <col v-if="props.selectable" style="width: 52px;">
+          <col v-if="isGrouped" style="width: 28px;">
+          <col v-for="(col, idx) in bodyCols" :key="'col-' + idx" 
+            :style="{ width: bodyColumnWidths[idx] + 'px' }">
+        </colgroup>
+        <thead>
+          <tr v-for="(headerRow, rowIndex) in filteredHeaders" :key="'header-row-' + rowIndex">
+            <!-- Global selectable column (from Grid prop) - only on first row -->
+            <th v-if="rowIndex === 0 && props.selectable" 
+              class="v3grid__cell v3grid__headercell" 
+              :rowspan="filteredHeaders.length"
+              style="text-align: center; vertical-align: middle; padding: 0.5rem 0.75rem; border: 1px solid var(--grid-border, #e5e7eb); background: var(--grid-header-bg, #f9fafb);">
+              <input class="v3grid__checkbox" type="checkbox" :checked="allVisibleSelected"
+                :indeterminate="someVisibleSelected" @change="toggleAllVisible(selectableRowsOnPage)" />
+            </th>
+
+            <!-- Group expander column - only on first row -->
+            <th v-if="rowIndex === 0 && isGrouped" 
+              class="v3grid__cell v3grid__headercell"
+              :rowspan="filteredHeaders.length"
+              style="padding: 0.5rem 0.75rem; border: 1px solid var(--grid-border, #e5e7eb); background: var(--grid-header-bg, #f9fafb);">
+            </th>
+
+            <!-- Header cells for this row -->
+            <template v-for="(headerCell, cellIndex) in headerRow" :key="'header-cell-' + rowIndex + '-' + cellIndex">
+              <th 
+                class="v3grid__cell v3grid__headercell" 
+                :class="[headerCell.column.field && headerCell.column._idx != null && headerCell.column._idx >= 0 ? pinClass(headerCell.column._idx) : {}]" 
+                :style="[
+                  headerCell.column.field && headerCell.column._idx != null && headerCell.column._idx >= 0 ? pinStyle(headerCell.column._idx) : undefined,
+                  { padding: '0.5rem 0.75rem', borderRight: '1px solid var(--grid-border, #e5e7eb)', borderBottom: '1px solid var(--grid-border, #e5e7eb)', background: 'var(--grid-header-bg, #f9fafb)' }
+                ]"
+                :colspan="headerCell.colspan > 1 ? headerCell.colspan : undefined"
+                :rowspan="headerCell.rowspan > 1 ? headerCell.rowspan : undefined"
+                :draggable="props.enableColumnReorder && headerCell.colspan === 1 && headerCell.column.field && headerCell.column._orderIndex != null && headerCell.column._orderIndex >= 0 ? true : undefined"
+                :tabindex="props.navigatable && headerCell.colspan === 1 && headerCell.column._idx != null && headerCell.column._idx >= 0 ? 0 : undefined"
+                @dragstart="props.enableColumnReorder && headerCell.column.field && headerCell.column._orderIndex != null && headerCell.column._orderIndex >= 0 && onDragStart(headerCell.column._orderIndex, $event)"
+                @dragover="props.enableColumnReorder && onDragOver($event)"
+                @drop="props.enableColumnReorder && headerCell.column.field && headerCell.column._orderIndex != null && headerCell.column._orderIndex >= 0 && handleHeaderDrop(headerCell.column._orderIndex)"
+                @click="headerCell.column.field && handleHeaderCellClick(headerCell.column, $event)"
+                @keydown="props.navigatable && headerCell.colspan === 1 && headerCell.column._idx != null && headerCell.column._idx >= 0 && handleKeydown($event, undefined, headerCell.column._idx)">
+                <div class="v3grid__header-content">
+                  <span v-if="headerCell.column.headerTemplate" v-html="renderHeaderTemplate(headerCell.column)"></span>
+                  <span v-else class="v3grid__header-title">{{ headerCell.column.title ?? (headerCell.column.field ? String(headerCell.column.field) : '') }}</span>
+                  <template v-if="headerCell.column.field && sortIconData(headerCell.column)">
+                    <span v-if="props.sortableMode === 'multiple' && props.sortableShowIndexes && sortIconData(headerCell.column)?.index" 
+                      class="v3grid__sort-index">{{ sortIconData(headerCell.column)!.index }}</span>
+                    <img :src="sortIconData(headerCell.column)!.src" :alt="sortIconData(headerCell.column)!.alt"
+                      class="v3grid__icon" />
+                  </template>
+                  <button
+                    v-if="props.columnMenu && headerCell.column.field"
+                    class="v3grid__column-menu-btn"
+                    @click.stop="openColumnMenu(headerCell.column, $event)"
+                    :aria-label="msgs.columnMenuSettings || 'Column menu'"
+                    type="button">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                      <circle cx="7" cy="3" r="1.5"/>
+                      <circle cx="7" cy="7" r="1.5"/>
+                      <circle cx="7" cy="11" r="1.5"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <span v-if="props.enableColumnResize && headerCell.colspan === 1 && headerCell.column.field && headerCell.column._orderIndex != null && headerCell.column._orderIndex >= 0 && (headerCell.column.resizable ?? true)" 
+                  class="v3grid__resizer"
+                  @mousedown="(e: any) => { if (headerCell.column._orderIndex != null && headerCell.column._orderIndex >= 0) { onResizeDown(e, headerCell.column._orderIndex); handleColumnResize(headerCell.column, effW(headerCell.column._orderIndex, headerCell.column)) } }"
+                  :style="{ width: (props.columnResizeHandleWidth ?? 4) * 2 + 'px', right: '-' + (props.columnResizeHandleWidth ?? 4) + 'px' }"></span>
+              </th>
+            </template>
+          </tr>
+        </thead>
+      </table>
+      <!-- Single-row header (no nested columns) -->
+      <div v-else class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
         <!-- Global selectable column (from Grid prop) -->
         <div v-if="props.selectable" class="v3grid__cell">
           <input class="v3grid__checkbox" type="checkbox" :checked="allVisibleSelected"
@@ -97,7 +174,7 @@
             </button>
 
             <span v-if="props.enableColumnResize && (c.resizable ?? true)" class="v3grid__resizer"
-              @mousedown="(e: any) => { onResizeDown(e, c._orderIndex); handleColumnResize(c, effW(c._orderIndex, c)) }"
+              @mousedown="(e: any) => { onResizeDown(e, c._orderIndex); handleColumnResize(c, effW(c._orderIndex, c, 0)) }"
               :style="{ width: (props.columnResizeHandleWidth ?? 4) * 2 + 'px', right: '-' + (props.columnResizeHandleWidth ?? 4) + 'px' }"></span>
           </div>
         </template>
@@ -105,7 +182,7 @@
 
       <!-- FILTER ROW -->
       <div v-if="(props.showFilterRow || props.filterableMode === 'row' || props.filterableMode === 'menu, row') && anyFilterable && (!isCardMode || props.showFiltersInCards)"
-        class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
+        class="v3grid__filters" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(headerLevels.hasMultiLevel ? headerLevels.leafColumns : columns) }">
         <div v-if="props.selectable" class="v3grid__cell"></div>
         <div v-if="isGrouped" class="v3grid__cell"></div>
         <template v-for="c in unlockedCols" :key="c._idx">
@@ -170,10 +247,11 @@
         <div :style="{ height: topPad + 'px' }"></div>
         <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
           :class="props.striped && ((start ?? 0) + r) % 2 === 1 ? 'v3grid__row--alt' : ''"
-          :style="{ gridTemplateColumns: bodyTemplate(columns) }">
+          :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? bodyCols : columns) }">
           <div v-if="props.selectable" class="v3grid__cell" @click.stop>
             <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
           </div>
+          <div v-if="isGrouped" class="v3grid__cell"></div>
           <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
             :style="[pinStyle(c._idx)]" 
             :tabindex="props.navigatable ? (isFocusedRow(r) && focusCol === c._idx ? 0 : -1) : undefined"
@@ -406,9 +484,9 @@
         <template v-else>
           <!-- CAMINHO AGRUPADO -->
           <template v-if="isGrouped">
-            <div v-for="(n, r) in visibleRows" :key="n.key ?? r" class="v3grid__row"
+              <div v-for="(n, r) in visibleRows" :key="n.key ?? r" class="v3grid__row"
               :class="props.striped && n.type === 'row' && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
-              :style="{ gridTemplateColumns: bodyTemplate(columns) }">
+              :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? headerLevels.leafColumns : columns) }">
               <!-- seleção (só para linhas) -->
               <div v-if="props.selectable" class="v3grid__cell" @click.stop>
                 <template v-if="n.type === 'row'">
@@ -514,7 +592,7 @@
               <template v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r">
                 <div class="v3grid__row"
                   :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
-                  :style="{ gridTemplateColumns: bodyTemplate(columns) }">
+                  :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? headerLevels.leafColumns : columns) }">
                   <div v-if="props.selectable" class="v3grid__cell" @click.stop>
                     <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
                   </div>
@@ -1232,13 +1310,18 @@ const columnMenuPosition = ref<{ top: number; left: number }>({ top: 0, left: 0 
 const visibleColumns = ref<Set<string>>(new Set())
 // Internal state for column locked status (overrides props when user changes via menu)
 const columnLockedState = ref<Map<string, boolean | 'left' | 'right'>>(new Map())
+// Track if user has interacted with column visibility (to preserve their choices)
+const userHasChangedVisibility = ref(false)
 
 // Initialize visible columns and locked state
 watch(() => columns.value, (cols) => {
   const newVisibleColumns = new Set<string>()
   const newLockedState = new Map<string, boolean | 'left' | 'right'>(columnLockedState.value)
   
-  cols.forEach(col => {
+  // Flatten nested columns to get all leaf columns (columns with field)
+  const flatCols = flattenNestedColumns(cols)
+  
+  flatCols.forEach(col => {
     if (col.field) {
       const fieldStr = String(col.field)
       // Initialize visible columns - always add if not explicitly hidden
@@ -1257,12 +1340,22 @@ watch(() => columns.value, (cols) => {
     }
   })
   
-  // Update visible columns if changed
-  const visibleChanged = newVisibleColumns.size !== visibleColumns.value.size || 
-    Array.from(newVisibleColumns).some(f => !visibleColumns.value.has(f)) ||
-    Array.from(visibleColumns.value).some(f => !newVisibleColumns.has(f))
-  if (visibleChanged || visibleColumns.value.size === 0) {
-    visibleColumns.value = newVisibleColumns
+  // Update visible columns
+  // If user hasn't changed visibility yet, initialize with all columns
+  // If user has changed visibility, preserve their choices but add new columns
+  if (!userHasChangedVisibility.value || visibleColumns.value.size === 0) {
+    // Initial state or first load: initialize with all columns as visible
+    visibleColumns.value = new Set(newVisibleColumns)
+  } else {
+    // User has interacted: preserve their choices, but add any new columns
+    const updated = new Set(visibleColumns.value)
+    newVisibleColumns.forEach(f => {
+      // Add new columns that weren't in the previous definition
+      if (!updated.has(f)) {
+        updated.add(f)
+      }
+    })
+    visibleColumns.value = updated
   }
   
   // Update locked state if changed (only add new columns, don't remove user changes)
@@ -1274,7 +1367,10 @@ watch(() => columns.value, (cols) => {
   }
 }, { immediate: true })
 
-const allColumns = computed(() => columns.value)
+const allColumns = computed(() => {
+  // Return leaf columns (columns with field) for column menu and visibility controls
+  return flattenNestedColumns(columns.value)
+})
 const columnMenuStyle = computed(() => ({
   position: 'fixed',
   top: `${columnMenuPosition.value.top}px`,
@@ -1284,14 +1380,34 @@ const columnMenuStyle = computed(() => ({
 
 function isColumnVisible(col: ColumnDef): boolean {
   if (!col.field) return true
-  return visibleColumns.value.has(String(col.field))
+  const fieldStr = String(col.field)
+  // If visibleColumns is empty or doesn't have this column, consider it visible by default
+  // (columns are visible by default unless explicitly hidden)
+  if (visibleColumns.value.size === 0 || !visibleColumns.value.has(fieldStr)) {
+    // Only consider hidden if explicitly marked as hidden in column definition
+    return col.hidden !== true
+  }
+  return visibleColumns.value.has(fieldStr)
 }
 
 function toggleColumnVisibility(col: ColumnDef, visible: boolean) {
   if (!col.field) return
   const fieldStr = String(col.field)
+  // Mark that user has changed visibility
+  userHasChangedVisibility.value = true
+  
   // Create a new Set to trigger reactivity
-  const newVisibleColumns = new Set(visibleColumns.value)
+  // If visibleColumns is empty, initialize it with all columns first
+  let newVisibleColumns = new Set(visibleColumns.value)
+  if (visibleColumns.value.size === 0) {
+    // Initialize with all leaf columns
+    const flatCols = flattenNestedColumns(columns.value)
+    flatCols.forEach(c => {
+      if (c.field && c.hidden !== true) {
+        newVisibleColumns.add(String(c.field))
+      }
+    })
+  }
   if (visible) {
     newVisibleColumns.add(fieldStr)
     emit('columnshow', { column: col, field: fieldStr })
@@ -1511,8 +1627,39 @@ const sortableColumns = computed(() => {
     return isColumnSortable
   })
 })
-const { order, onDragStart, onDragOver, onDrop, mapColumns, ensureOrder } = useColumnReorder(() => columns.value)
-const { widths, onMouseDown: onResizeDown, ensureWidths } = useColumnResize(() => columns.value)
+// Flatten nested columns to a flat list of leaf columns (columns with field property)
+function flattenColumns(cols: ColumnDef[], level = 0): ColumnDef[] {
+  const result: ColumnDef[] = []
+  for (const col of cols) {
+    if (col.columns && col.columns.length > 0) {
+      // This is a group column, recursively flatten its children
+      const children = flattenColumns(col.columns, level + 1)
+      result.push(...children)
+    } else if (col.field) {
+      // This is a leaf column (has a field)
+      result.push(col)
+    }
+  }
+  return result
+}
+
+// Check if columns have nested structure
+function hasNestedColumns(cols: ColumnDef[]): boolean {
+  return cols.some(col => col.columns && col.columns.length > 0)
+}
+
+// Flatten nested columns - if no nested columns, return as-is; otherwise flatten
+function flattenNestedColumns(cols: ColumnDef[]): ColumnDef[] {
+  if (!hasNestedColumns(cols)) {
+    return cols
+  }
+  return flattenColumns(cols)
+}
+
+// Use flattened columns for reorder (only leaf columns can be reordered)
+const columnsForReorder = computed(() => flattenNestedColumns(columns.value))
+const { order, onDragStart, onDragOver, onDrop, mapColumns, ensureOrder } = useColumnReorder(() => columnsForReorder.value)
+const { widths, onMouseDown: onResizeDown, ensureWidths } = useColumnResize(() => columnsForReorder.value)
 onMounted(() => { ensureOrder(); ensureWidths() })
 
 function handleHeaderDrop(idx: number) {
@@ -1524,22 +1671,26 @@ type PinSide = 'left' | 'right' | null
 type PinMeta = { side: PinSide; left?: number; right?: number }
 
 const pinMeta = computed<PinMeta[]>(() => {
-  // colunas na ordem atual
-  const ordered = mapColumns(columns.value)
+  // Always use ordered leaf columns (flattened columns) - filter out undefined
+  const ordered = orderedCols.value.filter(c => c != null && c.field != null)
+  if (ordered.length === 0) return []
+  
   // largura efetiva por índice
   const w = ordered.map((c, idx) => {
+    if (!c) return 0
     const orderIdx = order.value[idx] ?? idx
-    return effW(orderIdx, c, 0)
+    return effW(orderIdx, c)
   })
 
   // IMPORTANTÍSSIMO: seletores/expander no início ocupam espaço à esquerda do grid real
   const leftBase = (props.selectable ? 52 : 0) + (isGrouped.value ? 28 : 0)
 
-  // side por coluna
-  const side: PinSide[] = ordered.map(c =>
-    (c.pinned === true || c.pinned === 'left') ? 'left'
+  // side por coluna - check pinned property, handle undefined columns
+  const side: PinSide[] = ordered.map(c => {
+    if (!c || !c.field) return null
+    return (c.pinned === true || c.pinned === 'left') ? 'left'
       : (c.pinned === 'right' ? 'right' : null)
-  )
+  })
 
   // offsets left (acumulando da esquerda)
   let accLeft = leftBase
@@ -1568,9 +1719,10 @@ const pinMeta = computed<PinMeta[]>(() => {
       : { side: null })
 })
 
-function pinClass(i: number) {
+function pinClass(i: number | undefined) {
+  if (i == null || i < 0 || i >= pinMeta.value.length) return {}
   const meta = pinMeta.value[i]
-  if (!meta.side) return {}
+  if (!meta || !meta.side) return {}
 
   return {
     'v3grid__cell--pinned': true,
@@ -1580,9 +1732,10 @@ function pinClass(i: number) {
   }
 }
 
-function pinStyle(i: number) {
+function pinStyle(i: number | undefined) {
+  if (i == null || i < 0 || i >= pinMeta.value.length) return undefined
   const meta = pinMeta.value[i]
-  if (!meta.side) return undefined
+  if (!meta || !meta.side) return undefined
   if (meta.side === 'left') return { left: (meta.left || 0) + 'px' }
   if (meta.side === 'right') return { right: (meta.right || 0) + 'px' }
 }
@@ -2070,10 +2223,180 @@ watch(() => groupState.value, (v) => {
 }, { deep: true })
 
 /** UI helpers */
+
+// Calculate header levels for multi-column headers
+interface HeaderCell {
+  column: ColumnDef
+  colspan: number
+  rowspan: number
+  level: number
+}
+
+function calculateHeaderLevels(cols: ColumnDef[]): { headers: HeaderCell[][], leafColumns: ColumnDef[], maxLevel: number, columnWidths: number[] } {
+  const headers: HeaderCell[][] = []
+  const leafColumns: ColumnDef[] = []
+  
+  function getMaxDepth(columns: ColumnDef[], depth = 0): number {
+    let max = depth
+    for (const col of columns) {
+      if (col.columns && col.columns.length > 0) {
+        const childDepth = getMaxDepth(col.columns, depth + 1)
+        max = Math.max(max, childDepth)
+      } else if (col.field) {
+        max = Math.max(max, depth)
+      }
+    }
+    return max
+  }
+  
+  const maxLevel = getMaxDepth(cols)
+  
+  // Initialize header arrays for all levels
+  for (let i = 0; i <= maxLevel; i++) {
+    headers[i] = []
+  }
+  
+  function countLeafColumns(columns: ColumnDef[]): number {
+    let count = 0
+    for (const col of columns) {
+      if (col.columns && col.columns.length > 0) {
+        count += countLeafColumns(col.columns)
+      } else if (col.field) {
+        count++
+      }
+    }
+    return count
+  }
+  
+  function processColumns(columns: ColumnDef[], currentLevel: number): void {
+    for (const col of columns) {
+      if (col.columns && col.columns.length > 0) {
+        // Group column - calculate how many leaf columns it spans
+        const leafCount = countLeafColumns(col.columns)
+        if (leafCount > 0) {
+          headers[currentLevel].push({
+            column: col,
+            colspan: leafCount,
+            rowspan: 1,
+            level: currentLevel
+          })
+          // Process children at next level
+          processColumns(col.columns, currentLevel + 1)
+        }
+      } else if (col.field) {
+        // Leaf column
+        leafColumns.push(col)
+        const rowspan = maxLevel - currentLevel + 1
+        headers[currentLevel].push({
+          column: col,
+          colspan: 1,
+          rowspan: rowspan,
+          level: currentLevel
+        })
+      }
+    }
+  }
+  
+  processColumns(cols, 0)
+  
+  // Calculate column widths based on leaf columns
+  ensureOrder()
+  ensureWidths()
+  const orderedLeafCols = mapColumns(leafColumns)
+  
+  // Calculate widths ensuring they match what will be used in bodyTemplate
+  const columnWidths = orderedLeafCols.map((col, idx) => {
+    const orderIdx = order.value[idx] ?? idx
+    const calculatedWidth = effW(orderIdx, col)
+    // Ensure minimum width
+    return calculatedWidth > 0 ? calculatedWidth : (col.width ? (typeof col.width === 'string' ? parseInt(col.width) || 120 : col.width) : 120)
+  })
+  
+  return { headers: headers.filter(row => row.length > 0), leafColumns: orderedLeafCols, maxLevel, columnWidths }
+}
+
+// Calculate multi-column header structure
+const headerLevels = computed(() => {
+  const hasNested = hasNestedColumns(columns.value)
+  if (!hasNested) {
+    const leafCols = mapColumns(columns.value)
+    const columnWidths = leafCols.map((col, idx) => {
+      const orderIdx = order.value[idx] ?? idx
+      return effW(orderIdx, col, 120) // Use 120 as fallback instead of 0
+    })
+    return { headers: [], leafColumns: leafCols, maxLevel: 0, hasMultiLevel: false, columnWidths }
+  }
+  const result = calculateHeaderLevels(columns.value)
+  
+  // Update header cells to reference columns from ordered leaf columns
+  const updatedHeaders = result.headers.map(headerRow => 
+    headerRow.map(headerCell => {
+      if (headerCell.column.field) {
+        // Leaf column - find in ordered leaf columns to get correct column reference and metadata
+        // Use field string comparison to find the matching column
+        const fieldStr = String(headerCell.column.field)
+        const orderedIdx = result.leafColumns.findIndex(oc => {
+          if (!oc || !oc.field) return false
+          return String(oc.field) === fieldStr
+        })
+        if (orderedIdx >= 0) {
+          const foundCol = result.leafColumns[orderedIdx]
+          const orderIdx = order.value[orderedIdx] ?? orderedIdx
+          return { 
+            ...headerCell, 
+            column: { 
+              ...foundCol, 
+              _idx: orderedIdx,
+              _orderIndex: orderIdx
+            } 
+          }
+        } else {
+          // If column not found in leafColumns, it might be because it's not visible
+          // Return the headerCell with _idx set to undefined so pinClass/pinStyle won't be called
+          return {
+            ...headerCell,
+            column: {
+              ...headerCell.column,
+              _idx: undefined,
+              _orderIndex: undefined
+            }
+          }
+        }
+      }
+      // For group columns (no field), keep as is to maintain hierarchy
+      // But ensure _idx is undefined so pinClass/pinStyle won't be called
+      return {
+        ...headerCell,
+        column: {
+          ...headerCell.column,
+          _idx: undefined,
+          _orderIndex: undefined
+        }
+      }
+    })
+  )
+  
+  return { 
+    headers: updatedHeaders, 
+    leafColumns: result.leafColumns, 
+    maxLevel: result.maxLevel, 
+    hasMultiLevel: result.maxLevel > 0, 
+    columnWidths: result.columnWidths
+  }
+})
+
+// Flatten nested columns first, then apply reorder
+const orderedCols = computed(() => {
+  const flattened = flattenNestedColumns(columns.value)
+  return mapColumns(flattened)
+})
+
 function headerTemplate(cols: any[]) {
   ensureOrder(); ensureWidths()
 
-  const ordered = mapColumns(cols)
+  // Use ordered leaf columns if multi-level headers, otherwise use provided cols
+  const colsToUse = headerLevels.value.hasMultiLevel ? headerLevels.value.leafColumns : cols
+  const ordered = mapColumns(colsToUse)
   const hasPinnedOrLocked = ordered.some(c => c.locked || c.pinned)
 
   const unlocked = ordered.filter(c => !c.locked)
@@ -2081,22 +2404,41 @@ function headerTemplate(cols: any[]) {
   const tracksUnlocked = unlocked.flatMap((c) => {
     const idx = ordered.findIndex(o => o.field === c.field)
     const orderIdx = order.value[idx] ?? idx
+    
+    // For multi-level headers, use exact widths from columnWidths
+    let width: number
+    if (headerLevels.value.hasMultiLevel) {
+      // Find the index in leafColumns to get the exact width
+      const leafIdx = headerLevels.value.leafColumns.findIndex(lc => lc.field === c.field)
+      if (leafIdx >= 0 && headerLevels.value.columnWidths[leafIdx] != null) {
+        width = headerLevels.value.columnWidths[leafIdx]
+      } else {
+        width = effW(orderIdx, c)
+      }
+    } else {
+      width = effW(orderIdx, c)
+    }
 
     // If column is selectable, add a checkbox column (52px) before the data column
     if (c.selectable) {
       const checkboxCol = '52px'
-      const dataCol = !hasPinnedOrLocked && (c.width == null)
+      const dataCol = !hasPinnedOrLocked && (c.width == null && !headerLevels.value.hasMultiLevel)
         ? 'minmax(0px, 1fr)'
-        : `${effW(orderIdx, c)}px`
+        : `${width}px`
       return [checkboxCol, dataCol]
     }
 
-    // Regular column
+    // Regular column - use exact width for multi-level headers
+    if (headerLevels.value.hasMultiLevel) {
+      return [`${width}px`]
+    }
+
+    // For single-level headers, use flexible width if no fixed width
     if (!hasPinnedOrLocked && (c.width == null)) {
       return ['minmax(0px, 1fr)']
     }
 
-    return [`${effW(orderIdx, c)}px`]
+    return [`${width}px`]
   })
 
   const sel = props.selectable ? ['52px'] : []
@@ -2106,12 +2448,50 @@ function headerTemplate(cols: any[]) {
 }
 
 function bodyTemplate(cols: any[]) {
+  ensureOrder(); ensureWidths()
+  
+  // For multi-level headers, use bodyColumnWidths which matches bodyCols exactly
+  if (headerLevels.value.hasMultiLevel) {
+    // cols is bodyCols - use bodyColumnWidths for exact alignment with colgroup
+    const tracksUnlocked = bodyColumnWidths.value.map((width, idx) => {
+      const c = cols[idx]
+      if (!c) return '120px'
+      
+      // If column is selectable, add a checkbox column (52px) before the data column
+      if (c.selectable) {
+        return ['52px', `${width}px`]
+      }
+      
+      // Regular column - use exact width from bodyColumnWidths (same as colgroup)
+      return `${width}px`
+    })
+    
+    const sel = props.selectable ? ['52px'] : []
+    const exp = isGrouped.value ? ['28px'] : []
+    
+    return [...sel, ...exp, ...tracksUnlocked.flat()].join(' ')
+  }
+  
+  // For single-level headers, use the same template as header
   return headerTemplate(cols)
 }
 
 function effW(idx: number, col: any, fallback = 120): number {
   const raw = widths.value[idx];
-  return (raw == null || raw <= 0) ? (col.width ?? fallback) : raw;
+  if (raw != null && raw > 0) return raw;
+  if (col && col.width != null) {
+    if (typeof col.width === 'string') {
+      // Parse string width (e.g., "120px" -> 120)
+      const match = col.width.match(/(\d+)/);
+      if (match) {
+        const w = parseInt(match[1]);
+        return isNaN(w) ? fallback : w;
+      }
+      return fallback;
+    }
+    return typeof col.width === 'number' ? col.width : fallback;
+  }
+  return fallback;
 }
 
 function toggleGroupKey(key: string) {
@@ -2414,8 +2794,9 @@ const shouldShowFooter = computed(() => {
 })
 
 const anyFilterable = computed(() => {
-  const cols = columns.value as ColumnDef[]
-  return cols?.some(c => c?.filterable)
+  // Check leaf columns only (columns with field)
+  const leafCols = flattenNestedColumns(columns.value)
+  return leafCols.some(c => c?.filterable)
 })
 
 const hScrollEl = ref<HTMLElement | null>(null)
@@ -2432,36 +2813,44 @@ function updateHScrollState() {
   canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
 }
 
-const orderedCols = computed(() => mapColumns(columns.value))
+// Note: orderedCols is already defined above with flattenNestedColumns
+// This is just for locked columns calculation
+const lockedCols = computed(() => orderedCols.value)
 
 const lockedLeftCols = computed(() =>
-  orderedCols.value.map((c, i) => ({ ...c, _idx: i, _orderIndex: order.value[i] ?? i }))
+  lockedCols.value.map((c, i) => ({ ...c, _idx: i, _orderIndex: order.value[i] ?? i }))
     .filter(c => c.locked === true || c.locked === 'left')
 )
 
 const lockedRightCols = computed(() =>
-  orderedCols.value.map((c, i) => ({ ...c, _idx: i, _orderIndex: order.value[i] ?? i }))
+  lockedCols.value.map((c, i) => ({ ...c, _idx: i, _orderIndex: order.value[i] ?? i }))
     .filter(c => c.locked === 'right')
 )
 
 const lockedLeftWidth = computed(() =>
-  lockedLeftCols.value.reduce((sum, c) =>
-    sum + effW(c._orderIndex, c), 0)
+  lockedLeftCols.value.reduce((sum, c) => {
+    if (c._orderIndex == null || c._orderIndex < 0) return sum
+    return sum + effW(c._orderIndex, c)
+  }, 0)
 )
 
 const lockedRightWidth = computed(() =>
-  lockedRightCols.value.reduce((sum, c) =>
-    sum + effW(c._orderIndex, c), 0)
+  lockedRightCols.value.reduce((sum, c) => {
+    if (c._orderIndex == null || c._orderIndex < 0) return sum
+    return sum + effW(c._orderIndex, c)
+  }, 0)
 )
 
 const lockedLeftTemplate = computed(() =>
-  lockedLeftCols.value.map(c =>
-    effW(c._orderIndex, c) + 'px').join(' ')
+  lockedLeftCols.value
+    .filter(c => c._orderIndex != null && c._orderIndex >= 0)
+    .map(c => effW(c._orderIndex!, c) + 'px').join(' ')
 )
 
 const lockedRightTemplate = computed(() =>
-  lockedRightCols.value.map(c =>
-    effW(c._orderIndex, c) + 'px').join(' ')
+  lockedRightCols.value
+    .filter(c => c._orderIndex != null && c._orderIndex >= 0)
+    .map(c => effW(c._orderIndex!, c) + 'px').join(' ')
 )
 
 // Check if column should be visible based on hidden, media, minScreenWidth
@@ -2489,25 +2878,294 @@ function isColumnHidden(col: ColumnDef): boolean {
   return false
 }
 
-const unlockedCols = computed(() =>
-  orderedCols.value
+// Get columns to render in body - for multi-column headers, use leaf columns directly
+const bodyCols = computed(() => {
+  if (headerLevels.value.hasMultiLevel) {
+    // For multi-column headers, use leaf columns directly (they're already filtered and ordered)
+    return headerLevels.value.leafColumns
+      .map((c, i) => {
+        const orderIdx = order.value[i] ?? i
+        return { ...c, _idx: i, _orderIndex: orderIdx }
+      })
+      .filter(c => {
+        // Filter out locked columns
+        if (c.locked) return false
+        // Filter out hidden columns (explicitly hidden in column definition)
+        if (isColumnHidden(c)) return false
+        // Only filter by visibility if column menu is enabled AND user has explicitly hidden columns
+        // By default, all columns are visible unless explicitly hidden by user
+        if (props.columnMenu && c.field) {
+          // Check if column is visible
+          // If visibleColumns is empty, all columns are visible by default
+          // If visibleColumns has values, check if this column is in it
+          const fieldStr = String(c.field)
+          if (visibleColumns.value.size > 0) {
+            // User has interacted with column menu - respect their choices
+            if (!visibleColumns.value.has(fieldStr)) {
+              return false
+            }
+          }
+          // If visibleColumns is empty, column is visible by default (don't filter)
+        }
+        // Filter out columns not in menu (if menu prop is false)
+        if (c.menu === false && props.columnMenu) return false
+        // Only include columns with field (leaf columns)
+        if (!c.field) return false
+        return true
+      })
+  }
+  // For single-level headers, use orderedCols
+  return orderedCols.value
     .map((c, i) => ({ ...c, _idx: i, _orderIndex: order.value[i] ?? i })) 
     .filter(c => {
       // Filter out locked columns
       if (c.locked) return false
-      
-      // Filter out hidden columns
+      // Filter out hidden columns (explicitly hidden in column definition)
       if (isColumnHidden(c)) return false
-      
-      // Filter based on column menu visibility (if column menu is used)
-      if (c.field && !isColumnVisible(c)) return false
-      
+      // Only filter by visibility if column menu is enabled AND user has explicitly hidden columns
+      // By default, all columns are visible unless explicitly hidden by user
+      if (props.columnMenu && c.field) {
+        // Check if column is visible
+        // If visibleColumns is empty, all columns are visible by default
+        // If visibleColumns has values, check if this column is in it
+        const fieldStr = String(c.field)
+        if (visibleColumns.value.size > 0) {
+          // User has interacted with column menu - respect their choices
+          if (!visibleColumns.value.has(fieldStr)) {
+            return false
+          }
+        }
+        // If visibleColumns is empty, column is visible by default (don't filter)
+      }
       // Filter out columns not in menu (if menu prop is false)
       if (c.menu === false && props.columnMenu) return false
-      
+      // Only include columns with field (leaf columns) - filter out group columns
+      if (!c.field) return false
       return true
     })
-)
+})
+
+const unlockedCols = computed(() => bodyCols.value)
+
+// Helper function to count visible leaf columns in a column definition tree
+function countVisibleLeafColumns(col: ColumnDef, visibleFields: Set<string>): number {
+  if (col.field) {
+    // Leaf column - return 1 if visible, 0 otherwise
+    return visibleFields.has(String(col.field)) ? 1 : 0
+  }
+  if (col.columns && col.columns.length > 0) {
+    // Group column - sum visible leaf columns from children
+    return col.columns.reduce((sum, child) => sum + countVisibleLeafColumns(child, visibleFields), 0)
+  }
+  return 0
+}
+
+// Filter headers to show only visible columns (matching bodyCols)
+// CRITICAL: The header HTML table must align with the colgroup which uses bodyCols
+// The last row of the header must have exactly bodyCols.length cells, in bodyCols order
+const filteredHeaders = computed(() => {
+  if (!headerLevels.value.hasMultiLevel) {
+    return headerLevels.value.headers
+  }
+  
+  // Get set of visible column fields from bodyCols (this is the source of truth)
+  const visibleFields = new Set(bodyCols.value.map(c => String(c.field)))
+  
+  // Build a map: field -> position in bodyCols (for ordering)
+  const fieldToBodyIdx = new Map<string, number>()
+  bodyCols.value.forEach((c, idx) => {
+    fieldToBodyIdx.set(String(c.field), idx)
+  })
+  
+  // Use headerLevels.headers as base, but we need to ensure the last row matches bodyCols exactly
+  // The last row must have one cell per bodyCol, in bodyCols order
+  const originalHeaders = headerLevels.value.headers
+  const maxLevel = headerLevels.value.maxLevel
+  
+  // Filter headers: remove invisible columns and adjust colspans
+  const filtered = originalHeaders.map((headerRow, rowIdx) => {
+    return headerRow.filter(headerCell => {
+      if (headerCell.column.field) {
+        // Leaf column - only include if visible
+        return visibleFields.has(String(headerCell.column.field))
+      }
+      // Group column - include if it has any visible children
+      return countVisibleLeafColumns(headerCell.column, visibleFields) > 0
+    }).map(headerCell => {
+      if (!headerCell.column.field) {
+        // Group column - recalculate colspan based on visible children
+        const visibleCount = countVisibleLeafColumns(headerCell.column, visibleFields)
+        return {
+          ...headerCell,
+          colspan: visibleCount
+        }
+      }
+      return headerCell
+    })
+  }).filter(row => row.length > 0)
+  
+  // CRITICAL: Rebuild the last row to match bodyCols order exactly
+  // The last row must have exactly bodyCols.length cells, one per column, in bodyCols order
+  // This ensures the header table aligns with the colgroup
+  const lastRowIndex = filtered.length - 1
+  if (lastRowIndex >= 0 && filtered[lastRowIndex]) {
+    // Rebuild last row: one cell per bodyCol, in bodyCols order
+    // This is the key to alignment - the last row defines the column positions
+    const lastRowCells: any[] = []
+    bodyCols.value.forEach((bodyCol, bodyIdx) => {
+      lastRowCells.push({
+        column: {
+          ...bodyCol,
+          _idx: bodyIdx,
+          _orderIndex: bodyCol._orderIndex ?? bodyIdx
+        },
+        colspan: 1,
+        rowspan: undefined, // Last row, no rowspan
+        level: lastRowIndex
+      })
+    })
+    filtered[lastRowIndex] = lastRowCells
+    
+    // Now rebuild upper rows: they need colspans that align with bodyCols positions
+    // Work backwards from the last row to rebuild the structure
+    for (let rowIdx = lastRowIndex - 1; rowIdx >= 0; rowIdx--) {
+      const rowCells: any[] = []
+      let colPos = 0
+      
+      // Get all cells from the original row at this level that are visible
+      const originalRow = originalHeaders[rowIdx] || []
+      const visibleCells = originalRow.filter(cell => {
+        if (cell.column.field) {
+          return visibleFields.has(String(cell.column.field))
+        }
+        return countVisibleLeafColumns(cell.column, visibleFields) > 0
+      })
+      
+      // Build the row by positioning cells based on bodyCols order
+      for (const cell of visibleCells) {
+        if (cell.column.field) {
+          // Leaf column - find its position in bodyCols
+          const bodyIdx = bodyCols.value.findIndex(bc => String(bc.field) === String(cell.column.field))
+          if (bodyIdx >= 0) {
+            // Calculate how many positions to skip
+            while (rowCells.length < bodyIdx) {
+              // This means there's a gap - shouldn't happen, but we'll skip
+              rowCells.push(null as any)
+            }
+            
+            const rowspan = lastRowIndex - rowIdx + 1
+            rowCells[bodyIdx] = {
+              column: {
+                ...bodyCols.value[bodyIdx],
+                _idx: bodyIdx,
+                _orderIndex: bodyCols.value[bodyIdx]._orderIndex ?? bodyIdx
+              },
+              colspan: 1,
+              rowspan: rowspan > 1 ? rowspan : undefined,
+              level: rowIdx
+            }
+          }
+        } else {
+          // Group column - find which bodyCols it spans
+          const groupLeafFields: string[] = []
+          function collectGroupFields(col: ColumnDef): void {
+            if (col.columns && col.columns.length > 0) {
+              col.columns.forEach(c => collectGroupFields(c))
+            } else if (col.field && visibleFields.has(String(col.field))) {
+              groupLeafFields.push(String(col.field))
+            }
+          }
+          collectGroupFields(cell.column)
+          
+          if (groupLeafFields.length > 0) {
+            // Find positions in bodyCols
+            const positions = groupLeafFields
+              .map((f: string) => bodyCols.value.findIndex(bc => String(bc.field) === f))
+              .filter((p: number) => p >= 0)
+            
+            if (positions.length > 0) {
+              const minPos = Math.min(...positions)
+              const maxPos = Math.max(...positions)
+              const colspan = maxPos - minPos + 1
+              
+              // Position the group header
+              while (rowCells.length < minPos) {
+                rowCells.push(null as any)
+              }
+              
+              rowCells[minPos] = {
+                ...cell,
+                colspan: colspan,
+                rowspan: 1,
+                level: rowIdx
+              }
+              
+              // Mark positions spanned by this group as null (they're covered by colspan)
+              for (let i = minPos + 1; i <= maxPos; i++) {
+                if (rowCells.length <= i) {
+                  rowCells.push(null as any)
+                } else {
+                  rowCells[i] = null as any
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      // Remove nulls and update the row
+      filtered[rowIdx] = rowCells.filter((cell: any) => cell !== null)
+    }
+  }
+  
+  // Update all header cells to reference bodyCols correctly
+  const bodyColsMap = new Map(bodyCols.value.map((c, idx) => [String(c.field), { col: c, idx }]))
+  
+  const finalHeaders = filtered.map((headerRow, rowIdx) =>
+    headerRow.map((headerCell: any) => {
+      if (headerCell.column.field) {
+        const bodyColInfo = bodyColsMap.get(String(headerCell.column.field))
+        if (bodyColInfo) {
+          return {
+            ...headerCell,
+            column: {
+              ...bodyColInfo.col,
+              _idx: bodyColInfo.idx,
+              _orderIndex: bodyColInfo.col._orderIndex ?? bodyColInfo.idx
+            }
+          }
+        }
+      }
+      return headerCell
+    })
+  )
+  
+  return finalHeaders.filter(row => row.length > 0)
+})
+
+// Calculate widths for body columns (matching bodyCols exactly)
+const bodyColumnWidths = computed(() => {
+  if (!headerLevels.value.hasMultiLevel) {
+    return bodyCols.value.map(c => {
+      const idx = order.value.findIndex((o, i) => {
+        const col = headerLevels.value.leafColumns[i]
+        return col && col.field === c.field
+      })
+      return idx >= 0 ? effW(order.value[idx] ?? idx, c) : (c.width ? (typeof c.width === 'string' ? parseInt(c.width) || 120 : c.width) : 120)
+    })
+  }
+  
+  // For multi-level headers, get width from headerLevels.columnWidths
+  return bodyCols.value.map(c => {
+    const leafIdx = headerLevels.value.leafColumns.findIndex(lc => lc.field === c.field)
+    if (leafIdx >= 0 && headerLevels.value.columnWidths[leafIdx] != null) {
+      return headerLevels.value.columnWidths[leafIdx]
+    }
+    // Fallback
+    return c.width ? (typeof c.width === 'string' ? parseInt(c.width) || 120 : c.width) : 120
+  })
+})
+
 const footerEl = ref<HTMLElement | null>(null)
 const footerH = ref(0)
 let footerObserver: ResizeObserver | null = null
@@ -2722,17 +3380,17 @@ const keyboardNav = useKeyboardNav({
   },
   onColumnReorder: (fromIndex: number, toIndex: number) => {
     if (!props.enableColumnReorder) return
-    const ordered = mapColumns(columns.value)
+    const ordered = mapColumns(columnsForReorder.value)
     const fromCol = ordered[fromIndex]
     const toCol = ordered[toIndex]
     if (!fromCol || !toCol) return
     
     const fromOrderIdx = order.value.findIndex((_, i) => {
-      const col = columns.value[i]
+      const col = columnsForReorder.value[i]
       return col && String(col.field) === String(fromCol.field)
     })
     const toOrderIdx = order.value.findIndex((_, i) => {
-      const col = columns.value[i]
+      const col = columnsForReorder.value[i]
       return col && String(col.field) === String(toCol.field)
     })
     
