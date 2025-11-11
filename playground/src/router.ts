@@ -53,6 +53,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/pinned-columns', component: () => import('./pages/PinnedColumnsPage.vue') },
   { path: '/multi-column-headers', component: () => import('./pages/MultiColumnHeadersPage.vue') },
   { path: '/reordering', component: () => import('./pages/ReorderingPage.vue') },
+  { path: '/resizing', component: () => import('./pages/ResizingPage.vue') },
 ]
 
 export const router = createRouter({

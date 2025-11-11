@@ -100,6 +100,7 @@ const navSections = [
       { to: '/filtering', label: 'Filtering', icon: 'filter' },
       { to: '/sorting', label: 'Sorting', icon: 'arrow-down-wide-short' },
       { to: '/reordering', label: 'Column Reordering', icon: 'arrows-left-right' },
+      { to: '/resizing', label: 'Column Resizing', icon: 'arrows-left-right-to-line' },
       { to: '/keyboard-navigation', label: 'Keyboard Navigation', icon: 'keyboard' },
       { to: '/paging', label: 'Paging', icon: 'file-lines' },
       { to: '/selection', label: 'Selection', icon: 'check-square' },

@@ -3663,6 +3663,156 @@ When keyboard navigation is enabled, you can use keyboard shortcuts to reorder c
 - Multi-column headers: Only leaf columns (columns with `field` property) can be reordered. Group columns cannot be reordered.
 - The `columnReorder` event provides `from` and `to` indices indicating the old and new positions of the column.
 
+---
+
+## Column Resizing
+
+The Grid supports column resizing functionality. Users can resize columns by dragging the resize handle that appears on the right edge of column headers.
+
+### Basic Usage
+
+Enable column resizing by setting the `enableColumnResize` prop to `true`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :enable-column-resize="true"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+interface Product {
+  productID: number
+  productName: string
+  unitPrice: number
+  unitsInStock: number
+}
+
+const rows = ref<Product[]>([
+  { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39 },
+  { productID: 2, productName: 'Chang', unitPrice: 19, unitsInStock: 17 },
+])
+
+const columns: ColumnDef<Product>[] = [
+  { field: 'productName', title: 'Product Name', width: 180 },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, format: '{0:c}' },
+  { field: 'unitsInStock', title: 'Units In Stock', width: 120 },
+]
+</script>
+```
+
+### How It Works
+
+- **Resize Handle**: A resize handle appears on the right edge of each column header when resizing is enabled.
+- **Drag to Resize**: Users can drag the resize handle to adjust the column width.
+- **Minimum Width**: Columns have a minimum width of 60px to prevent them from becoming too narrow.
+- **Visual Feedback**: The grid provides visual feedback during resizing.
+
+### Column Resizing Events
+
+Listen to the `columnResize` event to track column resizing changes:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :enable-column-resize="true"
+    @column-resize="handleColumnResize"
+  />
+</template>
+
+<script setup lang="ts">
+function handleColumnResize(event: { field: string; width: number }) {
+  console.log('Column resized:', event.field, 'to', event.width, 'px')
+  // Persist the new width or update your state
+}
+</script>
+```
+
+### Column-Level Resizable Control
+
+Control resizing on a per-column basis using the `resizable` property:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Product>[] = [
+  { field: 'productName', title: 'Product Name', width: 180, resizable: true },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, resizable: true },
+  { field: 'unitsInStock', title: 'Units In Stock', width: 120, resizable: false }, // Not resizable
+]
+</script>
+```
+
+### Column Resizing with Other Features
+
+Column resizing works seamlessly with other grid features:
+
+- **Sorting**: You can resize columns and sort by any column independently.
+- **Filtering**: Column resizing works with filtering.
+- **Reordering**: Combine column resizing with column reordering.
+- **Locked Columns**: Locked columns can also be resized.
+
+### Locked Columns and Resizing
+
+Locked columns can be resized. The resize handle appears on locked columns as well:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="orderID"
+    :enable-column-resize="true"
+  />
+</template>
+
+<script setup lang="ts">
+const columns: ColumnDef<Order>[] = [
+  { field: 'orderID', title: 'Order ID', width: 120, locked: true }, // Can be resized
+  { field: 'shipCountry', title: 'Ship Country', width: 180 }, // Can be resized
+  { field: 'shipCity', title: 'Ship City', width: 180 }, // Can be resized
+]
+</script>
+```
+
+### Resize Handle Width
+
+You can customize the width of the resize handle using the `columnResizeHandleWidth` prop:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :enable-column-resize="true"
+    :column-resize-handle-width="8"
+  />
+</template>
+```
+
+### Minimum Column Width
+
+Columns have a minimum width of 60px. This prevents columns from becoming too narrow and ensures readability. If you try to resize a column below this minimum, it will stop at 60px.
+
+### Notes
+
+- Column resizing is enabled by default when `enableColumnResize` is `true`.
+- All columns are resizable by default unless `resizable: false` is set on a specific column.
+- The minimum column width is 60px.
+- Resizing works with locked columns.
+- Multi-column headers: Only leaf columns (columns with `field` property) can be resized. Group columns cannot be resized.
+- The `columnResize` event provides the `field` and `width` of the resized column.
+- Column widths are maintained during reordering, sorting, and filtering.
+
 ## Multi-Column Headers
 
 The Grid supports multi-column headers by specifying column groups which incorporate inner column structures. You can nest columns by using the `columns` property of a column definition.
