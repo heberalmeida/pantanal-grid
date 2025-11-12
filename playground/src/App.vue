@@ -161,6 +161,7 @@ const navSections = [
       { to: '/i18n/en', label: 'English (en)', icon: 'language' },
       { to: '/i18n/es', label: 'Spanish (es)', icon: 'flag-checkered' },
       { to: '/i18n/custom', label: 'Custom labels', icon: 'language' },
+      { to: '/messages-props', label: 'Messages Props', icon: 'comment' },
     ],
   },
 ]

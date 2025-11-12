@@ -35,6 +35,8 @@ export interface Messages {
   edit: string
   destroy: string
   delete: string
+  update?: string
+  cancelEdit?: string
   filterAll: string
   filterTrue: string
   filterFalse: string
@@ -54,6 +56,7 @@ export interface Messages {
   cancelDelete?: string
   confirmDeleteTitle?: string
   excel?: string
+  expandCollapseColumnHeader?: string
   filterableMessagesAnd?: string
   filterableMessagesOr?: string
   filterableMessagesClear?: string

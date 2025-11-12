@@ -73,6 +73,7 @@
         <colgroup>
           <col v-if="props.selectable" style="width: 52px;">
           <col v-if="isGrouped" style="width: 28px;">
+          <col v-if="props.detailTemplate && !props.selectable" style="width: 28px;">
           <col v-for="(col, idx) in bodyCols" :key="'col-' + idx" 
             :style="{ width: bodyColumnWidths[idx] + 'px' }">
         </colgroup>
@@ -92,6 +93,14 @@
               class="v3grid__cell v3grid__headercell"
               :rowspan="filteredHeaders.length"
               style="padding: 0.5rem 0.75rem; border: 1px solid var(--grid-border, #e5e7eb); background: var(--grid-header-bg, #f9fafb);">
+            </th>
+
+            <!-- Detail template expand/collapse column - only on first row -->
+            <th v-if="rowIndex === 0 && props.detailTemplate && !props.selectable" 
+              class="v3grid__cell v3grid__headercell"
+              :rowspan="filteredHeaders.length"
+              style="padding: 0.5rem 0.75rem; border: 1px solid var(--grid-border, #e5e7eb); background: var(--grid-header-bg, #f9fafb);">
+              <span v-if="msgs.expandCollapseColumnHeader">{{ msgs.expandCollapseColumnHeader }}</span>
             </th>
 
             <!-- Header cells for this row -->
@@ -153,6 +162,11 @@
         </div>
 
         <div v-if="isGrouped" class="v3grid__cell"></div>
+
+        <!-- Detail template expand/collapse column -->
+        <div v-if="props.detailTemplate && !props.selectable" class="v3grid__cell v3grid__headercell">
+          <span v-if="msgs.expandCollapseColumnHeader">{{ msgs.expandCollapseColumnHeader }}</span>
+        </div>
 
         <template v-for="c in unlockedCols" :key="c._idx">
           <!-- Column-level selectable checkbox (from column.selectable prop) -->
@@ -527,12 +541,12 @@
               </div>
 
               <!-- Para linhas de grupo: uma única célula que ocupa todas as colunas de dados -->
-              <!-- Começa após: seleção (se selectable) + expander (sempre presente quando isGrouped) -->
+              <!-- Começa após: seleção (se selectable) + expander (sempre presente quando isGrouped) + detail (se detailTemplate && !selectable) -->
               <div v-if="n.type === 'group'" 
                 class="v3grid__cell v3grid__group v3grid__group--full-width" 
                 :key="`group-${r}`"
                 :style="{ 
-                  gridColumn: `${(props.selectable ? 3 : 2)} / -1`
+                  gridColumn: `${1 + (props.selectable ? 1 : 0) + (isGrouped ? 1 : 0) + (props.detailTemplate && !props.selectable ? 1 : 0)} / -1`
                 }">
                 <template v-for="(c, i) in unlockedCols" :key="c._idx">
                   <template v-if="String(c.field) === String(n.field)">
@@ -2473,8 +2487,9 @@ function headerTemplate(cols: any[]) {
 
   const sel = props.selectable ? ['52px'] : []
   const exp = isGrouped.value ? ['28px'] : []
+  const detail = (props.detailTemplate && !props.selectable) ? ['28px'] : []
 
-  return [...sel, ...exp, ...tracksUnlocked].join(' ')
+  return [...sel, ...exp, ...detail, ...tracksUnlocked].join(' ')
 }
 
 function bodyTemplate(cols: any[]) {
@@ -2498,8 +2513,9 @@ function bodyTemplate(cols: any[]) {
     
     const sel = props.selectable ? ['52px'] : []
     const exp = isGrouped.value ? ['28px'] : []
+    const detail = (props.detailTemplate && !props.selectable) ? ['28px'] : []
     
-    return [...sel, ...exp, ...tracksUnlocked.flat()].join(' ')
+    return [...sel, ...exp, ...detail, ...tracksUnlocked.flat()].join(' ')
   }
   
   // For single-level headers, use the same template as header
@@ -3802,10 +3818,11 @@ function getCommandLabel(cmd: string | { name: string; text?: string; textEdit?:
     return cmd.text || cmd.name || ''
   }
   switch (cmd) {
-    case 'edit': return isEditing ? (msgs.value.save || 'Save') : msgs.value.edit
+    case 'edit': return isEditing ? (msgs.value.update || msgs.value.save || 'Update') : msgs.value.edit
     case 'destroy': return msgs.value.destroy
     case 'save': return msgs.value.save
-    case 'cancel': return msgs.value.cancel
+    case 'cancel': return msgs.value.cancelEdit || msgs.value.cancel
+    case 'update': return msgs.value.update || msgs.value.save
     default: return String(cmd)
   }
 }

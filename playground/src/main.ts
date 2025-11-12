@@ -52,6 +52,10 @@ import {
   faCode,
   faLock,
   faThumbTack,
+  faArrowsLeftRight,
+  faArrowsLeftRightToLine,
+  faSliders,
+  faComment,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -103,6 +107,10 @@ library.add(
   faCode,
   faLock,
   faThumbTack,
+  faArrowsLeftRight,
+  faArrowsLeftRightToLine,
+  faSliders,
+  faComment,
 )
 
 createApp(App)

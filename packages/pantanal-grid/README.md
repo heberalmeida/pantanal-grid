@@ -123,6 +123,147 @@ You can register additional locales by calling `registerLocale(code, messages)` 
 
 ---
 
+## Messages Props
+
+The Grid supports customizable messages for all UI elements. You can customize toolbar buttons, command buttons, and other messages through the `messages` prop.
+
+### Toolbar Messages
+
+Customize toolbar button messages using `messages.create`, `messages.save`, `messages.cancel`, and `messages.excel`:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef, type Messages } from '@pantanal/grid'
+
+const messages: Partial<Messages> = {
+  create: 'Add New',
+  save: 'Save All',
+  cancel: 'Discard Changes',
+  excel: 'Export Data',
+}
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :toolbar="['create', 'save', 'cancel', 'excel']"
+    :messages="messages"
+  />
+</template>
+```
+
+### Command Messages
+
+Customize command button messages using `messages.edit`, `messages.update`, `messages.destroy`, and `messages.cancelEdit`:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef, type Messages } from '@pantanal/grid'
+
+const columns: ColumnDef<Product>[] = [
+  { field: 'productName', title: 'Product Name', width: 200 },
+  { field: 'category', title: 'Category', width: 150 },
+  { field: 'command', title: 'Actions', width: 150, command: ['edit', 'destroy'] },
+]
+
+const messages: Partial<Messages> = {
+  edit: 'Modify',
+  update: 'Confirm',
+  destroy: 'Remove',
+  cancelEdit: 'Undo',
+}
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :editable="true"
+    :messages="messages"
+  />
+</template>
+```
+
+### No Records Message
+
+Customize the "no records" message using `messages.noRecords`:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef, type Messages } from '@pantanal/grid'
+
+const messages: Partial<Messages> = {
+  noRecords: 'No products found. Please try a different search.',
+}
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    key-field="productID"
+    :no-records="true"
+    :messages="messages"
+  />
+</template>
+```
+
+### Expand Collapse Column Header
+
+Customize the expand/collapse column header message using `messages.expandCollapseColumnHeader` when using master-detail templates:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef, type Messages } from '@pantanal/grid'
+
+const detailTemplate = (row: Product) => {
+  return `<div style="padding: 1rem;">
+    <h3>Product Details</h3>
+    <p><strong>Category:</strong> ${row.category}</p>
+    <p><strong>Unit Price:</strong> $${row.unitPrice}</p>
+  </div>`
+}
+
+const messages: Partial<Messages> = {
+  expandCollapseColumnHeader: 'Details',
+}
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :detail-template="detailTemplate"
+    :messages="messages"
+  />
+</template>
+```
+
+### Available Message Properties
+
+- `messages.create` - Text for the "Create" button in the toolbar
+- `messages.save` - Text for the "Save" button in the toolbar
+- `messages.cancel` - Text for the "Cancel" button in the toolbar
+- `messages.excel` - Text for the "Export to Excel" button in the toolbar
+- `messages.edit` - Text for the "Edit" button in command columns
+- `messages.update` - Text for the "Update" button when editing (replaces "Save" in edit mode)
+- `messages.destroy` - Text for the "Delete" button in command columns
+- `messages.cancelEdit` - Text for the "Cancel" button when editing (replaces "Cancel" in edit mode)
+- `messages.noRecords` - Text displayed when no records are available
+- `messages.expandCollapseColumnHeader` - Text for the expand/collapse column header (when using master-detail)
+
+### Notes
+
+- All message properties are optional. If not provided, default messages will be used based on the current locale.
+- Messages can be customized per grid instance or globally using the `messages` prop.
+- The `messages` prop accepts a `Partial<Messages>` object, so you only need to specify the messages you want to customize.
+
+---
+
 ## Virtual scroll
 
 Enable `:virtual="true"` to render only the visible portion of the grid. Control the viewport height and row height to fine-tune performance:

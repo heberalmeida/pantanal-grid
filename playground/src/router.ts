@@ -55,6 +55,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/reordering', component: () => import('./pages/ReorderingPage.vue') },
   { path: '/resizing', component: () => import('./pages/ResizingPage.vue') },
   { path: '/groupable-props', component: () => import('./pages/GroupablePropsPage.vue') },
+  { path: '/messages-props', component: () => import('./pages/MessagesPropsPage.vue') },
 ]
 
 export const router = createRouter({
