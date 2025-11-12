@@ -156,7 +156,7 @@
       <h2 class="text-2xl font-semibold mb-4">Avoid Links</h2>
       <p class="text-gray-600 mb-4">
         Control whether links should be converted to text using the <code class="bg-gray-100 px-2 py-1 rounded">pdfAvoidLinks</code> prop.
-        By default, links are converted to text to avoid broken links in the PDF.
+        By default, links are converted to text to avoid broken links in the PDF. You can also use a CSS selector to ignore specific links.
       </p>
       
       <div class="mb-6">
@@ -172,6 +172,102 @@
       </div>
 
       <ExampleCode :source="avoidLinksCode" />
+    </div>
+
+    <div class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Individual Margins</h2>
+      <p class="text-gray-600 mb-4">
+        Specify margins individually using <code class="bg-gray-100 px-2 py-1 rounded">pdfMarginTop</code>,
+        <code class="bg-gray-100 px-2 py-1 rounded">pdfMarginLeft</code>,
+        <code class="bg-gray-100 px-2 py-1 rounded">pdfMarginRight</code>, and
+        <code class="bg-gray-100 px-2 py-1 rounded">pdfMarginBottom</code> props.
+      </p>
+      
+      <div class="mb-6">
+        <PantanalGrid
+          :rows="individualMarginsRows"
+          :columns="individualMarginsColumns"
+          :toolbar="['pdf']"
+          :pdfMarginTop="'2cm'"
+          :pdfMarginLeft="'1cm'"
+          :pdfMarginRight="'1cm'"
+          :pdfMarginBottom="'2cm'"
+          responsive="table"
+          key-field="productID"
+          :height="400"
+        />
+      </div>
+
+      <ExampleCode :source="individualMarginsCode" />
+    </div>
+
+    <div class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Custom Paper Size</h2>
+      <p class="text-gray-600 mb-4">
+        Specify a custom paper size using an array of numbers (in mm) or strings (with units).
+      </p>
+      
+      <div class="mb-6">
+        <PantanalGrid
+          :rows="customPaperSizeRows"
+          :columns="customPaperSizeColumns"
+          :toolbar="['pdf']"
+          :pdfPaperSize="[210, 297]"
+          responsive="table"
+          key-field="productID"
+          :height="400"
+        />
+      </div>
+
+      <ExampleCode :source="customPaperSizeCode" />
+    </div>
+
+    <div class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4">PDF Template (Headers/Footers)</h2>
+      <p class="text-gray-600 mb-4">
+        Add headers and footers to each page using the <code class="bg-gray-100 px-2 py-1 rounded">pdfTemplate</code> prop.
+        The template supports <code class="bg-gray-100 px-2 py-1 rounded">{pageNum}</code> and
+        <code class="bg-gray-100 px-2 py-1 rounded">{totalPages}</code> variables.
+      </p>
+      
+      <div class="mb-6">
+        <PantanalGrid
+          :rows="templateRows"
+          :columns="templateColumns"
+          :toolbar="['pdf']"
+          :pdfTemplate="'Page {pageNum} of {totalPages}'"
+          responsive="table"
+          key-field="productID"
+          :height="400"
+        />
+      </div>
+
+      <ExampleCode :source="templateCode" />
+    </div>
+
+    <div class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4">PDF Proxy</h2>
+      <p class="text-gray-600 mb-4">
+        Use a server-side proxy for PDF download using <code class="bg-gray-100 px-2 py-1 rounded">pdfProxyUrl</code> and
+        <code class="bg-gray-100 px-2 py-1 rounded">pdfProxyTarget</code> props.
+        This is useful for browsers that don't support direct downloads.
+      </p>
+      
+      <div class="mb-6">
+        <PantanalGrid
+          :rows="proxyRows"
+          :columns="proxyColumns"
+          :toolbar="['pdf']"
+          :pdfForceProxy="false"
+          pdfProxyUrl="/api/pdf-proxy"
+          pdfProxyTarget="_blank"
+          responsive="table"
+          key-field="productID"
+          :height="400"
+        />
+      </div>
+
+      <ExampleCode :source="proxyCode" />
     </div>
   </div>
 </template>
@@ -234,6 +330,22 @@ const scaleColumns: ColumnDef[] = [...basicColumns]
 // Avoid Links
 const avoidLinksRows = ref<Product[]>([...basicRows.value])
 const avoidLinksColumns: ColumnDef[] = [...basicColumns]
+
+// Individual Margins
+const individualMarginsRows = ref<Product[]>([...basicRows.value])
+const individualMarginsColumns: ColumnDef[] = [...basicColumns]
+
+// Custom Paper Size
+const customPaperSizeRows = ref<Product[]>([...basicRows.value])
+const customPaperSizeColumns: ColumnDef[] = [...basicColumns]
+
+// Template
+const templateRows = ref<Product[]>([...basicRows.value])
+const templateColumns: ColumnDef[] = [...basicColumns]
+
+// Proxy
+const proxyRows = ref<Product[]>([...basicRows.value])
+const proxyColumns: ColumnDef[] = [...basicColumns]
 
 const basicCode = `<template>
   <PantanalGrid
@@ -368,6 +480,87 @@ const avoidLinksCode = `<template>
     :columns="columns"
     :toolbar="['pdf']"
     :pdfAvoidLinks="true"
+    key-field="productID"
+    :height="400"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref([...])
+const columns: ColumnDef[] = [...]
+<\/script>`
+
+const individualMarginsCode = `<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :toolbar="['pdf']"
+    :pdfMarginTop="'2cm'"
+    :pdfMarginLeft="'1cm'"
+    :pdfMarginRight="'1cm'"
+    :pdfMarginBottom="'2cm'"
+    key-field="productID"
+    :height="400"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref([...])
+const columns: ColumnDef[] = [...]
+<\/script>`
+
+const customPaperSizeCode = `<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :toolbar="['pdf']"
+    :pdfPaperSize="[210, 297]"
+    key-field="productID"
+    :height="400"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref([...])
+const columns: ColumnDef[] = [...]
+<\/script>`
+
+const templateCode = `<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :toolbar="['pdf']"
+    :pdfTemplate="'Page {pageNum} of {totalPages}'"
+    key-field="productID"
+    :height="400"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref([...])
+const columns: ColumnDef[] = [...]
+<\/script>`
+
+const proxyCode = `<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :toolbar="['pdf']"
+    :pdfForceProxy="false"
+    pdfProxyUrl="/api/pdf-proxy"
+    pdfProxyTarget="_blank"
     key-field="productID"
     :height="400"
   />

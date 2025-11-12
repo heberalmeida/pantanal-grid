@@ -831,7 +831,7 @@ Control whether links should be converted to text using the `pdfAvoidLinks` prop
 
 ### Repeat Headers
 
-Control whether headers should be repeated on each page using the `pdfRepeatHeaders` prop (currently not fully implemented, but reserved for future use):
+Control whether headers should be repeated on each page using the `pdfRepeatHeaders` prop:
 
 ```vue
 <PantanalGrid
@@ -844,21 +844,143 @@ Control whether headers should be repeated on each page using the `pdfRepeatHead
 />
 ```
 
+### PDF Template (Headers/Footers)
+
+Add headers and footers to each page using the `pdfTemplate` prop. The template supports `{pageNum}` and `{totalPages}` variables:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfTemplate="'Page {pageNum} of {totalPages}'"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+**Note:** Full HTML rendering in templates requires additional libraries. Simple text templates are recommended.
+
+### Custom Paper Size
+
+Specify a custom paper size using an array of numbers (in mm) or strings (with units):
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfPaperSize="[210, 297]"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+Or with units:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfPaperSize="['210mm', '297mm']"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+### Individual Margins
+
+Specify margins individually using `pdfMarginTop`, `pdfMarginLeft`, `pdfMarginRight`, and `pdfMarginBottom`:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfMarginTop="'2cm'"
+  :pdfMarginLeft="'1cm'"
+  :pdfMarginRight="'1cm'"
+  :pdfMarginBottom="'2cm'"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+### PDF Proxy
+
+Use a server-side proxy for PDF download (useful for browsers that don't support direct downloads):
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfForceProxy="false"
+  :pdfProxyUrl="'/api/pdf-proxy'"
+  :pdfProxyTarget="'_blank'"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+### PDF Date
+
+Set the PDF creation date:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfDate="new Date()"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+### Avoid Links with CSS Selector
+
+Ignore specific links using a CSS selector:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfAvoidLinks="'.external-link'"
+  key-field="productID"
+  :height="400"
+/>
+```
+
 ### Available PDF Props
 
-- `pdfAllPages` - Export all pages (reserved for future use)
-- `pdfAvoidLinks` - Convert links to text (default: `true`)
-- `pdfPaperSize` - Paper size (default: `'A4'`)
+- `pdfAllPages` - Export all pages (default: `false`, reserved for future use with server-side data)
+- `pdfAvoidLinks` - Convert links to text or ignore matching links via CSS selector (default: `true`, can be `boolean` or `string`)
+- `pdfPaperSize` - Paper size (default: `'A4'`). Can be:
+  - String: `'A4'`, `'A3'`, `'A2'`, `'A1'`, `'A0'`, `'B0'`-`'B10'`, `'C0'`-`'C10'`, `'Letter'`, `'Legal'`, `'Tabloid'`, `'Ledger'`, `'Executive'`, `'Folio'`, `'auto'`
+  - Array of numbers: `[width, height]` in mm
+  - Array of strings: `[width, height]` with units (e.g., `['210mm', '297mm']`)
 - `pdfMargin` - Margins object `{ top, left, right, bottom }` (default: `{ top: '1cm', left: '1cm', right: '1cm', bottom: '1cm' }`)
+- `pdfMarginTop` - Top margin (string with unit or number in pt)
+- `pdfMarginLeft` - Left margin (string with unit or number in pt)
+- `pdfMarginRight` - Right margin (string with unit or number in pt)
+- `pdfMarginBottom` - Bottom margin (string with unit or number in pt)
 - `pdfLandscape` - Landscape orientation (default: `false`)
-- `pdfRepeatHeaders` - Repeat headers on each page (default: `true`, reserved for future use)
-- `pdfScale` - Scale factor (default: `1`)
+- `pdfRepeatHeaders` - Repeat headers on each page (default: `true`)
+- `pdfScale` - Scale factor (default: `1`). Higher values produce better quality but larger file sizes
 - `pdfFileName` - File name (default: `'export.pdf'`)
 - `pdfAuthor` - PDF author metadata
 - `pdfTitle` - PDF title metadata
 - `pdfSubject` - PDF subject metadata
 - `pdfKeywords` - PDF keywords metadata
 - `pdfCreator` - PDF creator metadata
+- `pdfDate` - PDF creation date (default: `new Date()`)
+- `pdfTemplate` - HTML template for headers/footers. Supports `{pageNum}` and `{totalPages}` variables (limited HTML support, simple text recommended)
+- `pdfForceProxy` - Force use of proxy for download (default: `false`)
+- `pdfProxyUrl` - URL of server-side proxy for PDF download
+- `pdfProxyTarget` - Where to display the document returned by proxy (`'_blank'`, `'_self'`, or iframe name)
 
 ### Programmatic Export
 

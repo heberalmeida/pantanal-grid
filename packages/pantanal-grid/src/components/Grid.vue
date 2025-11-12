@@ -1232,6 +1232,10 @@ const props = withDefaults(defineProps<GridProps>(), {
   pdfAvoidLinks: true,
   pdfPaperSize: 'A4',
   pdfMargin: undefined,
+  pdfMarginTop: undefined,
+  pdfMarginLeft: undefined,
+  pdfMarginRight: undefined,
+  pdfMarginBottom: undefined,
   pdfLandscape: false,
   pdfRepeatHeaders: true,
   pdfScale: 1,
@@ -1241,6 +1245,11 @@ const props = withDefaults(defineProps<GridProps>(), {
   pdfSubject: undefined,
   pdfKeywords: undefined,
   pdfCreator: undefined,
+  pdfDate: undefined,
+  pdfTemplate: undefined,
+  pdfForceProxy: false,
+  pdfProxyUrl: undefined,
+  pdfProxyTarget: undefined,
 })
 const emit = defineEmits<GridEmits>()
 const slots = useSlots()
@@ -4678,32 +4687,57 @@ async function exportToPdf() {
       (el as HTMLElement).style.display = 'none'
     })
     
-    // Remove links if pdfAvoidLinks is true
+    // Remove links if pdfAvoidLinks is true or a CSS selector
     if (props.pdfAvoidLinks !== false) {
-      const links = clonedElement.querySelectorAll('a')
-      links.forEach(link => {
-        // Replace link with text node
-        const text = document.createTextNode(link.textContent || '')
-        if (link.parentNode) {
-          link.parentNode.replaceChild(text, link)
-        }
-      })
+      if (typeof props.pdfAvoidLinks === 'string') {
+        // If pdfAvoidLinks is a CSS selector, ignore matching links
+        const linksToIgnore = clonedElement.querySelectorAll(props.pdfAvoidLinks)
+        linksToIgnore.forEach(link => {
+          (link as HTMLElement).style.display = 'none'
+        })
+      } else {
+        // If pdfAvoidLinks is true, replace all links with text
+        const links = clonedElement.querySelectorAll('a')
+        links.forEach(link => {
+          // Replace link with text node
+          const text = document.createTextNode(link.textContent || '')
+          if (link.parentNode) {
+            link.parentNode.replaceChild(text, link)
+          }
+        })
+      }
     }
     
     // Ensure all styles are applied
     await nextTick()
     
     // Configure PDF options
-    const paperSize = props.pdfPaperSize || 'a4'
+    // Parse paper size - can be string, array [number, number], or array [string, string]
+    let paperSize: string | [number, number] | [string, string] = props.pdfPaperSize || 'a4'
+    if (typeof paperSize === 'string' && paperSize.toLowerCase() === 'auto') {
+      // Auto size - use content dimensions (not fully supported, default to A4)
+      paperSize = 'a4'
+    }
+    
     const landscape = props.pdfLandscape || false
     const scale = props.pdfScale || 1
-    const margin = props.pdfMargin || { top: '1cm', left: '1cm', right: '1cm', bottom: '1cm' }
+    
+    // Build margin object from individual props or pdfMargin object
+    const margin = props.pdfMargin || {
+      top: props.pdfMarginTop ?? '1cm',
+      left: props.pdfMarginLeft ?? '1cm',
+      right: props.pdfMarginRight ?? '1cm',
+      bottom: props.pdfMarginBottom ?? '1cm',
+    }
     
     // Convert margin values to numbers (in mm)
-    // Support both string (e.g., "2cm", "20mm") and number formats
+    // Support both string (e.g., "2cm", "20mm") and number formats (numbers are in pt)
     function parseMargin(value: string | number | undefined, defaultVal: number): number {
       if (value === undefined || value === null) return defaultVal
-      if (typeof value === 'number') return value
+      if (typeof value === 'number') {
+        // Numbers are considered as pt units, convert to mm
+        return value * 0.352778
+      }
       if (typeof value === 'string') {
         // Remove whitespace and convert to lowercase
         const cleaned = value.trim().toLowerCase()
@@ -4716,7 +4750,7 @@ async function exportToPdf() {
           if (unit === 'cm') return num * 10
           if (unit === 'in') return num * 25.4
           if (unit === 'pt') return num * 0.352778
-          return num // mm
+          return num // mm (default)
         }
         // If no unit, assume mm
         const num = parseFloat(cleaned)
@@ -4731,23 +4765,42 @@ async function exportToPdf() {
     const marginBottom = parseMargin(margin.bottom, 10)
     
     // Create PDF document
-    const pdf = new jsPDF({
+    // Handle paper size - can be string, array [number, number], or array [string, string]
+    let pdfOptions: any = {
       orientation: landscape ? 'landscape' : 'portrait',
       unit: 'mm',
-      format: paperSize.toLowerCase(),
       compress: true,
-    })
+    }
+    
+    if (Array.isArray(paperSize)) {
+      // Custom paper size [width, height]
+      if (typeof paperSize[0] === 'number' && typeof paperSize[1] === 'number') {
+        // Numbers in mm
+        pdfOptions.format = [paperSize[0], paperSize[1]]
+      } else if (typeof paperSize[0] === 'string' && typeof paperSize[1] === 'string') {
+        // Strings with units, convert to mm
+        const width = parseMargin(paperSize[0], 210) // Default A4 width
+        const height = parseMargin(paperSize[1], 297) // Default A4 height
+        pdfOptions.format = [width, height]
+      }
+    } else {
+      // String format name
+      pdfOptions.format = (paperSize as string).toLowerCase()
+    }
+    
+    const pdf = new jsPDF(pdfOptions)
     
     // Set PDF metadata
-    if (props.pdfTitle) {
-      pdf.setProperties({
-        title: props.pdfTitle,
-        subject: props.pdfSubject || '',
-        author: props.pdfAuthor || '',
-        keywords: props.pdfKeywords || '',
-        creator: props.pdfCreator || 'Pantanal Grid',
-      })
-    }
+    const pdfDate = props.pdfDate || new Date()
+    pdf.setProperties({
+      title: props.pdfTitle || '',
+      subject: props.pdfSubject || '',
+      author: props.pdfAuthor || '',
+      keywords: props.pdfKeywords || '',
+      creator: props.pdfCreator || 'Pantanal Grid',
+      creationDate: pdfDate,
+      modDate: pdfDate,
+    })
     
     // Convert HTML to canvas
     const canvas = await html2canvas(clonedElement, {
@@ -4772,29 +4825,101 @@ async function exportToPdf() {
     const imgWidthPdf = imgWidth * ratio
     const imgHeightPdf = imgHeight * ratio
     
-    // Add image to PDF
+    // Store image data for reuse
     const imgData = canvas.toDataURL('image/png')
     
-    // Handle multiple pages if content is larger than one page
-    let heightLeft = imgHeightPdf
-    let position = marginTop
-    let pageNumber = 1
+    // Calculate total pages needed
+    const totalPages = Math.max(1, Math.ceil(imgHeightPdf / contentHeight))
     
-    // Add first page
-    pdf.addImage(imgData, 'PNG', marginLeft, position, imgWidthPdf, imgHeightPdf)
-    heightLeft -= contentHeight
+    // Helper function to render PDF template (for headers/footers)
+    function renderPdfTemplate(template: string, pageNum: number, totalPages: number): string {
+      if (!template) return ''
+      return template
+        .replace(/{pageNum}/g, String(pageNum))
+        .replace(/{totalPages}/g, String(totalPages))
+    }
     
-    // Add additional pages if needed
-    while (heightLeft > 0) {
-      position = marginTop - contentHeight * pageNumber
-      pdf.addPage()
-      pdf.addImage(imgData, 'PNG', marginLeft, position, imgWidthPdf, imgHeightPdf)
-      heightLeft -= contentHeight
-      pageNumber++
+    // Add content to PDF with pagination
+    // If content fits on one page, add it directly
+    if (imgHeightPdf <= contentHeight) {
+      // Single page - add template if provided
+      if (props.pdfTemplate) {
+        const templateHtml = renderPdfTemplate(props.pdfTemplate, 1, 1)
+        if (templateHtml && !templateHtml.includes('<')) {
+          pdf.setFontSize(10)
+          pdf.text(templateHtml, marginLeft, marginTop - 5)
+        }
+      }
+      
+      // Add image to PDF
+      pdf.addImage(imgData, 'PNG', marginLeft, marginTop, imgWidthPdf, imgHeightPdf)
+    } else {
+      // Multiple pages - split content
+      let heightLeft = imgHeightPdf
+      let position = marginTop
+      let pageNumber = 1
+      let sourceY = 0
+      
+      while (heightLeft > 0) {
+        if (pageNumber > 1) {
+          pdf.addPage()
+          position = marginTop
+        }
+        
+        // Calculate how much of the image to show on this page
+        const pageHeight = Math.min(heightLeft, contentHeight)
+        const sourceHeightRatio = pageHeight / imgHeightPdf
+        const sourceHeight = sourceHeightRatio * canvas.height
+        
+        // Create a temporary canvas for this page
+        const pageCanvas = document.createElement('canvas')
+        pageCanvas.width = canvas.width
+        pageCanvas.height = Math.ceil(sourceHeight)
+        const pageCtx = pageCanvas.getContext('2d')
+        
+        if (pageCtx) {
+          // Draw the portion of the image for this page
+          pageCtx.drawImage(
+            canvas,
+            0, sourceY, canvas.width, Math.ceil(sourceHeight),  // Source
+            0, 0, canvas.width, Math.ceil(sourceHeight)  // Destination
+          )
+          
+          const pageImgData = pageCanvas.toDataURL('image/png')
+          const pageImgHeightPdf = (pageCanvas.height / canvas.height) * imgHeightPdf
+          
+          // Add PDF template (header/footer) if provided
+          if (props.pdfTemplate) {
+            const templateHtml = renderPdfTemplate(props.pdfTemplate, pageNumber, totalPages)
+            // Note: jsPDF doesn't directly support HTML templates in the way Kendo does
+            // This is a simplified implementation - full HTML rendering would require additional libraries
+            // For now, we'll add it as text if it's simple text
+            if (templateHtml && !templateHtml.includes('<')) {
+              // Simple text template
+              pdf.setFontSize(10)
+              pdf.text(templateHtml, marginLeft, marginTop - 5)
+            }
+          }
+          
+          // Add image to PDF
+          pdf.addImage(pageImgData, 'PNG', marginLeft, position, imgWidthPdf, pageImgHeightPdf)
+        }
+        
+        // Update position for next page
+        sourceY += Math.ceil(sourceHeight)
+        heightLeft -= pageHeight
+        pageNumber++
+      }
     }
     
     // Clean up cloned element
-    document.body.removeChild(clonedElement)
+    try {
+      if (document.body.contains(clonedElement)) {
+        document.body.removeChild(clonedElement)
+      }
+    } catch (cleanupError) {
+      console.warn('Error cleaning up cloned element:', cleanupError)
+    }
     
     // Determine file name
     let fileName = props.pdfFileName || 'export.pdf'
@@ -4802,8 +4927,103 @@ async function exportToPdf() {
       fileName = fileName + '.pdf'
     }
     
-    // Save PDF
-    pdf.save(fileName)
+    // Check if we need to use proxy
+    const needsProxy = props.pdfForceProxy || 
+      (props.pdfProxyUrl && (isIE9() || isSafari()))
+    
+    if (needsProxy && props.pdfProxyUrl) {
+      // Use proxy to download PDF
+      try {
+        // Generate PDF as blob
+        const pdfBlob = pdf.output('blob')
+        
+        // Convert blob to base64
+        const base64 = await blobToBase64(pdfBlob)
+        
+        // Send to proxy
+        const response = await fetch(props.pdfProxyUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contentType: 'application/pdf',
+            base64: base64,
+            fileName: fileName,
+          }),
+        })
+        
+        if (!response.ok) {
+          throw new Error(`Proxy request failed: ${response.statusText}`)
+        }
+        
+        // Handle proxy response
+        if (props.pdfProxyTarget) {
+          // Open in target (e.g., '_blank', '_self', iframe name)
+          if (props.pdfProxyTarget === '_blank' || props.pdfProxyTarget === '_self') {
+            const blob = await response.blob()
+            const url = URL.createObjectURL(blob)
+            window.open(url, props.pdfProxyTarget)
+            setTimeout(() => URL.revokeObjectURL(url), 100)
+          } else {
+            // Assume iframe name - create form and submit to iframe
+            const iframe = document.createElement('iframe')
+            iframe.name = props.pdfProxyTarget
+            iframe.style.display = 'none'
+            document.body.appendChild(iframe)
+            
+            const form = document.createElement('form')
+            form.method = 'POST'
+            form.action = props.pdfProxyUrl
+            form.target = props.pdfProxyTarget
+            form.style.display = 'none'
+            
+            const contentTypeInput = document.createElement('input')
+            contentTypeInput.type = 'hidden'
+            contentTypeInput.name = 'contentType'
+            contentTypeInput.value = 'application/pdf'
+            form.appendChild(contentTypeInput)
+            
+            const base64Input = document.createElement('input')
+            base64Input.type = 'hidden'
+            base64Input.name = 'base64'
+            base64Input.value = base64
+            form.appendChild(base64Input)
+            
+            const fileNameInput = document.createElement('input')
+            fileNameInput.type = 'hidden'
+            fileNameInput.name = 'fileName'
+            fileNameInput.value = fileName
+            form.appendChild(fileNameInput)
+            
+            document.body.appendChild(form)
+            form.submit()
+            
+            // Clean up after a delay
+            setTimeout(() => {
+              if (document.body.contains(form)) {
+                document.body.removeChild(form)
+              }
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe)
+              }
+            }, 1000)
+          }
+        } else {
+          // Default: download via proxy response
+          const blob = await response.blob()
+          downloadFile(blob, fileName)
+        }
+      } catch (proxyError) {
+        console.error('Error exporting PDF via proxy:', proxyError)
+        emit('error', proxyError)
+        // Fallback to direct download
+        pdf.save(fileName)
+      }
+    } else {
+      // Direct download
+      pdf.save(fileName)
+    }
     
     // Emit pdfExport event
     emit('pdfExport', { fileName })

@@ -374,14 +374,18 @@ export interface GridProps<T = Row> {
 
   // PDF Export
   pdfAllPages?: boolean
-  pdfAvoidLinks?: boolean
-  pdfPaperSize?: 'A4' | 'A3' | 'A2' | 'A1' | 'A0' | 'Letter' | 'Legal' | 'Tabloid' | 'Ledger' | string
+  pdfAvoidLinks?: boolean | string  // Boolean or CSS selector
+  pdfPaperSize?: 'A4' | 'A3' | 'A2' | 'A1' | 'A0' | 'B0' | 'B1' | 'B2' | 'B3' | 'B4' | 'B5' | 'B6' | 'B7' | 'B8' | 'B9' | 'B10' | 'C0' | 'C1' | 'C2' | 'C3' | 'C4' | 'C5' | 'C6' | 'C7' | 'C8' | 'C9' | 'C10' | 'Letter' | 'Legal' | 'Tabloid' | 'Ledger' | 'Executive' | 'Folio' | 'auto' | string | [number, number] | [string, string]
   pdfMargin?: {
     top?: string | number
     left?: string | number
     right?: string | number
     bottom?: string | number
   }
+  pdfMarginTop?: string | number
+  pdfMarginLeft?: string | number
+  pdfMarginRight?: string | number
+  pdfMarginBottom?: string | number
   pdfLandscape?: boolean
   pdfRepeatHeaders?: boolean
   pdfScale?: number
@@ -391,6 +395,11 @@ export interface GridProps<T = Row> {
   pdfSubject?: string
   pdfKeywords?: string
   pdfCreator?: string
+  pdfDate?: Date
+  pdfTemplate?: string  // HTML template for headers/footers with pageNum and totalPages variables
+  pdfForceProxy?: boolean
+  pdfProxyUrl?: string
+  pdfProxyTarget?: string  // Where to display the document (e.g., '_blank', '_self', iframe name)
 }
 export interface GridEmits {
   (e: 'update:sort', value: SortDescriptor[]): void
