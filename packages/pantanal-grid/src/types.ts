@@ -354,6 +354,7 @@ export interface GridEmits {
   (e: 'update:page', value: number): void
   (e: 'update:pageSize', value: number): void
   (e: 'update:filter', value: FilterDescriptor[]): void
+  (e: 'update:group', value: GroupDescriptor[]): void
   (e: 'selectionChange', value: unknown[]): void
   (e: 'rowClick', value: unknown): void
   (e: 'editCommit', value: { row: unknown; field: string; value: unknown }): void

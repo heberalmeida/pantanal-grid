@@ -47,6 +47,26 @@
     <!-- HSCROLL WRAPPER -->
     <div class="v3grid__scroll" ref="hScrollEl" @scroll="onHScroll"
       :style="{ marginLeft: lockedLeftWidth + 'px', marginRight: lockedRightWidth + 'px' }">
+      <!-- Group Sort Indicator (inline above header when grouped) -->
+      <div v-if="isGrouped && !isCardMode && !props.virtual && groupState.length > 0" class="v3grid__group-sort-indicator">
+        <div class="v3grid__group-sort-indicator__container">
+          <span 
+            v-for="(g, idx) in groupState" 
+            :key="`${g.field}-${idx}`" 
+            class="v3grid__group-sort-indicator__badge">
+            <span class="v3grid__group-sort-indicator__arrow">{{ g.dir === 'desc' ? '↓' : '↑' }}</span>
+            <span class="v3grid__group-sort-indicator__field">{{ getColumnTitle(g.field) }}</span>
+            <button 
+              v-if="props.sortableAllowUnsort"
+              @click="removeGroupByField(g.field)"
+              class="v3grid__group-sort-indicator__close"
+              aria-label="Remove group">
+              ×
+            </button>
+          </span>
+        </div>
+      </div>
+      
       <!-- HEADER -->
       <!-- Multi-column headers using HTML table structure -->
       <table v-if="headerLevels.hasMultiLevel" class="v3grid__head-multi">
@@ -246,7 +266,7 @@
         :tabindex="props.navigatable || props.allowCopy ? 0 : undefined">
         <div :style="{ height: topPad + 'px' }"></div>
         <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
-          :class="props.striped && ((start ?? 0) + r) % 2 === 1 ? 'v3grid__row--alt' : ''"
+:class="props.striped && ((start ?? 0) + r) % 2 === 1 ? 'v3grid__row--alt' : ''"
           :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? bodyCols : columns) }">
           <div v-if="props.selectable" class="v3grid__cell" @click.stop>
             <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
@@ -485,7 +505,7 @@
           <!-- CAMINHO AGRUPADO -->
           <template v-if="isGrouped">
               <div v-for="(n, r) in visibleRows" :key="n.key ?? r" class="v3grid__row"
-              :class="props.striped && n.type === 'row' && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
+              :class="getGroupedRowClass(n, r)"
               :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? headerLevels.leafColumns : columns) }">
               <!-- seleção (só para linhas) -->
               <div v-if="props.selectable" class="v3grid__cell" @click.stop>
@@ -499,16 +519,22 @@
               <div v-if="isGrouped" class="v3grid__cell v3grid__expander"
                 :style="{ paddingLeft: ((n.level ?? 0) * 14) + 'px' }">
                 <template v-if="n.type === 'group'">
-                  <button class="v3grid__btn" @click="toggleGroupKey(n.key)">
+                  <button class="v3grid__btn v3grid__btn--group-toggle" @click="toggleGroupKey(n.key)">
                     <img :src="expanded.has(n.key) ? iconArrowDown : iconArrowRight"
                       :alt="expanded.has(n.key) ? 'collapse' : 'expand'" class="v3grid__icon" />
                   </button>
                 </template>
               </div>
 
-              <!-- células de dados -->
-              <template v-for="(c, i) in unlockedCols" :key="c._idx">
-                <div v-if="n.type === 'group'" class="v3grid__cell v3grid__group">
+              <!-- Para linhas de grupo: uma única célula que ocupa todas as colunas de dados -->
+              <!-- Começa após: seleção (se selectable) + expander (sempre presente quando isGrouped) -->
+              <div v-if="n.type === 'group'" 
+                class="v3grid__cell v3grid__group v3grid__group--full-width" 
+                :key="`group-${r}`"
+                :style="{ 
+                  gridColumn: `${(props.selectable ? 3 : 2)} / -1`
+                }">
+                <template v-for="(c, i) in unlockedCols" :key="c._idx">
                   <template v-if="String(c.field) === String(n.field)">
                     <template v-if="c.groupHeaderColumnTemplate">
                       <span v-html="renderGroupHeaderColumnTemplate(c, { field: n.field, value: n.value, items: n.items ?? [], aggregates: n.aggregates })"></span>
@@ -517,13 +543,15 @@
                       <span v-html="renderGroupHeaderTemplate(c, { field: n.field, value: n.value, items: n.items ?? [], aggregates: n.aggregates })"></span>
                     </template>
                     <template v-else>
-                      <strong>{{ n.value }}</strong>
-                      <span class="text-xs opacity-70" style="margin-left:.5rem">• {{ n.aggregates?.count ?? 0 }}</span>
+                      <strong>{{ getColumnTitle(n.field) }}: {{ n.value }}</strong>
                     </template>
                   </template>
-                </div>
+                </template>
+              </div>
 
-                <div v-else-if="n.type === 'row'" class="v3grid__cell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]"
+              <!-- células de dados para linhas normais -->
+              <template v-else-if="n.type === 'row'">
+                <div v-for="(c, i) in unlockedCols" :key="`row-${r}-${c._idx}`" class="v3grid__cell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]"
                   :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
                   :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
                   @click="handleCellClick(n.row, c, r, i)"
@@ -555,9 +583,11 @@
                     <span v-else>{{ formatColumnValue(columnValue(n.row, c, r), c, n.row as any) }}</span>
                   </slot>
                 </div>
+              </template>
 
-                <div v-else-if="n.type === 'footer' && (props.showGroupFooters ?? true)"
-                  class="v3grid__cell v3grid__groupfooter">
+              <!-- células de footer para grupos -->
+              <template v-else-if="n.type === 'footer' && (props.showGroupFooters ?? true)">
+                <div v-for="(c, i) in unlockedCols" :key="`footer-${r}-${c._idx}`" class="v3grid__cell v3grid__groupfooter">
                   <template v-if="c.groupFooterTemplate">
                     <span v-html="renderGroupFooterTemplate(c, { field: n.field, value: n.value, items: n.items ?? [], aggregates: n.aggregates })"></span>
                   </template>
@@ -2073,8 +2103,8 @@ const sorted = computed(() =>
   isServerLike.value ? filtered.value : applySort(filtered.value, sortState.value)
 )
 const isGrouped = computed(() => (groupState.value?.length ?? 0) > 0)
-const groupedTree = computed(() =>
-  !isGrouped.value ? [] : buildGroupTree(sorted.value as any[], groupState.value!, props.aggregates ?? {})
+const groupedTree = computed(() => 
+  !isGrouped.value ? [] : buildGroupTree(sorted.value as any[], groupState.value!, props.aggregates ?? {}, 0, columns.value)
 )
 const flatNodes = computed(() =>
   !isGrouped.value ? [] : flattenTree(groupedTree.value as any[], expanded.value, props.showGroupFooters ?? true)
@@ -2671,6 +2701,55 @@ function removeSortByField(field: string) {
     cardSortField.value = ''
     cardSortDir.value = 'asc'
   }
+}
+
+function removeGroupByField(field: string) {
+  const newGroup = groupState.value.filter(g => g.field !== field)
+  groupState.value = newGroup
+  emit('update:group', newGroup)
+  emit('group', { groups: newGroup })
+}
+
+// Helper function to get row class for grouped rows with proper striped alternation
+function getGroupedRowClass(node: any, index: number): string {
+  const classes: string[] = []
+  
+  // Check if this row is inside a group (not the last row of a group)
+  const nextRow = index < visibleRows.value.length - 1 ? visibleRows.value[index + 1] : null
+  const isLastRowOfGroup = !nextRow || 
+    (nextRow.type === 'group' && (nextRow.level ?? 0) <= (node.level ?? 0)) ||
+    (nextRow.type === 'footer' && (nextRow.level ?? 0) <= (node.level ?? 0))
+  
+  // Add group class if it's a group row - no border
+  if (node.type === 'group') {
+    classes.push('v3grid__row--group')
+  } 
+  // Add in-group class if it's a data row inside a group (not the last one) - no border
+  else if (node.type === 'row' && !isLastRowOfGroup) {
+    classes.push('v3grid__row--in-group')
+  }
+  // Footer rows inside a group - no border unless it's the last footer
+  else if (node.type === 'footer' && nextRow && nextRow.type !== 'group' && (nextRow.level ?? 0) > (node.level ?? 0)) {
+    classes.push('v3grid__row--in-group')
+  }
+  
+  // Add striped class for data rows
+  if (props.striped && node.type === 'row') {
+    // Count data rows (type === 'row') up to this index, ignoring groups and footers
+    let dataRowCount = 0
+    for (let i = 0; i < index; i++) {
+      if (visibleRows.value[i]?.type === 'row') {
+        dataRowCount++
+      }
+    }
+    
+    // Apply striped pattern based on data row count
+    if (dataRowCount % 2 === 1) {
+      classes.push('v3grid__row--alt')
+    }
+  }
+  
+  return classes.join(' ')
 }
 
 // Watch sortState to update card controls

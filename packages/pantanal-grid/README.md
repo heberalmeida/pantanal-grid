@@ -191,6 +191,128 @@ const aggregates = { price: ['sum', 'avg'], id: ['count'] } as const
 
 ---
 
+## Groupable Props
+
+The Grid supports various properties to control grouping behavior at both the grid level and column level.
+
+### Column-Level groupable Property
+
+Use the `groupable` property on a column to control whether it can be grouped. Set `groupable: false` to prevent grouping by that column:
+
+```vue
+<script setup lang="ts">
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const columns: ColumnDef<Product>[] = [
+  { field: 'productName', title: 'Product Name', width: 200 },
+  { field: 'category', title: 'Category', width: 150, groupable: true }, // Can be grouped
+  { field: 'supplier', title: 'Supplier', width: 200, groupable: false }, // Cannot be grouped
+  { field: 'unitPrice', title: 'Unit Price', width: 120, format: '{0:c}' },
+]
+</script>
+```
+
+### groupableSortDir Property
+
+Use the `groupableSortDir` property to specify the default sort direction for groups. Set to `'asc'` for ascending or `'desc'` for descending:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Product>[] = [
+  { field: 'category', title: 'Category', width: 150, groupableSortDir: 'desc' }, // Default descending
+  { field: 'unitPrice', title: 'Unit Price', width: 120, format: '{0:c}' },
+]
+
+const group = ref<GroupDescriptor[]>([{ field: 'category' }]) // Uses column's groupableSortDir
+</script>
+```
+
+### groupableSortCompare Property
+
+Use the `groupableSortCompare` property to provide a custom comparison function for sorting groups. This function has the same signature as the `compare` function used by `Array.sort`:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Product>[] = [
+  { 
+    field: 'category', 
+    title: 'Category', 
+    width: 150,
+    groupableSortCompare: (a: any, b: any) => {
+      // Custom sort: 'Beverages' first, then others alphabetically
+      if (a === 'Beverages' && b !== 'Beverages') return -1
+      if (a !== 'Beverages' && b === 'Beverages') return 1
+      return a > b ? 1 : a < b ? -1 : 0
+    }
+  },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, format: '{0:c}' },
+]
+
+const group = ref<GroupDescriptor[]>([{ field: 'category' }])
+</script>
+```
+
+### showGroupFooters Property
+
+Use the `showGroupFooters` property to control whether group footer rows are displayed. When enabled, group footers remain visible even when the group is collapsed:
+
+```vue
+<template>
+  <!-- With Group Footers -->
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :group="group"
+    :show-group-footers="true"
+  />
+
+  <!-- Without Group Footers -->
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :group="group"
+    :show-group-footers="false"
+  />
+</template>
+```
+
+### Combining Multiple Properties
+
+You can combine multiple groupable properties to create complex grouping configurations:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef<Product>[] = [
+  { field: 'productName', title: 'Product Name', width: 200 },
+  { 
+    field: 'category', 
+    title: 'Category', 
+    width: 150, 
+    groupable: true,
+    groupableSortDir: 'asc',
+    groupableSortCompare: (a: any, b: any) => a > b ? 1 : a < b ? -1 : 0
+  },
+  { field: 'supplier', title: 'Supplier', width: 200, groupable: false },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, format: '{0:c}' },
+]
+
+const group = ref<GroupDescriptor[]>([{ field: 'category', dir: 'asc' }])
+</script>
+```
+
+### Notes
+
+- The `groupable` property controls whether a column can be grouped. By default, all columns are groupable unless `groupable: false` is set.
+- The `groupableSortDir` property sets the default sort direction for groups. If not specified, it defaults to `'asc'`.
+- The `groupableSortCompare` function allows custom sorting logic for groups. If not provided, default alphabetical/numerical sorting is used.
+- The `showGroupFooters` property controls the visibility of group footer rows. Defaults to `true`.
+- Group descriptors (`GroupDescriptor`) can override column-level `groupableSortDir` by specifying `dir` in the descriptor.
+- When both `groupableSortCompare` and `groupableSortDir` are provided, the comparison function is used first, then reversed if `sortDir` is `'desc'`.
+
+---
+
 ## Server-side mode
 
 When `:serverSide="true"` is set (or a `dataProvider` is provided), the grid stops mutating its local rows and instead emits the current sort/filter/page model. Bind to those events and fetch data from your API:

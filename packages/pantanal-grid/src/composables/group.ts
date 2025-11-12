@@ -53,7 +53,7 @@ function computeAggregates(rows: any[], spec: AggSpec): Record<string, number> {
   return out
 }
 
-export function buildGroupTree(rows: any[], groups: GroupDescriptor[], spec: AggSpec, level = 0): GroupNode[] {
+export function buildGroupTree(rows: any[], groups: GroupDescriptor[], spec: AggSpec, level = 0, columnDefs?: any[]): GroupNode[] {
   if (!groups?.length) {
     return rows.map((row, i) => ({ type: 'row', key: `r-${i}`, level, row })) as GroupNode[]
   }
@@ -68,8 +68,21 @@ export function buildGroupTree(rows: any[], groups: GroupDescriptor[], spec: Agg
   }
 
   const keys = Array.from(buckets.keys())
-  if (g0.dir === 'desc') keys.sort((a: any, b: any) => (a > b ? -1 : a < b ? 1 : 0))
-  else keys.sort((a: any, b: any) => (a > b ? 1 : a < b ? -1 : 0))
+  
+  // Check if column has groupableSortCompare or groupableSortDir
+  const column = columnDefs?.find(c => c.field === g0.field)
+  const sortCompare = column?.groupableSortCompare
+  const sortDir = g0.dir ?? column?.groupableSortDir ?? 'asc'
+  
+  if (sortCompare) {
+    // Use custom comparison function
+    keys.sort(sortCompare)
+    if (sortDir === 'desc') keys.reverse()
+  } else {
+    // Use default sorting
+    if (sortDir === 'desc') keys.sort((a: any, b: any) => (a > b ? -1 : a < b ? 1 : 0))
+    else keys.sort((a: any, b: any) => (a > b ? 1 : a < b ? -1 : 0))
+  }
 
   const nodes: GroupNode[] = []
   for (const k of keys) {
@@ -77,7 +90,7 @@ export function buildGroupTree(rows: any[], groups: GroupDescriptor[], spec: Agg
     const childSpec = spec
     const groupAggs = computeAggregates(bucket, childSpec)
     const children = rest.length
-      ? buildGroupTree(bucket, rest, spec, level + 1) 
+      ? buildGroupTree(bucket, rest, spec, level + 1, columnDefs) 
       : bucket.map((row, i) => ({ type: 'row', key: `r-${String(k)}-${i}`, level: level + 1, row } as GroupNodeRow))
 
 

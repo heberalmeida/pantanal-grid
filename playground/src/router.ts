@@ -54,6 +54,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/multi-column-headers', component: () => import('./pages/MultiColumnHeadersPage.vue') },
   { path: '/reordering', component: () => import('./pages/ReorderingPage.vue') },
   { path: '/resizing', component: () => import('./pages/ResizingPage.vue') },
+  { path: '/groupable-props', component: () => import('./pages/GroupablePropsPage.vue') },
 ]
 
 export const router = createRouter({
