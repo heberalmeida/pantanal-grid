@@ -1,5 +1,11 @@
 # @pantanal/grid
 
+## 1.2.0
+
+### Minor Changes
+
+- feat: added new models and updated documentation; fix: multiple improvements and bug fixes
+
 ## 1.1.3
 
 ### Patch Changes
