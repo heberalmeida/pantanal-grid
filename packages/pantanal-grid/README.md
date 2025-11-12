@@ -417,6 +417,217 @@ Disable the no records message by setting `noRecords: false`:
 - The template function is called whenever the grid needs to render the no records message.
 - You can combine templates with custom messages for more flexibility.
 
+## Pageable Props
+
+The Grid supports extensive pagination configuration through various `pageable` props. You can customize the pager appearance, behavior, and messages.
+
+### Always Visible
+
+Control whether the pager is always visible using `pageableAlwaysVisible`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="products"
+    :columns="columns"
+    key-field="productID"
+    :page-size="10"
+    :pageable-always-visible="true"
+    :height="400"
+  />
+</template>
+```
+
+When `pageableAlwaysVisible` is `false`, the pager will be hidden when the total number of items is less than the `pageSize` value.
+
+### Previous/Next Buttons
+
+Show first/last page buttons using `pageablePreviousNext`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="products"
+    :columns="columns"
+    key-field="productID"
+    :page-size="10"
+    :pageable-previous-next="true"
+    pagination-variant="edges"
+    :height="400"
+  />
+</template>
+```
+
+### Numeric Pager
+
+Display numeric page buttons using `pageableNumeric`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="products"
+    :columns="columns"
+    key-field="productID"
+    :page-size="10"
+    :pageable-numeric="true"
+    :pageable-button-count="5"
+    :height="400"
+  />
+</template>
+```
+
+The `pageableButtonCount` prop controls the maximum number of buttons displayed. If more pages are available, ellipsis (`...`) will be shown.
+
+### Page Input
+
+Allow users to type a page number using `pageableInput`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="products"
+    :columns="columns"
+    key-field="productID"
+    :page-size="10"
+    :pageable-input="true"
+    pagination-variant="edges"
+    :height="400"
+  />
+</template>
+```
+
+**Note:** Avoid using `pageableNumeric` and `pageableInput` at the same time.
+
+### Refresh Button
+
+Display a refresh button using `pageableRefresh`:
+
+```vue
+<script setup lang="ts">
+function handleRefresh() {
+  // Reload data or refresh the grid
+  console.log('Refresh clicked')
+}
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="products"
+    :columns="columns"
+    key-field="productID"
+    :page-size="10"
+    :pageable-refresh="true"
+    @refresh="handleRefresh"
+    :height="400"
+  />
+</template>
+```
+
+### Page Sizes
+
+Customize available page sizes using `pageablePageSizes`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="products"
+    :columns="columns"
+    key-field="productID"
+    :page-size="20"
+    :pageable-page-sizes="[5, 10, 20, 50, 100]"
+    :height="400"
+  />
+</template>
+```
+
+You can also use `'all'` as a page size option to show all records:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="products"
+    :columns="columns"
+    key-field="productID"
+    :page-size="20"
+    :pageable-page-sizes="[10, 20, 50, 'all']"
+    :height="400"
+  />
+</template>
+```
+
+Set `pageablePageSizes` to `false` to hide the page size selector.
+
+### Page Info
+
+Display pagination information using `pageableInfo`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="products"
+    :columns="columns"
+    key-field="productID"
+    :page-size="10"
+    :pageable-info="true"
+    :messages="customMessages"
+    :height="400"
+  />
+</template>
+```
+
+### Custom Messages
+
+Customize pagination messages using the `messages` prop:
+
+```vue
+<script setup lang="ts">
+const customMessages = {
+  pageableDisplay: 'Displaying {0}-{1} of {2} items',
+  pageableEmpty: 'No items to display',
+  pageablePage: 'Page',
+  pageableOf: 'of {0}',
+  pageableItemsPerPage: 'Items per page',
+  pageableFirst: 'First',
+  pageableLast: 'Last',
+  pageableNext: 'Next',
+  pageablePrevious: 'Previous',
+  pageableRefresh: 'Refresh',
+  pageableMorePages: 'More pages',
+}
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="products"
+    :columns="columns"
+    key-field="productID"
+    :page-size="10"
+    :messages="customMessages"
+    :height="400"
+  />
+</template>
+```
+
+### Available Pageable Props
+
+- `pageable` - Enable/disable pagination (default: `true`)
+- `pageableAlwaysVisible` - Always show pager even when items < pageSize (default: `true`)
+- `pageablePageSizes` - Array of page sizes or `false` to hide (default: `[10, 20, 50, 100]`)
+- `pageablePreviousNext` - Show first/last page buttons (default: `true`)
+- `pageableNumeric` - Show numeric page buttons (default: `false`)
+- `pageableButtonCount` - Maximum number of numeric buttons (default: `5`)
+- `pageableInput` - Show page number input (default: `false`)
+- `pageableRefresh` - Show refresh button (default: `false`)
+- `pageableResponsive` - Enable responsive pager (default: `true`)
+- `pageableInfo` - Show pagination info (default: `true`)
+
+### Notes
+
+- The `pageableDisplay` message supports placeholders: `{0}` (first item), `{1}` (last item), `{2}` (total items).
+- The `pageableOf` message supports placeholder: `{0}` (total pages).
+- Avoid using `pageableNumeric` and `pageableInput` at the same time.
+- The refresh button emits a `refresh` event that you can handle to reload data.
+
 ---
 
 ## Virtual scroll

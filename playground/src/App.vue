@@ -163,6 +163,7 @@ const navSections = [
       { to: '/i18n/custom', label: 'Custom labels', icon: 'language' },
       { to: '/messages-props', label: 'Messages Props', icon: 'comment' },
       { to: '/no-records-props', label: 'No Records Props', icon: 'file-xmark' },
+      { to: '/pageable-props', label: 'Pageable Props', icon: 'ellipsis' },
     ],
   },
 ]

@@ -57,6 +57,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/groupable-props', component: () => import('./pages/GroupablePropsPage.vue') },
   { path: '/messages-props', component: () => import('./pages/MessagesPropsPage.vue') },
   { path: '/no-records-props', component: () => import('./pages/NoRecordsPropsPage.vue') },
+  { path: '/pageable-props', component: () => import('./pages/PageablePropsPage.vue') },
 ]
 
 export const router = createRouter({

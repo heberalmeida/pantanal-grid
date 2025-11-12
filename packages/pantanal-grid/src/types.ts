@@ -73,6 +73,18 @@ export interface Messages {
   filterableMessagesValue?: string
   filterableMessagesCheckAll?: string
   noRecords?: string
+  // Pageable messages
+  pageableDisplay?: string
+  pageableEmpty?: string
+  pageablePage?: string
+  pageableOf?: string
+  pageableItemsPerPage?: string
+  pageableFirst?: string
+  pageableLast?: string
+  pageableNext?: string
+  pageablePrevious?: string
+  pageableRefresh?: string
+  pageableMorePages?: string
 }
 
 export interface ColumnTemplateContext<T = Row> {
@@ -300,7 +312,14 @@ export interface GridProps<T = Row> {
   paginationMaxPages?: number
   pageable?: boolean
   pageableAlwaysVisible?: boolean
-  pageablePageSizes?: number[]
+  pageablePageSizes?: number[] | boolean | (number | 'all')[]
+  pageablePreviousNext?: boolean
+  pageableNumeric?: boolean
+  pageableButtonCount?: number
+  pageableInput?: boolean
+  pageableRefresh?: boolean
+  pageableResponsive?: boolean
+  pageableInfo?: boolean
 
   showFilterRow?: boolean
   filterable?: boolean
@@ -360,6 +379,7 @@ export interface GridEmits {
   (e: 'update:group', value: GroupDescriptor[]): void
   (e: 'selectionChange', value: unknown[]): void
   (e: 'rowClick', value: unknown): void
+  (e: 'refresh'): void
   (e: 'editCommit', value: { row: unknown; field: string; value: unknown }): void
   (e: 'edit', value: { row: unknown; field?: string }): void
   (e: 'editCancel', value: { row: unknown }): void

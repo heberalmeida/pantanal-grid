@@ -928,30 +928,65 @@
 
     <!-- FOOTER / PAGING -->
     <div v-if="shouldShowFooter" class="v3grid__footer" ref="footerEl"
-      style="display:flex;gap:.75rem;justify-content:space-between;align-items:center;padding:0.5rem 0.75rem;">
-      <div class="text-sm">
-        {{ msgs.total }}: {{ total }} • {{ msgs.page }} {{ page }}<span v-if="!props.virtual"> / {{ totalPages()
-        }}</span>
-        <template v-if="isGrouped">
-          • <button class="v3grid__btn__group" @click="expandAll">expand all</button>
-          <button class="v3grid__btn__group" @click="collapseAll">collapse all</button>
-        </template>
+      style="display:flex;flex-direction:column;gap:.75rem;padding:0.75rem;">
+      <!-- Top row: info and page size selector -->
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:space-between;align-items:center;width:100%;">
+        <div class="text-sm" style="flex:1;min-width:fit-content;">
+          <template v-if="props.pageableInfo !== false && msgs.pageableDisplay">
+            {{ formatPageableDisplay(msgs.pageableDisplay) }}
+          </template>
+          <template v-else-if="props.pageableInfo === false">
+            {{ msgs.total }}: {{ total }} • {{ msgs.page }} {{ page }}<span v-if="!props.virtual"> / {{ totalPages()
+            }}</span>
+          </template>
+          <template v-if="isGrouped">
+            • <button class="v3grid__btn__group" @click="expandAll">expand all</button>
+            <button class="v3grid__btn__group" @click="collapseAll">collapse all</button>
+          </template>
+        </div>
+
+        <!-- Page size selector -->
+        <div v-if="!props.virtual && props.pageable !== false && props.pageablePageSizes !== false && (props.pageablePageSizes === true || Array.isArray(props.pageablePageSizes))" 
+          style="display:flex;align-items:center;gap:.5rem;flex-wrap:nowrap;">
+          <label class="text-sm" style="white-space:nowrap;">{{ msgs.pageableItemsPerPage || msgs.rowsPerPage }}</label>
+          <select class="v3grid__input" style="width:auto;min-width:60px;" :value="pageSize"
+            @change="pageSize = Number(($event.target as HTMLSelectElement).value)">
+            <template v-if="Array.isArray(props.pageablePageSizes)">
+              <option v-for="n in props.pageablePageSizes" :key="String(n)" :value="typeof n === 'string' && n === 'all' ? total : (typeof n === 'number' ? n : Number(n))">
+                {{ typeof n === 'string' && n === 'all' ? 'All' : String(n) }}
+              </option>
+            </template>
+            <template v-else>
+              <option v-for="n in [10, 20, 50, 100]" :key="n" :value="n">{{ n }}</option>
+            </template>
+          </select>
+        </div>
       </div>
 
-      <!-- NOVO: paginação com props tipadas -->
-      <div style="display:flex;align-items:center;gap:.5rem" v-if="!props.virtual && props.pageable !== false">
-        <label class="text-sm">{{ msgs.rowsPerPage }}</label>
-        <select class="v3grid__input" style="width:auto" :value="pageSize"
-          @change="pageSize = Number(($event.target as HTMLSelectElement).value)">
-          <option v-for="n in (props.pageablePageSizes ?? [10, 20, 50, 100])" :key="n" :value="n">{{ n }}</option>
-        </select>
-
-        <GridPagination :page="page" :pageSize="pageSize" :total="total" :variant="props.paginationVariant ?? 'simple'"
-          :showText="props.paginationShowText ?? true" :showIcons="props.paginationShowIcons ?? true"
-          :showTotal="props.paginationShowTotal ?? true" :maxPages="props.paginationMaxPages ?? 5"
-          :locale="props.locale" :messages="props.messages" :rtl="props.rtl"
+      <!-- Bottom row: pagination controls -->
+      <div v-if="!props.virtual && props.pageable !== false" style="display:flex;justify-content:center;align-items:center;width:100%;overflow-x:auto;">
+        <GridPagination 
+          :page="page" 
+          :pageSize="pageSize" 
+          :total="total" 
+          :variant="props.paginationVariant ?? 'simple'"
+          :showText="props.paginationShowText ?? true" 
+          :showIcons="props.paginationShowIcons ?? true"
+          :showTotal="false" 
+          :maxPages="props.paginationMaxPages ?? 5"
+          :locale="props.locale" 
+          :messages="props.messages" 
+          :rtl="props.rtl"
+          :previousNext="props.pageablePreviousNext !== false"
+          :numeric="props.pageableNumeric === true"
+          :buttonCount="props.pageableButtonCount ?? props.paginationMaxPages ?? 5"
+          :input="props.pageableInput === true"
+          :refresh="props.pageableRefresh === true"
+          :responsive="props.pageableResponsive !== false"
+          :info="props.pageableInfo !== false"
           @update:page="(p: number) => page = p"
-          @update:pageSize="(s: number) => pageSize = s" />
+          @update:pageSize="(s: number) => pageSize = s"
+          @refresh="() => emit('refresh')" />
       </div>
     </div>
 
@@ -1151,6 +1186,13 @@ const props = withDefaults(defineProps<GridProps>(), {
   pageable: true,
   pageableAlwaysVisible: true,
   pageablePageSizes: () => [10, 20, 50, 100],
+  pageablePreviousNext: true,
+  pageableNumeric: false,
+  pageableButtonCount: undefined,
+  pageableInput: false,
+  pageableRefresh: false,
+  pageableResponsive: true,
+  pageableInfo: true,
   sortable: false,
   sortableMode: 'single',
   sortableAllowUnsort: true,
@@ -2200,6 +2242,17 @@ const total = computed(() => {
   }
   return sorted.value.length
 })
+
+// Helper function to format pageableDisplay message
+function formatPageableDisplay(template: string): string {
+  if (!template) return ''
+  const firstItem = total.value === 0 ? 0 : (page.value - 1) * pageSize.value + 1
+  const lastItem = total.value === 0 ? 0 : Math.min(page.value * pageSize.value, total.value)
+  return template
+    .replace('{0}', String(firstItem))
+    .replace('{1}', String(lastItem))
+    .replace('{2}', String(total.value))
+}
 
 /** VIRTUAL vs padrão */
 const allRowsRef = () => sorted.value
