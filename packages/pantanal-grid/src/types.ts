@@ -56,6 +56,7 @@ export interface Messages {
   cancelDelete?: string
   confirmDeleteTitle?: string
   excel?: string
+  pdf?: string
   expandCollapseColumnHeader?: string
   filterableMessagesAnd?: string
   filterableMessagesOr?: string
@@ -339,7 +340,7 @@ export interface GridProps<T = Row> {
   autoBind?: boolean
 
   editable?: boolean | 'inline' | 'popup' | 'batch'
-  toolbar?: ('create' | 'save' | 'cancel' | 'excel')[] | string | (() => string)
+  toolbar?: ('create' | 'save' | 'cancel' | 'excel' | 'pdf')[] | string | (() => string)
   navigatable?: boolean
 
   sortable?: boolean
@@ -370,6 +371,26 @@ export interface GridProps<T = Row> {
   excelFilterable?: boolean
   excelForceProxy?: boolean
   excelProxyUrl?: string
+
+  // PDF Export
+  pdfAllPages?: boolean
+  pdfAvoidLinks?: boolean
+  pdfPaperSize?: 'A4' | 'A3' | 'A2' | 'A1' | 'A0' | 'Letter' | 'Legal' | 'Tabloid' | 'Ledger' | string
+  pdfMargin?: {
+    top?: string | number
+    left?: string | number
+    right?: string | number
+    bottom?: string | number
+  }
+  pdfLandscape?: boolean
+  pdfRepeatHeaders?: boolean
+  pdfScale?: number
+  pdfFileName?: string
+  pdfAuthor?: string
+  pdfTitle?: string
+  pdfSubject?: string
+  pdfKeywords?: string
+  pdfCreator?: string
 }
 export interface GridEmits {
   (e: 'update:sort', value: SortDescriptor[]): void
@@ -407,6 +428,7 @@ export interface GridEmits {
   (e: 'columnunlock', options: { column: ColumnDef; field: string }): void
   (e: 'columnmenuinit', options: { column: ColumnDef; field: string; container: HTMLElement }): void
   (e: 'columnmenuopen', options: { column: ColumnDef; field: string }): void
+  (e: 'pdfExport', options: { fileName: string }): void
 }
 
 export type AggregateName = 'sum' | 'avg' | 'min' | 'max' | 'count'

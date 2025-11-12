@@ -13,7 +13,7 @@ export default defineConfig({
       fileName: (format) => format === 'es' ? 'index.es.js' : 'index.umd.cjs'
     },
     rollupOptions: {
-      external: ['vue'],
+      external: ['vue', 'jspdf', 'html2canvas'],
       output: { globals: { vue: 'Vue' } }
     }
   }

@@ -42,6 +42,14 @@
         >
           {{ msgs.excel || 'Export to Excel' }}
         </button>
+        <button
+          v-if="props.toolbar.includes('pdf')"
+          type="button"
+          @click="exportToPdf"
+          class="v3grid__btn--toolbar"
+        >
+          {{ msgs.pdf || 'Export to PDF' }}
+        </button>
       </template>
     </div>
     <!-- HSCROLL WRAPPER -->
@@ -1220,6 +1228,19 @@ const props = withDefaults(defineProps<GridProps>(), {
   excelFilterable: true,
   excelForceProxy: false,
   excelProxyUrl: undefined,
+  pdfAllPages: false,
+  pdfAvoidLinks: true,
+  pdfPaperSize: 'A4',
+  pdfMargin: undefined,
+  pdfLandscape: false,
+  pdfRepeatHeaders: true,
+  pdfScale: 1,
+  pdfFileName: 'export.pdf',
+  pdfAuthor: undefined,
+  pdfTitle: undefined,
+  pdfSubject: undefined,
+  pdfKeywords: undefined,
+  pdfCreator: undefined,
 })
 const emit = defineEmits<GridEmits>()
 const slots = useSlots()
@@ -4607,6 +4628,191 @@ function isSafari(): boolean {
   return /Safari/.test(ua) && !/Chrome/.test(ua) && !/Chromium/.test(ua)
 }
 
+// PDF Export function
+async function exportToPdf() {
+  try {
+    // Check if jsPDF and html2canvas libraries are available
+    let jsPDF: any = null
+    let html2canvas: any = null
+    
+    try {
+      // Try to dynamically import jsPDF and html2canvas libraries
+      // These are optional peer dependencies, handled gracefully if not installed
+      // @ts-ignore - Optional peer dependency, may not be installed
+      const jsPDFMod = await import('jspdf')
+      jsPDF = jsPDFMod.default || jsPDFMod
+      // @ts-ignore - Optional peer dependency, may not be installed  
+      const html2canvasMod = await import('html2canvas')
+      html2canvas = html2canvasMod.default || html2canvasMod
+    } catch (error) {
+      console.warn('jsPDF or html2canvas library not found. Install packages for PDF export: npm install jspdf html2canvas')
+      alert('PDF export requires jsPDF and html2canvas libraries. Please install them: npm install jspdf html2canvas')
+      return
+    }
+    
+    // Get the grid element to export
+    const gridElement = rootEl.value
+    if (!gridElement) {
+      console.error('Grid element not found')
+      return
+    }
+    
+    // Clone the grid element to avoid modifying the original
+    const clonedElement = gridElement.cloneNode(true) as HTMLElement
+    
+    // Apply styles to cloned element
+    clonedElement.style.position = 'absolute'
+    clonedElement.style.left = '-9999px'
+    clonedElement.style.top = '0'
+    clonedElement.style.width = gridElement.offsetWidth + 'px'
+    clonedElement.style.maxWidth = gridElement.offsetWidth + 'px'
+    clonedElement.style.visibility = 'visible'
+    clonedElement.style.opacity = '1'
+    
+    // Append to body temporarily
+    document.body.appendChild(clonedElement)
+    
+    // Hide elements that shouldn't be exported
+    const elementsToHide = clonedElement.querySelectorAll('.v3grid__toolbar, .v3grid__footer, .v3grid__column-menu, .v3grid__filter-row')
+    elementsToHide.forEach(el => {
+      (el as HTMLElement).style.display = 'none'
+    })
+    
+    // Remove links if pdfAvoidLinks is true
+    if (props.pdfAvoidLinks !== false) {
+      const links = clonedElement.querySelectorAll('a')
+      links.forEach(link => {
+        // Replace link with text node
+        const text = document.createTextNode(link.textContent || '')
+        if (link.parentNode) {
+          link.parentNode.replaceChild(text, link)
+        }
+      })
+    }
+    
+    // Ensure all styles are applied
+    await nextTick()
+    
+    // Configure PDF options
+    const paperSize = props.pdfPaperSize || 'a4'
+    const landscape = props.pdfLandscape || false
+    const scale = props.pdfScale || 1
+    const margin = props.pdfMargin || { top: '1cm', left: '1cm', right: '1cm', bottom: '1cm' }
+    
+    // Convert margin values to numbers (in mm)
+    // Support both string (e.g., "2cm", "20mm") and number formats
+    function parseMargin(value: string | number | undefined, defaultVal: number): number {
+      if (value === undefined || value === null) return defaultVal
+      if (typeof value === 'number') return value
+      if (typeof value === 'string') {
+        // Remove whitespace and convert to lowercase
+        const cleaned = value.trim().toLowerCase()
+        // Extract number and unit (e.g., "2cm", "20mm", "1in", "72pt")
+        const match = cleaned.match(/^([\d.]+)\s*(cm|mm|in|pt)?$/)
+        if (match) {
+          const num = parseFloat(match[1])
+          const unit = match[2] || 'mm'
+          // Convert to mm
+          if (unit === 'cm') return num * 10
+          if (unit === 'in') return num * 25.4
+          if (unit === 'pt') return num * 0.352778
+          return num // mm
+        }
+        // If no unit, assume mm
+        const num = parseFloat(cleaned)
+        return isNaN(num) ? defaultVal : num
+      }
+      return defaultVal
+    }
+    
+    const marginTop = parseMargin(margin.top, 10)
+    const marginLeft = parseMargin(margin.left, 10)
+    const marginRight = parseMargin(margin.right, 10)
+    const marginBottom = parseMargin(margin.bottom, 10)
+    
+    // Create PDF document
+    const pdf = new jsPDF({
+      orientation: landscape ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: paperSize.toLowerCase(),
+      compress: true,
+    })
+    
+    // Set PDF metadata
+    if (props.pdfTitle) {
+      pdf.setProperties({
+        title: props.pdfTitle,
+        subject: props.pdfSubject || '',
+        author: props.pdfAuthor || '',
+        keywords: props.pdfKeywords || '',
+        creator: props.pdfCreator || 'Pantanal Grid',
+      })
+    }
+    
+    // Convert HTML to canvas
+    const canvas = await html2canvas(clonedElement, {
+      scale: scale,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      width: clonedElement.scrollWidth,
+      height: clonedElement.scrollHeight,
+    })
+    
+    // Calculate PDF dimensions
+    const pdfWidth = pdf.internal.pageSize.getWidth()
+    const pdfHeight = pdf.internal.pageSize.getHeight()
+    const contentWidth = pdfWidth - marginLeft - marginRight
+    const contentHeight = pdfHeight - marginTop - marginBottom
+    
+    // Calculate image dimensions
+    const imgWidth = canvas.width
+    const imgHeight = canvas.height
+    const ratio = Math.min(contentWidth / imgWidth, contentHeight / imgHeight)
+    const imgWidthPdf = imgWidth * ratio
+    const imgHeightPdf = imgHeight * ratio
+    
+    // Add image to PDF
+    const imgData = canvas.toDataURL('image/png')
+    
+    // Handle multiple pages if content is larger than one page
+    let heightLeft = imgHeightPdf
+    let position = marginTop
+    let pageNumber = 1
+    
+    // Add first page
+    pdf.addImage(imgData, 'PNG', marginLeft, position, imgWidthPdf, imgHeightPdf)
+    heightLeft -= contentHeight
+    
+    // Add additional pages if needed
+    while (heightLeft > 0) {
+      position = marginTop - contentHeight * pageNumber
+      pdf.addPage()
+      pdf.addImage(imgData, 'PNG', marginLeft, position, imgWidthPdf, imgHeightPdf)
+      heightLeft -= contentHeight
+      pageNumber++
+    }
+    
+    // Clean up cloned element
+    document.body.removeChild(clonedElement)
+    
+    // Determine file name
+    let fileName = props.pdfFileName || 'export.pdf'
+    if (!fileName.endsWith('.pdf')) {
+      fileName = fileName + '.pdf'
+    }
+    
+    // Save PDF
+    pdf.save(fileName)
+    
+    // Emit pdfExport event
+    emit('pdfExport', { fileName })
+  } catch (error) {
+    console.error('Error exporting to PDF:', error)
+    emit('error', error)
+  }
+}
+
 // @ts-ignore - Reserved for future editing implementation
 function handleCellEdit(_row: any, _field: string, _value: any) {
   // Reserved for future editing implementation
@@ -4794,6 +5000,8 @@ function setOptions(options: GridOptions): void {
 defineExpose({
   getOptions,
   setOptions,
+  exportToPdf,
+  saveAsPdf: exportToPdf, // Alias for Kendo UI compatibility
 })
 
 onBeforeUnmount(() => {

@@ -249,6 +249,7 @@ const messages: Partial<Messages> = {
 - `messages.save` - Text for the "Save" button in the toolbar
 - `messages.cancel` - Text for the "Cancel" button in the toolbar
 - `messages.excel` - Text for the "Export to Excel" button in the toolbar
+- `messages.pdf` - Text for the "Export to PDF" button in the toolbar
 - `messages.edit` - Text for the "Edit" button in command columns
 - `messages.update` - Text for the "Update" button when editing (replaces "Save" in edit mode)
 - `messages.destroy` - Text for the "Delete" button in command columns
@@ -695,6 +696,207 @@ const aggregates = { price: ['sum', 'avg'], id: ['count'] } as const
 - Group headers render full-width rows with the field/value and aggregate count.
 - Use the built-in footer buttons (or `toggleGroup` event) to expand/collapse all groups at once.
 - For server-side grouping, compute aggregates on the backend and feed the grid with pre-grouped rows.
+
+---
+
+## PDF Export
+
+The Grid supports exporting data to PDF format. You can export the current view, customize paper size, margins, orientation, and metadata.
+
+> **Note:** PDF export requires `jspdf` and `html2canvas` libraries. Install them:
+> ```bash
+> npm install jspdf html2canvas
+> ```
+
+### Basic Usage
+
+Add `'pdf'` to the toolbar to enable PDF export:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :toolbar="['pdf']"
+    key-field="productID"
+    :height="400"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref([...])
+const columns: ColumnDef[] = [...]
+</script>
+```
+
+### Custom Paper Size and Orientation
+
+Configure paper size and orientation using `pdfPaperSize` and `pdfLandscape` props:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfPaperSize="'A4'"
+  :pdfLandscape="true"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+Supported paper sizes: `'A4'`, `'A3'`, `'A2'`, `'A1'`, `'A0'`, `'Letter'`, `'Legal'`, `'Tabloid'`, `'Ledger'`, or any custom size string.
+
+### Custom Margins
+
+Specify custom margins using the `pdfMargin` prop. Margins can be specified as strings (e.g., `"2cm"`, `"20mm"`) or numbers (in mm):
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfMargin="{ top: '2cm', left: '1cm', right: '1cm', bottom: '1cm' }"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+### Custom File Name
+
+Specify a custom file name using the `pdfFileName` prop:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfFileName="'my-products-export.pdf'"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+### PDF Metadata
+
+Set PDF metadata (title, author, subject, keywords, creator) using the respective props:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfTitle="'Products Report'"
+  :pdfAuthor="'Pantanal Grid'"
+  :pdfSubject="'Product Inventory'"
+  :pdfKeywords="'products, inventory, report'"
+  :pdfCreator="'Pantanal Grid PDF Export'"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+### Scale and Quality
+
+Control the scale and quality of the PDF using the `pdfScale` prop. Higher values (e.g., `2`) produce better quality but larger file sizes:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfScale="0.8"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+### Avoid Links
+
+Control whether links should be converted to text using the `pdfAvoidLinks` prop. By default, links are converted to text to avoid broken links in the PDF:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfAvoidLinks="true"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+### Repeat Headers
+
+Control whether headers should be repeated on each page using the `pdfRepeatHeaders` prop (currently not fully implemented, but reserved for future use):
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :toolbar="['pdf']"
+  :pdfRepeatHeaders="true"
+  key-field="productID"
+  :height="400"
+/>
+```
+
+### Available PDF Props
+
+- `pdfAllPages` - Export all pages (reserved for future use)
+- `pdfAvoidLinks` - Convert links to text (default: `true`)
+- `pdfPaperSize` - Paper size (default: `'A4'`)
+- `pdfMargin` - Margins object `{ top, left, right, bottom }` (default: `{ top: '1cm', left: '1cm', right: '1cm', bottom: '1cm' }`)
+- `pdfLandscape` - Landscape orientation (default: `false`)
+- `pdfRepeatHeaders` - Repeat headers on each page (default: `true`, reserved for future use)
+- `pdfScale` - Scale factor (default: `1`)
+- `pdfFileName` - File name (default: `'export.pdf'`)
+- `pdfAuthor` - PDF author metadata
+- `pdfTitle` - PDF title metadata
+- `pdfSubject` - PDF subject metadata
+- `pdfKeywords` - PDF keywords metadata
+- `pdfCreator` - PDF creator metadata
+
+### Programmatic Export
+
+You can also export PDF programmatically by calling the `exportToPdf` or `saveAsPdf` method on the grid component:
+
+```vue
+<template>
+  <PantanalGrid
+    ref="gridRef"
+    :rows="rows"
+    :columns="columns"
+    key-field="productID"
+    :height="400"
+  />
+  <button @click="handleExport">Export to PDF</button>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const gridRef = ref<InstanceType<typeof PantanalGrid>>()
+
+const handleExport = () => {
+  gridRef.value?.exportToPdf()
+  // or
+  gridRef.value?.saveAsPdf()
+}
+</script>
+```
+
+### Notes
+
+- PDF export requires `jspdf` and `html2canvas` libraries to be installed
+- The exported PDF is generated from a screenshot of the grid, so it preserves the visual appearance
+- Toolbar and footer are automatically excluded from the export
+- Links are converted to text by default to avoid broken links in the PDF
+- The export respects the current view (current page, filters, sorting)
 
 ---
 

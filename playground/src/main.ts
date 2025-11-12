@@ -56,6 +56,8 @@ import {
   faArrowsLeftRightToLine,
   faSliders,
   faComment,
+  faFilePdf,
+  faFileCircleXmark
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -111,6 +113,8 @@ library.add(
   faArrowsLeftRightToLine,
   faSliders,
   faComment,
+  faFilePdf,
+  faFileCircleXmark
 )
 
 createApp(App)

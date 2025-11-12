@@ -108,6 +108,7 @@ const navSections = [
       { to: '/column-menu', label: 'Column Menu', icon: 'bars' },
       { to: '/multi-column-headers', label: 'Multi-Column Headers', icon: 'table-columns' },
       { to: '/excel-export', label: 'Excel Export', icon: 'file-excel' },
+      { to: '/pdf-export', label: 'PDF Export', icon: 'file-pdf' },
       { to: '/filterable-props', label: 'Filterable Props', icon: 'filter' },
       { to: '/grid-column', label: 'Grid Column API', icon: 'table-columns' },
       { to: '/templates', label: 'Templates', icon: 'file-code' },

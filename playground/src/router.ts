@@ -58,6 +58,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/messages-props', component: () => import('./pages/MessagesPropsPage.vue') },
   { path: '/no-records-props', component: () => import('./pages/NoRecordsPropsPage.vue') },
   { path: '/pageable-props', component: () => import('./pages/PageablePropsPage.vue') },
+  { path: '/pdf-export', component: () => import('./pages/PdfExportPage.vue') },
 ]
 
 export const router = createRouter({
