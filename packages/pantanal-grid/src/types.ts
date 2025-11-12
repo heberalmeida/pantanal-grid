@@ -254,9 +254,9 @@ export interface GridProps<T = Row> {
   
   // Detail template (master-detail)
   detailTemplate?: string | ((row: T, rowIndex: number) => string)
-
-  // No records message
-  noRecords?: boolean | { template?: string; message?: string }
+  
+  // No records message or template
+  noRecords?: boolean | string | (() => string) | { template?: string | (() => string); message?: string } | false
 
   // Column resize handle width
   columnResizeHandleWidth?: number

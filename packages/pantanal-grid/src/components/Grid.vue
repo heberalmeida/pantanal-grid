@@ -393,7 +393,17 @@
               </template>
             </div>
           </div>
-          <div class="v3grid__cards">
+          <!-- NO RECORDS MESSAGE (for card mode) -->
+          <div v-if="props.noRecords !== false && visibleRows.length === 0" 
+            class="v3grid__no-records">
+            <template v-if="noRecordsTemplate">
+              <div v-html="noRecordsTemplate"></div>
+            </template>
+            <template v-else>
+              <div>{{ msgs.noRecords || 'No records available' }}</div>
+            </template>
+          </div>
+          <div v-else class="v3grid__cards">
             <!-- AGRUPADO -->
             <template v-if="isGrouped">
               <div v-for="(n, r) in visibleRows" :key="n.key ?? r">
@@ -516,8 +526,18 @@
 
         <!-- ====== MODO TABELA ====== -->
         <template v-else>
+          <!-- NO RECORDS MESSAGE (for table mode, when no rows) -->
+          <div v-if="props.noRecords !== false && visibleRows.length === 0" 
+            class="v3grid__no-records">
+            <template v-if="noRecordsTemplate">
+              <div v-html="noRecordsTemplate"></div>
+            </template>
+            <template v-else>
+              <div>{{ msgs.noRecords || 'No records available' }}</div>
+            </template>
+          </div>
           <!-- CAMINHO AGRUPADO -->
-          <template v-if="isGrouped">
+          <template v-else-if="isGrouped">
               <div v-for="(n, r) in visibleRows" :key="n.key ?? r" class="v3grid__row"
               :class="getGroupedRowClass(n, r)"
               :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? headerLevels.leafColumns : columns) }">
@@ -896,11 +916,8 @@
       <!-- NO RECORDS MESSAGE -->
       <div v-if="props.noRecords !== false && visibleRows.length === 0" 
         class="v3grid__no-records">
-        <template v-if="typeof props.noRecords === 'object' && props.noRecords.template">
-          <div v-html="props.noRecords.template"></div>
-        </template>
-        <template v-else-if="typeof props.noRecords === 'object' && props.noRecords.message">
-          <div>{{ props.noRecords.message }}</div>
+        <template v-if="noRecordsTemplate">
+          <div v-html="noRecordsTemplate"></div>
         </template>
         <template v-else>
           <div>{{ msgs.noRecords || 'No records available' }}</div>
@@ -2084,6 +2101,47 @@ function renderDetailTemplate(row: any, rowIndex: number): string {
   }
   return html
 }
+
+// Helper function for no records template
+function renderNoRecordsTemplate(): string {
+  // Explicitly check for false first
+  if (props.noRecords === false) return ''
+  if (!props.noRecords) return ''
+  
+  // If it's a function, call it
+  if (typeof props.noRecords === 'function') {
+    const result = props.noRecords()
+    return typeof result === 'string' ? result : ''
+  }
+  
+  // If it's a string, use it as template
+  if (typeof props.noRecords === 'string') {
+    return props.noRecords
+  }
+  
+  // If it's boolean true, return empty (will use default message)
+  if (props.noRecords === true) return ''
+  
+  // If it's an object with template
+  if (typeof props.noRecords === 'object' && props.noRecords && 'template' in props.noRecords && props.noRecords.template) {
+    if (typeof props.noRecords.template === 'function') {
+      const result = props.noRecords.template()
+      return typeof result === 'string' ? result : ''
+    }
+    return props.noRecords.template
+  }
+  
+  // If it's an object with message
+  if (typeof props.noRecords === 'object' && props.noRecords && 'message' in props.noRecords && props.noRecords.message) {
+    return props.noRecords.message
+  }
+  
+  // Default: return empty string (will use msgs.noRecords in template)
+  return ''
+}
+
+// Computed property for no records template
+const noRecordsTemplate = computed(() => renderNoRecordsTemplate())
 
 // Expanded rows for master-detail
 const expandedRows = ref<(string | number)[]>([])

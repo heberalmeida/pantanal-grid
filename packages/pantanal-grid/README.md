@@ -264,6 +264,161 @@ const messages: Partial<Messages> = {
 
 ---
 
+## No Records Props
+
+The Grid supports customizable templates for rendering when the current view contains no records. You can customize the no records display using the `noRecords` prop.
+
+### Default No Records Message
+
+By default, the Grid displays a message when no records are available. Use `noRecords: true` to enable the default message:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    key-field="productID"
+    :no-records="true"
+    :height="300"
+  />
+</template>
+```
+
+### Custom No Records Message
+
+Customize the no records message using `noRecords: { message: '...' }`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    key-field="productID"
+    :no-records="{ message: 'No products found. Please try adjusting your filters or search criteria.' }"
+    :height="300"
+  />
+</template>
+```
+
+### No Records Template (String)
+
+Customize the no records display using an HTML template string:
+
+```vue
+<script setup lang="ts">
+const templateString = '<div style="padding: 2rem; text-align: center;"><div style="font-size: 3rem; margin-bottom: 1rem;">📦</div><div style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">No Products Found</div><div style="color: #6b7280;">Try adjusting your search or filter criteria.</div></div>'
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    key-field="productID"
+    :no-records="{ template: templateString }"
+    :height="300"
+  />
+</template>
+```
+
+### No Records Template (Function)
+
+Use a function to generate the no records template dynamically:
+
+```vue
+<script setup lang="ts">
+const templateFunction = () => {
+  const timestamp = new Date().toLocaleString()
+  return `<div style="padding: 2rem; text-align: center;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+    <div style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">No Products Available</div>
+    <div style="color: #6b7280; margin-bottom: 1rem;">The product catalog is currently empty.</div>
+    <div style="font-size: 0.875rem; color: #9ca3af;">Last checked: ${timestamp}</div>
+  </div>`
+}
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    key-field="productID"
+    :no-records="{ template: templateFunction }"
+    :height="300"
+  />
+</template>
+```
+
+### No Records Template (Direct)
+
+You can also pass a template string or function directly:
+
+```vue
+<script setup lang="ts">
+// Direct string template
+const directTemplate = '<div style="padding: 2rem; text-align: center; color: #6b7280;"><strong>No data available</strong></div>'
+
+// Direct function template
+const directTemplateFunction = () => {
+  return '<div style="padding: 2rem; text-align: center;"><div style="font-size: 2rem; margin-bottom: 1rem;">🚫</div><div style="font-weight: 600;">No records to display</div></div>'
+}
+</script>
+
+<template>
+  <!-- Using string directly -->
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    key-field="productID"
+    :no-records="directTemplate"
+    :height="300"
+  />
+  
+  <!-- Using function directly -->
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    key-field="productID"
+    :no-records="directTemplateFunction"
+    :height="300"
+  />
+</template>
+```
+
+### Disable No Records
+
+Disable the no records message by setting `noRecords: false`:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    key-field="productID"
+    :no-records="false"
+    :height="300"
+  />
+</template>
+```
+
+### Available noRecords Prop Values
+
+- `noRecords: true` - Enable default message (uses `messages.noRecords`)
+- `noRecords: false` - Disable no records message
+- `noRecords: string` - Use string as HTML template
+- `noRecords: () => string` - Use function to generate HTML template
+- `noRecords: { message: string }` - Use custom message text
+- `noRecords: { template: string }` - Use string as HTML template
+- `noRecords: { template: () => string }` - Use function to generate HTML template
+
+### Notes
+
+- Templates are rendered as HTML using `v-html`, so you can use any HTML markup.
+- If no template is provided and `noRecords` is `true`, the default message from `messages.noRecords` is used.
+- The template function is called whenever the grid needs to render the no records message.
+- You can combine templates with custom messages for more flexibility.
+
+---
+
 ## Virtual scroll
 
 Enable `:virtual="true"` to render only the visible portion of the grid. Control the viewport height and row height to fine-tune performance:
