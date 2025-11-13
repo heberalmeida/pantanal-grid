@@ -18,6 +18,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/aggregates', component: () => import('./pages/AggregatesPage.vue') },
   { path: '/server', component: () => import('./pages/ServerSidePage.vue') },
   { path: '/grouping', component: () => import('./pages/GroupingPage.vue') },
+  { path: '/grouping-basics', component: () => import('./pages/GroupingBasicsPage.vue') },
   { path: '/table-only', component: () => import('./pages/TableOnlyPage.vue') },
   { path: '/pagination', component: () => import('./pages/PaginationShowcase.vue') },
   { path: '/pagination/standalone', component: () => import('./pages/PaginationStandalonePage.vue') },
