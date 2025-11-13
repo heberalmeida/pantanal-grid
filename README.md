@@ -2,7 +2,9 @@
 
 A feature-rich data grid for **Vue 3** applications. Pantanal Grid ships with a Vite/Tailwind playground, supports both client-side and server-side data flows, exposes a typed API, and includes quality-of-life features such as keyboard navigation, persisted state, virtual scrolling, grouping, and internationalization.
 
-👉 **Live demo:** [https://heberalmeida.github.io/pantanal-grid/](https://heberalmeida.github.io/pantanal-grid/)
+👉 **Live demo:** [https://heberalmeida.github.io/pantanal-grid/](https://heberalmeida.github.io/pantanal-grid/)  
+📚 **Documentation:** [https://heberalmeida.github.io/pantanal-grid-docs/](https://heberalmeida.github.io/pantanal-grid-docs/)  
+📦 **NPM Package:** [@pantanal/grid](https://www.npmjs.com/package/@pantanal/grid)
 
 ---
 
@@ -12,7 +14,8 @@ A feature-rich data grid for **Vue 3** applications. Pantanal Grid ships with a 
 pantanal-grid/
 ├─ packages/
 │  └─ pantanal-grid       # source code of the published @pantanal/grid package
-└─ playground/            # Vite + Vue 3 playground showcasing usage scenarios
+├─ playground/            # Vite + Vue 3 playground showcasing usage scenarios
+└─ docs/                  # VitePress documentation site
 ```
 
 ## Requirements
@@ -39,6 +42,9 @@ The playground aliases `@pantanal/grid` to the local source, so every change you
 yarn test           # executes vitest on the library workspace
 yarn build          # builds the library (vite) and type definitions (vue-tsc)
 yarn workspace pantanal-grid-playground build   # builds the playground itself
+yarn docs:dev       # starts VitePress dev server for documentation
+yarn docs:build     # builds the documentation site
+yarn docs:preview   # previews the built documentation
 yarn workspace @pantanal/grid lint              # run eslint (if configured)
 ```
 
@@ -233,7 +239,9 @@ Pantanal Grid emits the following events for integration with parent components:
 |--------------------------|--------------------------------------------------------|
 | Install dependencies     | `yarn`                                                 |
 | Run playground           | `yarn dev`                                             |
+| Run docs locally         | `yarn docs:dev`                                        |
 | Build library            | `yarn build`                                           |
+| Build docs               | `yarn docs:build`                                      |
 | Run tests                | `yarn test`                                            |
 | Format / lint            | `yarn workspace @pantanal/grid lint`                   |
 | Prepare release          | `yarn changeset` then `yarn changeset version`         |
