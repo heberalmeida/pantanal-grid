@@ -24,9 +24,8 @@ yarn dev
 
 - **Getting started** — Basic grid, table-only layout, responsive cards and the new setup guide.
 - **Data sources** — Static data, REST, GraphQL and server-side pagination demos.
-- **UX & Visuals** — Styled table, image gallery, grouping, locked columns, virtual scroll, pagination variants and
-  custom cell slots.
-- **Internationalization** — Built-in locales (en/es) plus a fully custom locale example.
+- **UX & Visuals** — Styled table, image gallery, grouping basics (drag-and-drop), aggregates, locked columns, virtual scrolling, virtualization, pagination variants and custom cell slots.
+- **Internationalization** — Built-in locales (en/es/pt) plus a fully custom locale example.
 
 Every page uses the public API of the component. Toggle between themes using the header picker, inspect the source code
 with the “View code” expanders and combine the snippets to build your own grid experiences.

@@ -98,11 +98,12 @@ const columns: ColumnDef[] = [
 - Client-side pagination + server-side mode (`:serverSide="true"`)
 - Column resize and reorder (drag & drop)
 - Keyboard navigation (arrow keys + focus outline)
-- Virtual scroll for large datasets
+- Virtual scrolling for large datasets (100,000+ rows)
 - Pinned and locked columns (left/right) with optional sticky shadows
 - Persisted state (sort, filter, page, order, widths) via `persistStateKey`
 - Internationalization (en, es, pt) with pluggable messages
-- Grouping with aggregations and expandable tree nodes
+- Grouping with drag-and-drop UI, aggregations and expandable tree nodes
+- Aggregates (sum, avg, min, max, count) with customizable templates
 
 ---
 
@@ -631,29 +632,61 @@ const customMessages = {
 
 ---
 
-## Virtual scroll
+## Virtual scrolling
 
-Enable `:virtual="true"` to render only the visible portion of the grid. Control the viewport height and row height to fine-tune performance:
+Virtual scrolling is an alternative to paging and optimizes grid performance when displaying huge volumes of data. Enable it using `scrollable-virtual`, `virtual`, or `scrollable: { virtual: true }`:
 
 ```vue
 <PantanalGrid
   :rows="items"
   :columns="columns"
-  :virtual="true"
-  :height="420"
+  scrollable-virtual
+  :height="600"
+  :page-size="20"
   :row-height="44"
 />
 ```
+
+**Features:**
+- Renders only visible rows (typically 20-50 rows)
+- Smooth scrolling performance with 100,000+ records
+- Works with both local and remote data
+- Compatible with sorting, filtering, and inline editing
+- Supports custom row heights
 
 ---
 
 ## Grouping & aggregations
 
-Pantanal Grid supports multi-level grouping with optional aggregations and group footers. The following example groups products by category and brand while calculating counts and sums:
+Pantanal Grid supports multi-level grouping with drag-and-drop UI, optional aggregations, and group footers.
+
+### Drag-and-Drop Grouping
+
+Enable `groupable` to allow users to drag column headers to a drop zone for grouping:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  groupable
+  key-field="id"
+/>
+```
+
+**Features:**
+- Drag column headers to drop zone to group by that column
+- Multiple column grouping support
+- Reorder groups by dragging badges
+- Remove groups with × button
+- Column-level control (`groupable: false` on specific columns)
+
+### Programmatic Grouping
+
+You can also set groups programmatically:
 
 ```vue
 <script setup lang="ts">
-import { PantanalGrid, type GroupDescriptor } from '@pantanal/grid'
+import { PantanalGrid, type GroupDescriptor, type AggregateName } from '@pantanal/grid'
 import '@pantanal/grid/styles.css'
 
 const rows = [
@@ -675,7 +708,10 @@ const group: GroupDescriptor[] = [
   { field: 'brand', dir: 'asc' }
 ]
 
-const aggregates = { price: ['sum', 'avg'], id: ['count'] } as const
+const aggregates: Record<string, AggregateName[]> = {
+  price: ['sum', 'avg'],
+  id: ['count']
+}
 </script>
 
 <template>
@@ -690,6 +726,25 @@ const aggregates = { price: ['sum', 'avg'], id: ['count'] } as const
   />
 </template>
 ```
+
+### Aggregates
+
+Calculate aggregates (sum, avg, min, max, count) for grouped or ungrouped data:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :aggregates="{ price: ['sum', 'avg'], stock: ['sum'], id: ['count'] }"
+/>
+```
+
+**Features:**
+- Multiple aggregate types per column
+- Custom aggregate templates
+- Group footers with aggregate values
+- Total aggregates when not grouped
+- Internationalized aggregate labels (pt, en, es)
 
 ### Tips
 
