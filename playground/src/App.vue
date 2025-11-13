@@ -153,6 +153,7 @@ const navSections = [
       { to: '/locked', label: 'Pinned columns', icon: 'table-columns' },
       { to: '/adaptive-height', label: 'Adaptive height & slots', icon: 'arrows-up-down-left-right' },
       { to: '/virtual', label: 'Virtual scroll', icon: 'rocket' },
+      { to: '/virtualization', label: 'Virtualization', icon: 'rocket' },
       { to: '/scrollable-virtual', label: 'Scrollable Virtual', icon: 'rocket' },
       { to: '/scrollable-endless', label: 'Scrollable Endless', icon: 'chevron-down' },
       { to: '/sortable-props', label: 'Sortable Props', icon: 'arrow-down-wide-short' },

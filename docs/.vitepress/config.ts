@@ -64,6 +64,7 @@ export default defineConfig({
             { text: 'Grouping Basics', link: '/examples/grouping-basics' },
             { text: 'Grouping', link: '/examples/grouping' },
             { text: 'Virtual Scrolling', link: '/examples/virtual' },
+            { text: 'Virtualization', link: '/examples/virtualization' },
             { text: 'Scrollable Props', link: '/examples/scrollable-props' },
             { text: 'Sortable Props', link: '/examples/sortable-props' },
             { text: 'Aggregates', link: '/examples/aggregates' },
