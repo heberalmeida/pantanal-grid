@@ -306,3 +306,4 @@ const detailTemplate = (row: any) => {
 
 
 
+

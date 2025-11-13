@@ -126,6 +126,7 @@ const navSections = [
   {
     title: 'Data sources',
     items: [
+      { to: '/data-binding', label: 'Data Binding', icon: 'database' },
       { to: '/data/local', label: 'Static data', icon: 'folder' },
       { to: '/data/rest', label: 'REST API', icon: 'cloud-arrow-down' },
       { to: '/data/graphql', label: 'GraphQL', icon: 'diagram-project' },

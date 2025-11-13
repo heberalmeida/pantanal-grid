@@ -175,9 +175,9 @@ const filterRowRows = ref([
   { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39, category: 'Beverages' },
   { productID: 2, productName: 'Chang', unitPrice: 17, unitsInStock: 40, category: 'Beverages' },
   { productID: 3, productName: 'Aniseed Syrup', unitPrice: 10, unitsInStock: 13, category: 'Condiments' },
-  { productID: 4, productName: "Chef Anton's Cajun Seasoning", unitPrice: 22, unitsInStock: 53, category: 'Condiments' },
-  { productID: 5, productName: "Chef Anton's Gumbo Mix", unitPrice: 21.35, unitsInStock: 0, category: 'Condiments' },
-  { productID: 6, productName: "Grandma's Boysenberry Spread", unitPrice: 25, unitsInStock: 120, category: 'Confections' },
+  { productID: 4, productName: 'Chef Anton\'s Cajun Seasoning', unitPrice: 22, unitsInStock: 53, category: 'Condiments' },
+  { productID: 5, productName: 'Chef Anton\'s Gumbo Mix', unitPrice: 21.35, unitsInStock: 0, category: 'Condiments' },
+  { productID: 6, productName: 'Grandma\'s Boysenberry Spread', unitPrice: 25, unitsInStock: 120, category: 'Confections' },
 ])
 
 const filterRowColumns: ColumnDef[] = [
@@ -239,9 +239,9 @@ const numericFilterRows = ref([
   { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39, category: 'Beverages' },
   { productID: 2, productName: 'Chang', unitPrice: 17, unitsInStock: 40, category: 'Beverages' },
   { productID: 3, productName: 'Aniseed Syrup', unitPrice: 10, unitsInStock: 13, category: 'Condiments' },
-  { productID: 4, productName: "Chef Anton's Cajun Seasoning", unitPrice: 22, unitsInStock: 53, category: 'Condiments' },
-  { productID: 5, productName: "Chef Anton's Gumbo Mix", unitPrice: 21.35, unitsInStock: 0, category: 'Condiments' },
-  { productID: 6, productName: "Grandma's Boysenberry Spread", unitPrice: 25, unitsInStock: 120, category: 'Confections' },
+  { productID: 4, productName: 'Chef Anton\'s Cajun Seasoning', unitPrice: 22, unitsInStock: 53, category: 'Condiments' },
+  { productID: 5, productName: 'Chef Anton\'s Gumbo Mix', unitPrice: 21.35, unitsInStock: 0, category: 'Condiments' },
+  { productID: 6, productName: 'Grandma\'s Boysenberry Spread', unitPrice: 25, unitsInStock: 120, category: 'Confections' },
   { productID: 7, productName: 'Uncle Bob\'s Organic Dried Pears', unitPrice: 30, unitsInStock: 15, category: 'Produce' },
   { productID: 8, productName: 'Northwoods Cranberry Sauce', unitPrice: 40, unitsInStock: 6, category: 'Condiments' },
 ])
@@ -350,9 +350,9 @@ const allServerData = ref([
   { productID: 1, productName: 'Chai', unitPrice: 18, category: 'Beverages' },
   { productID: 2, productName: 'Chang', unitPrice: 17, category: 'Beverages' },
   { productID: 3, productName: 'Aniseed Syrup', unitPrice: 10, category: 'Condiments' },
-  { productID: 4, productName: "Chef Anton's Cajun Seasoning", unitPrice: 22, category: 'Condiments' },
-  { productID: 5, productName: "Chef Anton's Gumbo Mix", unitPrice: 21.35, category: 'Condiments' },
-  { productID: 6, productName: "Grandma's Boysenberry Spread", unitPrice: 25, category: 'Confections' },
+  { productID: 4, productName: 'Chef Anton\'s Cajun Seasoning', unitPrice: 22, category: 'Condiments' },
+  { productID: 5, productName: 'Chef Anton\'s Gumbo Mix', unitPrice: 21.35, category: 'Condiments' },
+  { productID: 6, productName: 'Grandma\'s Boysenberry Spread', unitPrice: 25, category: 'Confections' },
   { productID: 7, productName: 'Uncle Bob\'s Organic Dried Pears', unitPrice: 30, category: 'Produce' },
   { productID: 8, productName: 'Northwoods Cranberry Sauce', unitPrice: 40, category: 'Condiments' },
   { productID: 9, productName: 'Mishi Kobe Niku', unitPrice: 97, category: 'Meat/Poultry' },

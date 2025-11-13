@@ -1278,6 +1278,7 @@ import { useColumnResize } from '../composables/resize'
 import { useColumnReorder } from '../composables/reorder'
 import { useKeyboardNav } from '../composables/keyboard'
 import { useVirtual } from '../composables/virtual'
+import { cleanStringValue, deepCleanStrings } from '../utils/string'
 import { useEndless } from '../composables/endless'
 import { usePersist } from '../composables/persist'
 import { useEditing } from '../composables/editing'
@@ -1397,6 +1398,7 @@ const props = withDefaults(defineProps<GridProps>(), {
   pdfProxyTarget: undefined,
   scrollableVirtual: false,
   scrollableEndless: false,
+  cleanStrings: false,
 })
 const emit = defineEmits<GridEmits>()
 const slots = useSlots()
@@ -2134,6 +2136,16 @@ function columnValue(row: unknown, column: ColumnDef, rowIndex = -1): any {
   // Apply values transform (enum/transform)
   let transformed = applyValuesTransform(raw, column.values)
   
+  // Apply string cleaning if enabled
+  if (props.cleanStrings && typeof transformed === 'string') {
+    transformed = cleanStringValue(transformed, {
+      decodeEntities: true,
+      normalizeQuotes: true,
+      preferSingleQuotes: true,
+      deep: false,
+    })
+  }
+  
   // Apply cell function if provided
   if (typeof column.cell === 'function') {
     return column.cell({ value: transformed, row: row as any, rowIndex })
@@ -2405,7 +2417,14 @@ const abortCtl = ref<AbortController | null>(null)
 
 const effectiveRows = computed<any[]>(() => {
   const hasDataProvider = props.dataProvider !== undefined && typeof props.dataProvider === 'function'
-  return hasDataProvider ? remoteRows.value : (props.rows ?? [])
+  const rawRows = hasDataProvider ? remoteRows.value : (props.rows ?? [])
+  
+  // Clean strings if enabled (for local data, clean on-the-fly)
+  if (props.cleanStrings && !hasDataProvider && rawRows.length > 0) {
+    return deepCleanStrings(rawRows)
+  }
+  
+  return rawRows
 })
 
 const isServerLike = computed(() => (props.dataProvider !== undefined && typeof props.dataProvider === 'function') || !!props.serverSide)
@@ -3781,8 +3800,13 @@ async function refresh() {
     
     // Only update if the request wasn't aborted (e.g., by a newer request)
     if (!ctl.signal.aborted) {
-      remoteRows.value = rows || []
-      remoteTotal.value = typeof total === 'number' ? total : rows?.length ?? 0
+      // Clean strings if enabled
+      const cleanedRows = props.cleanStrings && rows
+        ? deepCleanStrings(rows)
+        : (rows || [])
+      
+      remoteRows.value = cleanedRows
+      remoteTotal.value = typeof total === 'number' ? total : cleanedRows?.length ?? 0
       // Emit databound event after data is loaded
       emit('databound', remoteRows.value)
     }
@@ -4579,11 +4603,15 @@ async function exportToCSV() {
             })
             
             if (result.rows && result.rows.length > 0) {
-              allData.push(...result.rows)
+              // Clean strings if enabled
+              const cleanedRows = props.cleanStrings 
+                ? deepCleanStrings(result.rows)
+                : result.rows
+              allData.push(...cleanedRows)
               totalRecords = result.total || allData.length
               
               // Check if we have all data
-              if (result.rows.length < pageSize || allData.length >= totalRecords) {
+              if (cleanedRows.length < pageSize || allData.length >= totalRecords) {
                 hasMore = false
               } else {
                 currentPage++
@@ -4753,11 +4781,15 @@ async function exportToExcel() {
             })
             
             if (result.rows && result.rows.length > 0) {
-              allData.push(...result.rows)
+              // Clean strings if enabled
+              const cleanedRows = props.cleanStrings 
+                ? deepCleanStrings(result.rows)
+                : result.rows
+              allData.push(...cleanedRows)
               totalRecords = result.total || allData.length
               
               // Check if we have all data
-              if (result.rows.length < pageSize || allData.length >= totalRecords) {
+              if (cleanedRows.length < pageSize || allData.length >= totalRecords) {
                 hasMore = false
               } else {
                 currentPage++

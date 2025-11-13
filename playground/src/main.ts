@@ -58,7 +58,8 @@ import {
   faComment,
   faFilePdf,
   faFileCircleXmark,
-  faBookOpen
+  faBookOpen,
+  faDatabase
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -116,7 +117,8 @@ library.add(
   faComment,
   faFilePdf,
   faFileCircleXmark,
-  faBookOpen
+  faBookOpen,
+  faDatabase
 )
 
 createApp(App)

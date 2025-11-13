@@ -223,11 +223,20 @@ async function loadData(page = 1, pageSize = 100) {
   loading.value = true
   try {
     const skip = (page - 1) * pageSize
-    const response = await fetch(\`https://your-api.com/orders?limit=\${pageSize}&skip=\${skip}\`)
+    // Using public REST API: https://dummyjson.com/products
+    const response = await fetch(\`https://dummyjson.com/products?limit=\${pageSize}&skip=\${skip}\`)
     const data = await response.json()
-    rows.value = data.items
+    // Transform products to orders format
+    rows.value = (data.products || []).map((p: any, idx: number) => ({
+      OrderID: p.id || (skip + idx + 1),
+      ShipName: p.title || \`Company \${idx % 5 + 1}\`,
+      Freight: p.price || Math.round(Math.random() * 1000 * 100) / 100,
+      OrderDate: new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
+      ShipCity: ['Seattle', 'Tacoma', 'Kirkland', 'Redmond', 'London', 'Philadelphia', 'New York', 'Boston'][idx % 8],
+    }))
   } catch (error) {
     console.error('Error:', error)
+    rows.value = []
   } finally {
     loading.value = false
   }

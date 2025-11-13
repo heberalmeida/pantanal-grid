@@ -77,6 +77,7 @@ export default defineConfig({
         {
           text: 'Data Sources',
           items: [
+            { text: 'Data Binding', link: '/examples/data-binding' },
             { text: 'REST API', link: '/examples/data-rest' },
             { text: 'GraphQL', link: '/examples/data-graphql' },
             { text: 'WebSocket', link: '/examples/data-websocket' }

@@ -110,6 +110,7 @@ const columns: ColumnDef[] = [
 - Internationalization (en, es, pt) with pluggable messages
 - Grouping with drag-and-drop UI, aggregations and expandable tree nodes
 - Aggregates (sum, avg, min, max, count) with customizable templates
+- Flexible data binding: Local arrays, REST APIs, GraphQL, WebSocket, and offline mode
 
 ---
 
@@ -252,6 +253,79 @@ Calculate aggregates (sum, avg, min, max, count) for grouped or ungrouped data:
 - Use the built-in footer buttons (or `toggleGroup` event) to expand/collapse all groups at once.
 - For server-side grouping, compute aggregates on the backend and feed the grid with pre-grouped rows.
 - See [Grouping Basics Examples](/examples/grouping-basics) and [Aggregates Examples](/examples/aggregates) for more details.
+
+---
+
+## Data Binding
+
+Pantanal Grid supports flexible data binding to various data sources:
+
+### Local Data Arrays
+
+The simplest way to provide data is using a local array. All operations are performed client-side:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  key-field="id"
+/>
+```
+
+### Remote Data Services (REST)
+
+Use the `dataProvider` prop to fetch data from REST APIs:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :data-provider="dataProvider"
+  server-side
+  key-field="id"
+/>
+```
+
+### GraphQL
+
+Bind to GraphQL services with queries and mutations:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :data-provider="graphqlDataProvider"
+  server-side
+  key-field="productID"
+/>
+```
+
+### WebSocket (Real-time)
+
+Connect to WebSocket servers for real-time updates:
+
+```vue
+<PantanalGrid
+  :rows="wsRows"
+  :columns="columns"
+  key-field="id"
+/>
+```
+
+### Offline Mode
+
+Work offline with localStorage persistence:
+
+```vue
+<PantanalGrid
+  :rows="offlineRows"
+  :columns="columns"
+  key-field="id"
+  editable="inline"
+/>
+```
+
+See [Data Binding Examples](/examples/data-binding) for complete examples.
 
 ---
 
