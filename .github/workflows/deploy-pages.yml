@@ -43,6 +43,18 @@ jobs:
           # SPA fallback: 404.html -> index.html
           cp dist/index.html dist/404.html
 
+      - name: Build docs
+        working-directory: ./docs
+        run: |
+          yarn build
+          # Copy docs to docs subdirectory
+          mkdir -p ../playground/dist/docs
+          cp -r .vitepress/dist/* ../playground/dist/docs/
+          # Create 404.html for docs SPA fallback
+          if [ -f ../playground/dist/docs/index.html ]; then
+            cp ../playground/dist/docs/index.html ../playground/dist/docs/404.html
+          fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

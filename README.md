@@ -3,7 +3,7 @@
 A feature-rich data grid for **Vue 3** applications. Pantanal Grid ships with a Vite/Tailwind playground, supports both client-side and server-side data flows, exposes a typed API, and includes quality-of-life features such as keyboard navigation, persisted state, virtual scrolling, grouping, and internationalization.
 
 👉 **Live demo:** [https://heberalmeida.github.io/pantanal-grid/](https://heberalmeida.github.io/pantanal-grid/)  
-📚 **Documentation:** [https://heberalmeida.github.io/pantanal-grid-docs/](https://heberalmeida.github.io/pantanal-grid-docs/)  
+📚 **Documentation:** [https://heberalmeida.github.io/pantanal-grid/docs/](https://heberalmeida.github.io/pantanal-grid/docs/)  
 📦 **NPM Package:** [@pantanal/grid](https://www.npmjs.com/package/@pantanal/grid)
 
 ---

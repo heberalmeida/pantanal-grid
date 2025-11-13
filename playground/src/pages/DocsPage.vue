@@ -12,7 +12,7 @@
       <h2 class="text-2xl font-semibold">Quick Links</h2>
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/getting-started"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/getting-started"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -23,7 +23,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/api/grid"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/api/grid"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -34,7 +34,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/examples/basic"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/examples/basic"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -51,7 +51,7 @@
       <h2 class="text-2xl font-semibold">Guides</h2>
       <div class="grid gap-4 md:grid-cols-2">
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/installation"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/installation"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -60,7 +60,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/sorting"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/sorting"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -69,7 +69,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/filtering"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/filtering"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -78,7 +78,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/pagination"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/pagination"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -87,7 +87,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/grouping"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/grouping"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -96,7 +96,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/selection"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/selection"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -105,7 +105,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/virtual-scrolling"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/virtual-scrolling"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -114,7 +114,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/server-side"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/server-side"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -123,7 +123,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/editing"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/editing"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -132,7 +132,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/i18n"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/i18n"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -141,7 +141,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/export"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/export"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -150,7 +150,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/guide/templates"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/guide/templates"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -165,7 +165,7 @@
       <h2 class="text-2xl font-semibold">API Reference</h2>
       <div class="grid gap-4 md:grid-cols-2">
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/api/grid"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/api/grid"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -174,7 +174,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/api/column"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/api/column"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -183,7 +183,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/api/pagination"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/api/pagination"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -192,7 +192,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/api/messages"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/api/messages"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
@@ -201,7 +201,7 @@
         </a>
 
         <a
-          href="https://heberalmeida.github.io/pantanal-grid/api/types"
+          href="https://heberalmeida.github.io/pantanal-grid/docs/api/types"
           target="_blank"
           class="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900/75"
         >
