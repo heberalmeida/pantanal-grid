@@ -1,0 +1,62 @@
+:root {
+  --vp-c-brand: #0ea5e9;
+  --vp-c-brand-light: #38bdf8;
+  --vp-c-brand-lighter: #7dd3fc;
+  --vp-c-brand-dark: #0284c7;
+  --vp-c-brand-darker: #0369a1;
+}
+
+/* Grid preview container */
+.grid-preview {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  background: var(--vp-c-bg);
+}
+
+/* Code block styling */
+.vp-code-group {
+  margin: 1.5rem 0;
+}
+
+/* Example container */
+.example-container {
+  margin: 2rem 0;
+}
+
+.example-preview {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: var(--vp-c-bg-soft);
+  min-width: 800px;
+  width: 100%;
+}
+
+/* Force desktop mode for grids in examples */
+.example-preview :deep(.v3grid) {
+  min-width: 100%;
+}
+
+.example-preview :deep(.v3grid--cards) {
+  display: table !important;
+}
+
+.example-preview :deep(.v3grid__body) {
+  display: table-row-group !important;
+}
+
+.example-preview :deep(.v3grid__row) {
+  display: table-row !important;
+}
+
+.example-preview :deep(.v3grid__cell) {
+  display: table-cell !important;
+}
+
+.example-code {
+  margin-top: 1.5rem;
+}
+

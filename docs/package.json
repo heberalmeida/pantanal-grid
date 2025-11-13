@@ -1,0 +1,17 @@
+{
+  "name": "pantanal-grid-docs",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.5.0",
+    "vue": "^3.4.38"
+  },
+  "dependencies": {
+     "@pantanal/grid": "link:../packages/pantanal-grid"
+  }
+}
