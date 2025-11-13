@@ -2,7 +2,6 @@
 
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
-import { CodeGroup, CodeGroupItem } from 'vitepress/dist/client/theme-default/components'
 import DataRestExample from './components/DataRestExample.vue'
 </script>
 
@@ -10,10 +9,11 @@ Demonstrates fetching data from a REST API endpoint using Pantanal Grid.
 
 <ExamplePreview>
   <DataRestExample />
-  <template #code>
-    <CodeGroup>
-      <CodeGroupItem title="Vue" active>
-```plaintext
+</ExamplePreview>
+
+## Code
+
+```vue
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
@@ -46,7 +46,7 @@ async function fetchData() {
 onMounted(() => {
   fetchData()
 })
-<\/script>
+</script>
 
 <template>
   <PantanalGrid
@@ -58,12 +58,8 @@ onMounted(() => {
     responsive="table"
     :height="400"
   />
-<\/template>
+</template>
 ```
-      </CodeGroupItem>
-    </CodeGroup>
-  </template>
-</ExamplePreview>
 
 ## Features
 

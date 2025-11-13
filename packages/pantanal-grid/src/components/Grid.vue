@@ -281,8 +281,8 @@
       </div>
 
       <!-- BODY (VIRTUAL) -->
-      <div v-if="props.virtual" :style="{ height: props.height + 'px', overflowY: 'auto', overflowX: 'hidden' }"
-        @scroll="onScroll" 
+      <div v-if="isVirtualEnabled" :style="{ height: props.height + 'px', overflowY: 'auto', overflowX: 'hidden' }"
+        @scroll="onScrollHandler" 
         @keydown="handleBodyKeydown" 
         @focus="props.navigatable && handleBodyFocus"
         :tabindex="props.navigatable || props.allowCopy ? 0 : undefined">
@@ -347,6 +347,76 @@
           </div>
         </div>
         <div :style="{ height: bottomPad + 'px' }"></div>
+      </div>
+
+      <!-- BODY (ENDLESS) -->
+      <div v-else-if="isEndlessEnabled" :style="{ height: props.height + 'px', overflowY: 'auto', overflowX: 'hidden' }"
+        @scroll="onScrollHandler" 
+        @keydown="handleBodyKeydown" 
+        @focus="props.navigatable && handleBodyFocus"
+        :tabindex="props.navigatable || props.allowCopy ? 0 : undefined">
+        <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
+          :class="props.striped && r % 2 === 1 ? 'v3grid__row--alt' : ''"
+          :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? bodyCols : columns) }">
+          <div v-if="props.selectable" class="v3grid__cell" @click.stop>
+            <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
+          </div>
+          <div v-if="isGrouped" class="v3grid__cell"></div>
+          <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
+            :style="[pinStyle(c._idx)]" 
+            :tabindex="props.navigatable ? (isFocusedRow(r) && focusCol === c._idx ? 0 : -1) : undefined"
+            :data-focus="props.navigatable && isFocusedRow(r) && focusCol === c._idx"
+            @click="handleCellClick(row, c, r, i)"
+            @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
+            @focus="props.navigatable && handleCellFocus(r, c._idx)">
+            <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+              :name="columnSlotPrimary(c)"
+              :column="c"
+              :row="row"
+              :value="columnValue(row, c, r)"
+              :rowIndex="r"
+              :columnIndex="i"
+            />
+            <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
+              :name="columnSlotSecondary(c)"
+              :column="c"
+              :row="row"
+              :value="columnValue(row, c, r)"
+              :rowIndex="r"
+              :columnIndex="i"
+            />
+            <TemplateRenderer v-else-if="c.template"
+              :template="c.template!"
+              :payload="{ column: c, row, value: columnValue(row, c, r), rowIndex: r, columnIndex: i }"
+            />
+            <template v-else-if="hasCommands(c.command)">
+              <div class="v3grid__command-cell">
+                <template v-for="(cmd, cmdIdx) in getCommandArray(c.command)" :key="cmdIdx">
+                  <button
+                    v-if="shouldShowCommand(cmd, row, c)"
+                    @click.stop="handleCommand(cmd, row, c)"
+                    class="v3grid__btn--command"
+                    :class="getCommandClasses(cmd, c)">
+                    <span v-if="getCommandIconClass(cmd, row, c)" :class="getCommandIconClass(cmd, row, c)"></span>
+                    <span v-html="getCommandContent(cmd, row, c)"></span>
+                  </button>
+                </template>
+              </div>
+            </template>
+            <slot v-else name="cell"
+              :column="c"
+              :row="row"
+              :value="columnValue(row, c, r)"
+              :rowIndex="r"
+              :columnIndex="i">
+              <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, r), c, row as any)"></span>
+              <span v-else>{{ formatColumnValue(columnValue(row, c, r), c, row as any) }}</span>
+            </slot>
+          </div>
+        </div>
+        <div v-if="endlessLoading" class="v3grid__loading" style="padding: 1rem; text-align: center;">
+          Loading...
+        </div>
       </div>
 
       <!-- BODY (NÃO VIRTUAL) -->
@@ -1135,6 +1205,7 @@ import { useColumnResize } from '../composables/resize'
 import { useColumnReorder } from '../composables/reorder'
 import { useKeyboardNav } from '../composables/keyboard'
 import { useVirtual } from '../composables/virtual'
+import { useEndless } from '../composables/endless'
 import { usePersist } from '../composables/persist'
 import { useEditing } from '../composables/editing'
 import { getMessages } from '../i18n/messages'
@@ -1250,6 +1321,8 @@ const props = withDefaults(defineProps<GridProps>(), {
   pdfForceProxy: false,
   pdfProxyUrl: undefined,
   pdfProxyTarget: undefined,
+  scrollableVirtual: false,
+  scrollableEndless: false,
 })
 const emit = defineEmits<GridEmits>()
 const slots = useSlots()
@@ -2286,10 +2359,42 @@ function formatPageableDisplay(template: string): string {
 
 /** VIRTUAL vs padrão */
 const allRowsRef = () => sorted.value
-const { onScroll, slice, topPad, bottomPad, start } =
+
+// Determine if virtual scrolling should be enabled
+const isVirtualEnabled = computed(() => {
+  if (props.virtual) return true
+  if (props.scrollableVirtual) return true
+  if (typeof props.scrollable === 'object' && props.scrollable?.virtual) return true
+  return false
+})
+
+// Determine if endless scrolling should be enabled
+const isEndlessEnabled = computed(() => {
+  if (props.scrollableEndless) return true
+  if (typeof props.scrollable === 'object' && props.scrollable?.endless) return true
+  return false
+})
+
+// Virtual scrolling composable
+const { onScroll: onVirtualScroll, slice, topPad, bottomPad, start } =
   useVirtual(allRowsRef, props.rowHeight!, props.height!)
+
+// Endless scrolling composable
+const { onScroll: onEndlessScroll, visibleRows: endlessRows, hasMore: endlessHasMore, isLoading: endlessLoading } =
+  useEndless(allRowsRef, props.rowHeight!, props.height!, props.pageSize!, props.pageSize!)
+
+// Combined scroll handler
+const onScrollHandler = (e: Event) => {
+  if (isVirtualEnabled.value) {
+    onVirtualScroll(e)
+  } else if (isEndlessEnabled.value) {
+    onEndlessScroll(e)
+  }
+}
+
 const visibleRows = computed(() => {
-  if (props.virtual) return slice.value
+  if (isVirtualEnabled.value) return slice.value
+  if (isEndlessEnabled.value) return endlessRows.value
   if (isGrouped.value) return paginate(flatNodes.value as any[], page.value, pageSize.value)
   // When using dataProvider, the data is already paginated on the server
   // When using serverSide without dataProvider, the data is already paginated
@@ -2298,7 +2403,7 @@ const visibleRows = computed(() => {
   return (props.serverSide || hasDataProvider) ? sorted.value : paginate(sorted.value, page.value, pageSize.value)
 })
 
-const autoHeightEnabled = computed(() => !!props.autoHeight && !props.virtual)
+const autoHeightEnabled = computed(() => !!props.autoHeight && !isVirtualEnabled.value && !isEndlessEnabled.value)
 const autoHeightRowCount = computed(() => {
   if (!autoHeightEnabled.value) return 0
   const list = visibleRows.value

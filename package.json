@@ -3,11 +3,15 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "playground"
+    "playground",
+    "docs"
   ],
   "scripts": {
     "dev": "yarn workspace pantanal-grid-playground dev",
     "build": "yarn workspace @pantanal/grid build",
+    "docs:dev": "yarn workspace pantanal-grid-docs dev",
+    "docs:build": "yarn workspace pantanal-grid-docs build",
+    "docs:preview": "yarn workspace pantanal-grid-docs preview",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "changeset publish",

@@ -2,7 +2,6 @@
 
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
-import { CodeGroup, CodeGroupItem } from 'vitepress/dist/client/theme-default/components'
 import DataWebSocketExample from './components/DataWebSocketExample.vue'
 </script>
 
@@ -10,10 +9,11 @@ Demonstrates real-time data updates using WebSocket with Pantanal Grid.
 
 <ExamplePreview>
   <DataWebSocketExample />
-  <template #code>
-    <CodeGroup>
-      <CodeGroupItem title="Vue" active>
-```plaintext
+</ExamplePreview>
+
+## Code
+
+```vue
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
@@ -65,7 +65,7 @@ onMounted(() => {
 onUnmounted(() => {
   ws.value?.close()
 })
-<\/script>
+</script>
 
 <template>
   <div>
@@ -83,12 +83,8 @@ onUnmounted(() => {
       :height="400"
     />
   </div>
-<\/template>
+</template>
 ```
-      </CodeGroupItem>
-    </CodeGroup>
-  </template>
-</ExamplePreview>
 
 ## WebSocket Message Format
 

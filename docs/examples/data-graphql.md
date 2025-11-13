@@ -2,7 +2,6 @@
 
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
-import { CodeGroup, CodeGroupItem } from 'vitepress/dist/client/theme-default/components'
 import DataGraphQLExample from './components/DataGraphQLExample.vue'
 </script>
 
@@ -10,10 +9,11 @@ Demonstrates fetching data from a GraphQL API using Pantanal Grid.
 
 <ExamplePreview>
   <DataGraphQLExample />
-  <template #code>
-    <CodeGroup>
-      <CodeGroupItem title="Vue" active>
-```plaintext
+</ExamplePreview>
+
+## Code
+
+```vue
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
@@ -61,7 +61,7 @@ async function fetchData() {
 onMounted(() => {
   fetchData()
 })
-<\/script>
+</script>
 
 <template>
   <PantanalGrid
@@ -73,12 +73,8 @@ onMounted(() => {
     responsive="table"
     :height="400"
   />
-<\/template>
+</template>
 ```
-      </CodeGroupItem>
-    </CodeGroup>
-  </template>
-</ExamplePreview>
 
 ## Using with Apollo Client
 

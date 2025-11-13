@@ -282,6 +282,10 @@ export interface GridProps<T = Row> {
     virtual?: boolean
     endless?: boolean
   }
+  
+  // Scrollable props (kebab-case compatible)
+  scrollableVirtual?: boolean
+  scrollableEndless?: boolean
 
   persistStateKey?: string
 
