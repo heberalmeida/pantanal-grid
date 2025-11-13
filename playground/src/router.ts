@@ -13,6 +13,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/virtual', component: () => import('./pages/VirtualPage.vue') },
   { path: '/scrollable-virtual', component: () => import('./pages/ScrollableVirtualPage.vue') },
   { path: '/scrollable-endless', component: () => import('./pages/ScrollableEndlessPage.vue') },
+  { path: '/sortable-props', component: () => import('./pages/SortablePropsPage.vue') },
   { path: '/server', component: () => import('./pages/ServerSidePage.vue') },
   { path: '/grouping', component: () => import('./pages/GroupingPage.vue') },
   { path: '/table-only', component: () => import('./pages/TableOnlyPage.vue') },
