@@ -86,6 +86,12 @@ export interface Messages {
   pageablePrevious?: string
   pageableRefresh?: string
   pageableMorePages?: string
+  // Aggregate labels
+  aggregateSum?: string
+  aggregateAvg?: string
+  aggregateMin?: string
+  aggregateMax?: string
+  aggregateCount?: string
 }
 
 export interface ColumnTemplateContext<T = Row> {

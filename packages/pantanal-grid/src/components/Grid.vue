@@ -814,6 +814,24 @@
                 </div>
               </template>
             </template>
+            <!-- Footer row for aggregates (when not grouped) -->
+            <template v-if="!isGrouped && props.aggregates && Object.keys(props.aggregates).length > 0">
+              <div class="v3grid__row v3grid__footer-row"
+                :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? headerLevels.leafColumns : columns) }">
+                <div v-if="props.selectable" class="v3grid__cell"></div>
+                <template v-for="(c, i) in unlockedCols" :key="c._idx">
+                  <div v-if="c.selectable" class="v3grid__cell"></div>
+                  <div v-else class="v3grid__cell v3grid__footer-cell" :class="[pinClass(c._idx)]"
+                    :style="[pinStyle(c._idx)]">
+                    <span v-if="c.footerTemplate || (c.aggregates && c.aggregates.length > 0) || (props.aggregates && props.aggregates[String(c.field)])" 
+                      v-html="renderFooterTemplate(c, allAggregates)"></span>
+                    <span v-else-if="aggTextForCell(String(c.field), allAggregates)">
+                      {{ aggTextForCell(String(c.field), allAggregates) }}
+                    </span>
+                  </div>
+                </template>
+              </div>
+            </template>
           </template>
         </template>
       </div>
@@ -909,7 +927,18 @@
           </slot>
         </div>
       </div>
-
+      <!-- Footer row for aggregates (when not grouped) -->
+      <template v-if="!isGrouped && props.aggregates && Object.keys(props.aggregates).length > 0">
+        <div class="v3grid__row v3grid__footer-row" :style="{ display: 'grid', gridTemplateColumns: lockedLeftTemplate }">
+          <div v-for="(c, i) in lockedLeftCols" :key="'f-left-' + i" class="v3grid__cell v3grid__footer-cell">
+            <span v-if="c.footerTemplate || (c.aggregates && c.aggregates.length > 0) || (props.aggregates && props.aggregates[String(c.field)])" 
+              v-html="renderFooterTemplate(c, allAggregates)"></span>
+            <span v-else-if="aggTextForCell(String(c.field), allAggregates)">
+              {{ aggTextForCell(String(c.field), allAggregates) }}
+            </span>
+          </div>
+        </div>
+      </template>
     </div>
 
     <!-- BLOCO FIXO: COLUNAS LOCKED RIGHT -->
@@ -990,6 +1019,18 @@
           </slot>
         </div>
       </div>
+      <!-- Footer row for aggregates (when not grouped) -->
+      <template v-if="!isGrouped && props.aggregates && Object.keys(props.aggregates).length > 0">
+        <div class="v3grid__row v3grid__footer-row" :style="{ display: 'grid', gridTemplateColumns: lockedRightTemplate }">
+          <div v-for="(c, i) in lockedRightCols" :key="'f-right-' + i" class="v3grid__cell v3grid__footer-cell">
+            <span v-if="c.footerTemplate || (c.aggregates && c.aggregates.length > 0) || (props.aggregates && props.aggregates[String(c.field)])" 
+              v-html="renderFooterTemplate(c, allAggregates)"></span>
+            <span v-else-if="aggTextForCell(String(c.field), allAggregates)">
+              {{ aggTextForCell(String(c.field), allAggregates) }}
+            </span>
+          </div>
+        </div>
+      </template>
 
       <!-- NO RECORDS MESSAGE -->
       <div v-if="props.noRecords !== false && visibleRows.length === 0" 
@@ -1209,7 +1250,8 @@ import { useEndless } from '../composables/endless'
 import { usePersist } from '../composables/persist'
 import { useEditing } from '../composables/editing'
 import { getMessages } from '../i18n/messages'
-import { buildGroupTree, flattenTree, type GroupDescriptor, type GroupNode } from '../composables/group'
+import { buildGroupTree, flattenTree, computeAggregates, type GroupDescriptor, type GroupNode } from '../composables/group'
+import type { AggregateName, Messages } from '../types'
 import GridPagination from './Pagination.vue'
 import PantanalColumn from './Column.vue'
 
@@ -2121,24 +2163,46 @@ function renderHeaderTemplate(column: ColumnDef): string {
   return column.headerTemplate
 }
 
-// Footer template rendering (not yet used, reserved for future implementation)
-// function renderFooterTemplate(column: ColumnDef, aggregates?: Record<string, any>): string {
-//   if (!column.footerTemplate) {
-//     // Default: show aggregate if available
-//     if (aggregates && column.field) {
-//       const agg = aggregates[String(column.field)]
-//       if (agg) {
-//         return Object.entries(agg).map(([key, value]) => `${key}: ${value}`).join(', ')
-//       }
-//     }
-//     return ''
-//   }
-//   if (typeof column.footerTemplate === 'function') {
-//     const result = column.footerTemplate(aggregates ?? {})
-//     return typeof result === 'string' ? result : ''
-//   }
-//   return column.footerTemplate
-// }
+// Footer template rendering for column footers (when not grouped)
+function renderFooterTemplate(column: ColumnDef, aggregates?: Record<string, any>): string {
+  if (!column.footerTemplate) {
+    // Default: show aggregate if available
+    if (aggregates && column.field) {
+      const fieldStr = String(column.field)
+      const agg: Record<string, number> = {}
+      // Transform aggregates from "field:fn" format to nested object
+      for (const [key, value] of Object.entries(aggregates)) {
+        if (key.startsWith(`${fieldStr}:`)) {
+          const fn = key.split(':')[1] as AggregateName
+          agg[fn] = value as number
+        }
+      }
+      if (Object.keys(agg).length > 0) {
+        return Object.entries(agg).map(([key, value]) => {
+          const aggName = key as AggName
+          return `${getAggLabel(aggName)}: ${value}`
+        }).join(', ')
+      }
+    }
+    return ''
+  }
+  if (typeof column.footerTemplate === 'function') {
+    // Transform aggregates to nested format expected by template
+    const nestedAggs: Record<string, Record<string, number>> = {}
+    if (aggregates) {
+      for (const [key, value] of Object.entries(aggregates)) {
+        if (key.includes(':')) {
+          const [field, fn] = key.split(':')
+          if (!nestedAggs[field]) nestedAggs[field] = {}
+          nestedAggs[field][fn] = value as number
+        }
+      }
+    }
+    const result = column.footerTemplate(nestedAggs)
+    return typeof result === 'string' ? result : ''
+  }
+  return column.footerTemplate
+}
 
 function renderGroupHeaderTemplate(_column: ColumnDef, group: { field: string; value: any; items: any[]; aggregates?: Record<string, any> }): string {
   // Note: column parameter is reserved for future use
@@ -2326,6 +2390,13 @@ const groupedTree = computed(() =>
 const flatNodes = computed(() =>
   !isGrouped.value ? [] : flattenTree(groupedTree.value as any[], expanded.value, props.showGroupFooters ?? true)
 )
+// Calculate aggregates for all rows when not grouped
+const allAggregates = computed(() => {
+  if (isGrouped.value || !props.aggregates || Object.keys(props.aggregates).length === 0) {
+    return {}
+  }
+  return computeAggregates(sorted.value as any[], props.aggregates)
+})
 
 // Helper functions for group node types
 function isGroupNode(row: any): row is GroupNode {
@@ -2449,7 +2520,20 @@ const nonVirtualBodyStyle = computed<CSSProperties>(() => {
 
 /** ---- helpers de agregados ---- */
 type AggName = 'sum' | 'avg' | 'min' | 'max' | 'count'
-const aggLabels: Record<AggName, string> = { sum: 'Sum', avg: 'Average', min: 'Min', max: 'Max', count: 'Count' }
+
+// Get translated aggregate labels from messages
+function getAggLabel(aggName: AggName): string {
+  const labels: Record<AggName, keyof Messages> = {
+    sum: 'aggregateSum',
+    avg: 'aggregateAvg',
+    min: 'aggregateMin',
+    max: 'aggregateMax',
+    count: 'aggregateCount'
+  }
+  const msgKey = labels[aggName]
+  const msgValue = msgs.value[msgKey]
+  return msgValue || (aggName === 'sum' ? 'Sum' : aggName === 'avg' ? 'Average' : aggName === 'min' ? 'Min' : aggName === 'max' ? 'Max' : 'Count')
+}
 
 function firstAggFor(field: string): AggName | undefined {
   const arr = (props.aggregates as Record<string, AggName[]> | undefined)?.[field]
@@ -2460,7 +2544,7 @@ function aggTextForCell(field: string, aggs: Record<string, number>): string {
   if (!a) return ''
   const v = aggs[`${field}:${a}`]
   if (v == null) return ''
-  return `${aggLabels[a]}: ${v}`
+  return `${getAggLabel(a)}: ${v}`
 }
 
 /** chaves e texto para footer em cards */
@@ -2468,11 +2552,11 @@ function aggKeys(aggs: Record<string, number>): string[] {
   return Object.keys(aggs) // ex.: ['price:sum','qty:max','count']
 }
 function aggTextForKey(key: string, aggs: Record<string, number>): string {
-  if (key === 'count') return `${aggLabels.count}: ${aggs['count'] ?? 0}`
+  if (key === 'count') return `${getAggLabel('count')}: ${aggs['count'] ?? 0}`
   const [_field, a] = key.split(':') as [string, AggName]
   const v = aggs[key]
   if (v == null) return ''
-  const label = aggLabels[a] ?? a
+  const label = getAggLabel(a)
   return `${label}: ${v}`
 }
 

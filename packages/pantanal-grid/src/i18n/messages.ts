@@ -68,6 +68,11 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     pageablePrevious: 'Página anterior',
     pageableRefresh: 'Atualizar',
     pageableMorePages: 'Mais páginas',
+    aggregateSum: 'Soma',
+    aggregateAvg: 'Média',
+    aggregateMin: 'Mínimo',
+    aggregateMax: 'Máximo',
+    aggregateCount: 'Contagem',
   },
   en: {
     total: 'Total',
@@ -136,6 +141,11 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     pageablePrevious: 'Previous page',
     pageableRefresh: 'Refresh',
     pageableMorePages: 'More pages',
+    aggregateSum: 'Sum',
+    aggregateAvg: 'Average',
+    aggregateMin: 'Min',
+    aggregateMax: 'Max',
+    aggregateCount: 'Count',
   },
   es: {
     total: 'Total',
@@ -204,6 +214,11 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     pageablePrevious: 'Página anterior',
     pageableRefresh: 'Actualizar',
     pageableMorePages: 'Más páginas',
+    aggregateSum: 'Suma',
+    aggregateAvg: 'Promedio',
+    aggregateMin: 'Mínimo',
+    aggregateMax: 'Máximo',
+    aggregateCount: 'Contar',
   },
 }
 

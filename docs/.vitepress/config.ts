@@ -65,6 +65,7 @@ export default defineConfig({
             { text: 'Virtual Scrolling', link: '/examples/virtual' },
             { text: 'Scrollable Props', link: '/examples/scrollable-props' },
             { text: 'Sortable Props', link: '/examples/sortable-props' },
+            { text: 'Aggregates', link: '/examples/aggregates' },
             { text: 'Editing', link: '/examples/editing' },
             { text: 'Server-Side', link: '/examples/server-side' },
             { text: 'Column Reorder & Resize', link: '/examples/column-management' },
@@ -122,7 +123,8 @@ export default defineConfig({
           items: [
             { text: 'Pagination', link: '/api/pagination' },
             { text: 'ScrollableProps', link: '/api/scrollable-props' },
-            { text: 'SortableProps', link: '/api/sortable-props' }
+            { text: 'SortableProps', link: '/api/sortable-props' },
+            { text: 'Aggregates', link: '/api/aggregates' }
           ]
         }
       ]

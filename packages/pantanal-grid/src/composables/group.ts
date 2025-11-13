@@ -41,7 +41,7 @@ const aggs: Record<AggregateName, (vals: number[]) => number> = {
   count: (v) => v.length
 }
 
-function computeAggregates(rows: any[], spec: AggSpec): Record<string, number> {
+export function computeAggregates(rows: any[], spec: AggSpec): Record<string, number> {
   const out: Record<string, number> = {}
   for (const [field, fns] of Object.entries(spec)) {
     const vals = rows.map(r => (r as any)[field]).filter(v => v != null) as number[]

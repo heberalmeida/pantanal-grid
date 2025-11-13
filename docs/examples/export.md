@@ -9,6 +9,7 @@ Pantanal Grid supports exporting data to Excel (CSV) and PDF formats with custom
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import ExcelExportCompleteExample from './components/ExcelExportCompleteExample.vue'
+import PdfExportCompleteExample from './components/PdfExportCompleteExample.vue'
 </script>
 
 ## Excel Export
@@ -60,10 +61,6 @@ Specify a custom file name:
 <ExamplePreview>
   <PdfExportCompleteExample />
 </ExamplePreview>
-
-<script setup>
-import PdfExportCompleteExample from './components/PdfExportCompleteExample.vue'
-</script>
 
 ### Basic Usage
 
