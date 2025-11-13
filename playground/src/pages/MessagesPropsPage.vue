@@ -109,7 +109,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { PantanalGrid, type ColumnDef, type Messages } from '@pantanal/grid'
+import { PantanalGrid, type ColumnDef, type Messages, type Row } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
 
 interface Product extends Record<string, unknown> {
@@ -264,13 +264,14 @@ const detailColumns: ColumnDef<Product>[] = [
   { field: 'unitsInStock', title: 'Units In Stock', width: 120 },
 ]
 
-const detailTemplate = (row: Product) => {
+const detailTemplate = (row: Row, _rowIndex: number) => {
+  const product = row as Product
   return `<div style="padding: 1rem;">
     <h3 style="font-weight: 600; margin-bottom: 0.5rem;">Product Details</h3>
-    <p><strong>Category:</strong> ${row.category}</p>
-    <p><strong>Unit Price:</strong> $${row.unitPrice}</p>
-    <p><strong>Units In Stock:</strong> ${row.unitsInStock}</p>
-    <p><strong>Discontinued:</strong> ${row.discontinued ? 'Yes' : 'No'}</p>
+    <p><strong>Category:</strong> ${product.category}</p>
+    <p><strong>Unit Price:</strong> $${product.unitPrice}</p>
+    <p><strong>Units In Stock:</strong> ${product.unitsInStock}</p>
+    <p><strong>Discontinued:</strong> ${product.discontinued ? 'Yes' : 'No'}</p>
   </div>`
 }
 

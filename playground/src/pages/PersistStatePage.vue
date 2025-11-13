@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { PantanalGrid, type ColumnDef, type FilterDescriptor, type Row } from '@pantanal/grid'
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef, type FilterDescriptor } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
 
 interface Customer {

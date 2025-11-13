@@ -82,9 +82,9 @@
           <col v-if="props.selectable" style="width: 52px;">
           <col v-if="isGrouped" style="width: 28px;">
           <col v-if="props.detailTemplate && !props.selectable" style="width: 28px;">
-          <col v-for="(col, idx) in bodyCols" :key="'col-' + idx" 
+          <col v-for="(_col, idx) in bodyCols" :key="'col-' + idx" 
             :style="{ width: bodyColumnWidths[idx] + 'px' }">
-        </colgroup>
+        </colgroup>                                                                                                                                                                                                   
         <thead>
           <tr v-for="(headerRow, rowIndex) in filteredHeaders" :key="'header-row-' + rowIndex">
             <!-- Global selectable column (from Grid prop) - only on first row -->
@@ -112,7 +112,7 @@
             </th>
 
             <!-- Header cells for this row -->
-            <template v-for="(headerCell, cellIndex) in headerRow" :key="'header-cell-' + rowIndex + '-' + cellIndex">
+            <template v-for="(headerCell, _cellIndex) in headerRow" :key="'header-cell-' + rowIndex + '-' + _cellIndex">
               <th 
                 class="v3grid__cell v3grid__headercell" 
                 :class="[headerCell.column.field && headerCell.column._idx != null && headerCell.column._idx >= 0 ? pinClass(headerCell.column._idx) : {}]" 
@@ -646,7 +646,7 @@
                 :style="{ 
                   gridColumn: `${1 + (props.selectable ? 1 : 0) + (isGrouped ? 1 : 0) + (props.detailTemplate && !props.selectable ? 1 : 0)} / -1`
                 }">
-                <template v-for="(c, i) in unlockedCols" :key="c._idx">
+                <template v-for="(c, _i) in unlockedCols" :key="c._idx">
                   <template v-if="String(c.field) === String(n.field)">
                     <template v-if="c.groupHeaderColumnTemplate">
                       <span v-html="renderGroupHeaderColumnTemplate(c, { field: n.field, value: n.value, items: n.items ?? [], aggregates: n.aggregates })"></span>
@@ -699,7 +699,7 @@
 
               <!-- células de footer para grupos -->
               <template v-else-if="n.type === 'footer' && (props.showGroupFooters ?? true)">
-                <div v-for="(c, i) in unlockedCols" :key="`footer-${r}-${c._idx}`" class="v3grid__cell v3grid__groupfooter">
+                <div v-for="(c, _i) in unlockedCols" :key="`footer-${r}-${c._idx}`" class="v3grid__cell v3grid__groupfooter">
                   <template v-if="c.groupFooterTemplate">
                     <span v-html="renderGroupFooterTemplate(c, { field: n.field, value: n.value, items: n.items ?? [], aggregates: n.aggregates })"></span>
                   </template>
@@ -819,7 +819,7 @@
               <div class="v3grid__row v3grid__footer-row"
                 :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? headerLevels.leafColumns : columns) }">
                 <div v-if="props.selectable" class="v3grid__cell"></div>
-                <template v-for="(c, i) in unlockedCols" :key="c._idx">
+                <template v-for="(c, _i) in unlockedCols" :key="c._idx">
                   <div v-if="c.selectable" class="v3grid__cell"></div>
                   <div v-else class="v3grid__cell v3grid__footer-cell" :class="[pinClass(c._idx)]"
                     :style="[pinStyle(c._idx)]">
@@ -2451,7 +2451,7 @@ const { onScroll: onVirtualScroll, slice, topPad, bottomPad, start } =
   useVirtual(allRowsRef, props.rowHeight!, props.height!)
 
 // Endless scrolling composable
-const { onScroll: onEndlessScroll, visibleRows: endlessRows, hasMore: endlessHasMore, isLoading: endlessLoading } =
+const { onScroll: onEndlessScroll, visibleRows: endlessRows, isLoading: endlessLoading } =
   useEndless(allRowsRef, props.rowHeight!, props.height!, props.pageSize!, props.pageSize!)
 
 // Combined scroll handler
@@ -3405,10 +3405,10 @@ const filteredHeaders = computed(() => {
   // Use headerLevels.headers as base, but we need to ensure the last row matches bodyCols exactly
   // The last row must have one cell per bodyCol, in bodyCols order
   const originalHeaders = headerLevels.value.headers
-  const maxLevel = headerLevels.value.maxLevel
+  // const _maxLevel = headerLevels.value.maxLevel // Reserved for future use
   
   // Filter headers: remove invisible columns and adjust colspans
-  const filtered = originalHeaders.map((headerRow, rowIdx) => {
+  const filtered = originalHeaders.map((headerRow, _rowIdx) => {
     return headerRow.filter(headerCell => {
       if (headerCell.column.field) {
         // Leaf column - only include if visible
@@ -3455,7 +3455,7 @@ const filteredHeaders = computed(() => {
     // Work backwards from the last row to rebuild the structure
     for (let rowIdx = lastRowIndex - 1; rowIdx >= 0; rowIdx--) {
       const rowCells: any[] = []
-      let colPos = 0
+      // let _colPos = 0 // Reserved for future use
       
       // Get all cells from the original row at this level that are visible
       const originalRow = originalHeaders[rowIdx] || []
@@ -3546,7 +3546,7 @@ const filteredHeaders = computed(() => {
   // Update all header cells to reference bodyCols correctly
   const bodyColsMap = new Map(bodyCols.value.map((c, idx) => [String(c.field), { col: c, idx }]))
   
-  const finalHeaders = filtered.map((headerRow, rowIdx) =>
+  const finalHeaders = filtered.map((headerRow, _rowIdx) =>
     headerRow.map((headerCell: any) => {
       if (headerCell.column.field) {
         const bodyColInfo = bodyColsMap.get(String(headerCell.column.field))
@@ -3572,8 +3572,8 @@ const filteredHeaders = computed(() => {
 const bodyColumnWidths = computed(() => {
   if (!headerLevels.value.hasMultiLevel) {
     return bodyCols.value.map(c => {
-      const idx = order.value.findIndex((o, i) => {
-        const col = headerLevels.value.leafColumns[i]
+      const idx = order.value.findIndex((_o, _i) => {
+        const col = headerLevels.value.leafColumns[_i]
         return col && col.field === c.field
       })
       return idx >= 0 ? effW(order.value[idx] ?? idx, c) : (c.width ? (typeof c.width === 'string' ? parseInt(c.width) || 120 : c.width) : 120)
@@ -4131,7 +4131,7 @@ function getCommandName(cmd: string | { name: string }): string {
   return typeof cmd === 'string' ? cmd : cmd.name
 }
 
-function getCommandLabel(cmd: string | { name: string; text?: string; textEdit?: string; textUpdate?: string; textCancel?: string }, row?: any, isEditing?: boolean): string {
+function getCommandLabel(cmd: string | { name: string; text?: string; textEdit?: string; textUpdate?: string; textCancel?: string }, _row?: any, isEditing?: boolean): string {
   if (isCommandObject(cmd)) {
     const cmdName = cmd.name
     // Check if row is being edited and use specific text for edit command states
@@ -4157,7 +4157,7 @@ function getCommandLabel(cmd: string | { name: string; text?: string; textEdit?:
   }
 }
 
-function getCommandContent(cmd: string | { name: string; text?: string; template?: string | ((row: any) => string); textEdit?: string; textUpdate?: string; textCancel?: string }, row: any, column?: ColumnDef): string {
+function getCommandContent(cmd: string | { name: string; text?: string; template?: string | ((row: any) => string); textEdit?: string; textUpdate?: string; textCancel?: string }, row: any, _column?: ColumnDef): string {
   if (isCommandObject(cmd)) {
     if (cmd.template) {
       if (typeof cmd.template === 'function') {
@@ -5233,8 +5233,9 @@ function validateField(_column: ColumnDef, _value: any, _row: any): boolean | st
   return true
 }
 
-// Render editor for a column
-function renderEditor(column: ColumnDef, row: any, value: any): HTMLElement | null {
+// Render editor for a column (reserved for future use)
+/*
+function _renderEditor(column: ColumnDef, row: any, value: any): HTMLElement | null {
   // If column has a custom editor function, use it
   if (column.editor && typeof column.editor === 'function') {
     const container = document.createElement('div')
@@ -5276,6 +5277,7 @@ function renderEditor(column: ColumnDef, row: any, value: any): HTMLElement | nu
   // Default: return null (no editor)
   return null
 }
+*/
 
 const persist = usePersist(props.persistStateKey)
 onMounted(() => {

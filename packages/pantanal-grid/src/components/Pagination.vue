@@ -423,24 +423,28 @@ const showEllipsis = computed(() => {
   return pagesList.length > 0 && (pagesList[0] > 1 || pagesList[pagesList.length - 1] < tp)
 })
 
-const firstItem = computed(() => {
-  if (props.total === 0) return 0
-  return (props.page - 1) * props.pageSize + 1
-})
+// Reserved for future use
+// const firstItem = computed(() => {
+//   if (props.total === 0) return 0
+//   return (props.page - 1) * props.pageSize + 1
+// })
 
-const lastItem = computed(() => {
-  if (props.total === 0) return 0
-  return Math.min(props.page * props.pageSize, props.total)
-})
+// const lastItem = computed(() => {
+//   if (props.total === 0) return 0
+//   return Math.min(props.page * props.pageSize, props.total)
+// })
 
 const pageInputValue = ref<string>('')
 
-function formatDisplayMessage(template: string): string {
+// Reserved for future use
+/*
+function _formatDisplayMessage(template: string): string {
   return template
     .replace('{0}', String(firstItem.value))
     .replace('{1}', String(lastItem.value))
     .replace('{2}', String(props.total))
 }
+*/
 
 function formatOfMessage(template: string): string {
   return template.replace('{0}', String(totalPages.value))

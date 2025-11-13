@@ -109,7 +109,7 @@ let toolbarObserver: MutationObserver | null = null
 
 onMounted(() => {
   // Use MutationObserver to detect when toolbar is rendered
-  toolbarObserver = new MutationObserver((mutations, obs) => {
+  toolbarObserver = new MutationObserver((_mutations, obs) => {
     const categorySelect = document.getElementById(categoryFilterId)
     if (categorySelect) {
       setupToolbarListeners()
@@ -187,8 +187,8 @@ const rowTemplateColumns: ColumnDef[] = [
   { field: 'employeeID', title: 'ID', width: 110 },
 ]
 
-const rowTemplate = (row: Row, rowIndex: number) => {
-  const emp = row as Employee
+const rowTemplate = (row: Row, _rowIndex: number) => {
+  const emp = row as unknown as Employee
   return `
     <tr data-uid="${emp.id}" style="background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.15) 100%); padding: 20px;">
       <td class="details" style="width: 400px;">
@@ -205,8 +205,8 @@ const rowTemplate = (row: Row, rowIndex: number) => {
   `
 }
 
-const altRowTemplate = (row: Row, rowIndex: number) => {
-  const emp = row as Employee
+const altRowTemplate = (row: Row, _rowIndex: number) => {
+  const emp = row as unknown as Employee
   return `
     <tr class="k-alt" data-uid="${emp.id}" style="background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 100%); padding: 20px;">
       <td class="details" style="width: 400px;">
@@ -283,8 +283,8 @@ const masterDetailColumns: ColumnDef[] = [
   { field: 'title', title: 'Title', width: 200 },
 ]
 
-const detailTemplate = (row: Row, rowIndex: number) => {
-  const emp = row as EmployeeWithOrders
+const detailTemplate = (row: Row, _rowIndex: number) => {
+  const emp = row as unknown as EmployeeWithOrders
   const orders = emp.orders || []
   return `
     <div style="padding: 20px; background: #f5f5f5; border-top: 2px solid #ddd;">
