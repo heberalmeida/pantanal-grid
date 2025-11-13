@@ -7,7 +7,6 @@ import ExampleCode from '../components/ExampleCode.vue'
 
 // Example 1: Local Data
 const localRows = ref<any[]>([])
-const localNextId = ref(100001)
 
 const localColumns: ColumnDef[] = [
   { field: 'Id', title: 'ID', width: 110 },
