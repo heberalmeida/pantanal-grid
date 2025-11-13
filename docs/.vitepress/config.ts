@@ -61,6 +61,7 @@ export default defineConfig({
         {
           text: 'Advanced Examples',
           items: [
+            { text: 'Grouping Basics', link: '/examples/grouping-basics' },
             { text: 'Grouping', link: '/examples/grouping' },
             { text: 'Virtual Scrolling', link: '/examples/virtual' },
             { text: 'Scrollable Props', link: '/examples/scrollable-props' },

@@ -73,6 +73,7 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     aggregateMin: 'Mínimo',
     aggregateMax: 'Máximo',
     aggregateCount: 'Contagem',
+    groupableDropZonePlaceholder: 'Arraste um cabeçalho de coluna aqui para agrupar por essa coluna',
   },
   en: {
     total: 'Total',
@@ -146,6 +147,7 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     aggregateMin: 'Min',
     aggregateMax: 'Max',
     aggregateCount: 'Count',
+    groupableDropZonePlaceholder: 'Drag a column header here to group by that column',
   },
   es: {
     total: 'Total',
@@ -219,6 +221,7 @@ const builtInMsgs: Record<'pt' | 'en' | 'es', Messages> = {
     aggregateMin: 'Mínimo',
     aggregateMax: 'Máximo',
     aggregateCount: 'Contar',
+    groupableDropZonePlaceholder: 'Arrasta un encabezado de columna aquí para agrupar por esa columna',
   },
 }
 

@@ -55,8 +55,40 @@
     <!-- HSCROLL WRAPPER -->
     <div class="v3grid__scroll" ref="hScrollEl" @scroll="onHScroll"
       :style="{ marginLeft: lockedLeftWidth + 'px', marginRight: lockedRightWidth + 'px' }">
-      <!-- Group Sort Indicator (inline above header when grouped) -->
-      <div v-if="isGrouped && !isCardMode && !props.virtual && groupState.length > 0" class="v3grid__group-sort-indicator">
+      <!-- Groupable Drop Zone (when groupable is enabled) -->
+      <div v-if="props.groupable && !isCardMode && !props.virtual" 
+        class="v3grid__groupable-dropzone"
+        :class="{ 'v3grid__groupable-dropzone--dragging': isDraggingColumn }"
+        @dragover.prevent="onGroupDropZoneDragOver"
+        @drop="onGroupDropZoneDrop"
+        @dragleave="onGroupDropZoneDragLeave">
+        <div class="v3grid__groupable-dropzone__content">
+          <span v-if="groupState.length === 0" class="v3grid__groupable-dropzone__placeholder">
+            {{ msgs.groupableDropZonePlaceholder || 'Drag a column header here to group by that column' }}
+          </span>
+          <div v-else class="v3grid__groupable-dropzone__groups">
+            <span 
+              v-for="(g, idx) in groupState" 
+              :key="`${g.field}-${idx}`" 
+              class="v3grid__groupable-dropzone__badge"
+              :draggable="true"
+              @dragstart="onGroupBadgeDragStart(g, $event)"
+              @dragend="onGroupBadgeDragEnd">
+              <span class="v3grid__groupable-dropzone__arrow">{{ g.dir === 'desc' ? '↓' : '↑' }}</span>
+              <span class="v3grid__groupable-dropzone__field">{{ getColumnTitle(g.field) }}</span>
+              <button 
+                @click.stop="removeGroupByField(g.field)"
+                class="v3grid__groupable-dropzone__close"
+                aria-label="Remove group"
+                type="button">
+                ×
+              </button>
+            </span>
+          </div>
+        </div>
+      </div>
+      <!-- Group Sort Indicator (inline above header when grouped, but not using groupable UI) -->
+      <div v-else-if="isGrouped && !isCardMode && !props.virtual && groupState.length > 0 && !props.groupable" class="v3grid__group-sort-indicator">
         <div class="v3grid__group-sort-indicator__container">
           <span 
             v-for="(g, idx) in groupState" 
@@ -124,7 +156,7 @@
                 :rowspan="headerCell.rowspan > 1 ? headerCell.rowspan : undefined"
                 :draggable="props.enableColumnReorder && headerCell.colspan === 1 && headerCell.column.field && headerCell.column._orderIndex != null && headerCell.column._orderIndex >= 0 ? true : undefined"
                 :tabindex="props.navigatable && headerCell.colspan === 1 && headerCell.column._idx != null && headerCell.column._idx >= 0 ? 0 : undefined"
-                @dragstart="props.enableColumnReorder && headerCell.column.field && headerCell.column._orderIndex != null && headerCell.column._orderIndex >= 0 && onDragStart(headerCell.column._orderIndex, $event)"
+                @dragstart="handleHeaderDragStart(headerCell.column, $event)"
                 @dragover="props.enableColumnReorder && onDragOver($event)"
                 @drop="props.enableColumnReorder && headerCell.column.field && headerCell.column._orderIndex != null && headerCell.column._orderIndex >= 0 && handleHeaderDrop(headerCell.column._orderIndex)"
                 @click="headerCell.column.field && handleHeaderCellClick(headerCell.column, $event)"
@@ -183,12 +215,12 @@
               :indeterminate="someVisibleSelected" @change="toggleAllVisible(selectableRowsOnPage)" />
           </div>
           <div v-if="!c.selectable" class="v3grid__cell v3grid__headercell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]" 
-            :draggable="props.enableColumnReorder"
+            :draggable="((props.enableColumnReorder && ((c as ColumnDef & { _orderIndex?: number })._orderIndex != null) && ((c as ColumnDef & { _orderIndex?: number })._orderIndex! >= 0)) || (props.groupable && c.field && c.groupable !== false)) ? true : undefined"
             :tabindex="props.navigatable ? 0 : undefined"
             :ref="(el) => { if (el) (el as any).__column = c }"
-            @dragstart="props.enableColumnReorder && onDragStart(c._orderIndex, $event)"
+            @dragstart="handleHeaderDragStart(c, $event)"
             @dragover="props.enableColumnReorder && onDragOver($event)"
-            @drop="props.enableColumnReorder && handleHeaderDrop(c._orderIndex)"
+            @drop="props.enableColumnReorder && ((c as ColumnDef & { _orderIndex?: number })._orderIndex != null) && handleHeaderDrop((c as ColumnDef & { _orderIndex?: number })._orderIndex!)"
             @click="handleHeaderCellClick(c, $event)"
             @keydown="props.navigatable && handleKeydown($event, undefined, c._idx)">
             <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
@@ -3054,6 +3086,112 @@ function removeGroupByField(field: string) {
   groupState.value = newGroup
   emit('update:group', newGroup)
   emit('group', { groups: newGroup })
+}
+
+// Groupable drag and drop
+const isDraggingColumn = ref(false)
+const draggedColumnField = ref<string | null>(null)
+const draggedGroupBadge = ref<GroupDescriptor | null>(null)
+
+function onGroupDropZoneDragOver(e: DragEvent) {
+  e.preventDefault()
+  e.stopPropagation()
+  if (draggedColumnField.value || draggedGroupBadge.value) {
+    isDraggingColumn.value = true
+  }
+}
+
+function onGroupDropZoneDragLeave(e: DragEvent) {
+  // Only set to false if we're actually leaving the dropzone
+  const target = e.relatedTarget as HTMLElement | null
+  const currentTarget = e.currentTarget as HTMLElement | null
+  if (!target || !currentTarget || !currentTarget.contains(target)) {
+    isDraggingColumn.value = false
+  }
+}
+
+function onGroupDropZoneDrop(e: DragEvent) {
+  e.preventDefault()
+  e.stopPropagation()
+  isDraggingColumn.value = false
+  
+  // Handle dropping a column header
+  if (draggedColumnField.value) {
+    const field = draggedColumnField.value
+    // Check if column is groupable (default to true if not specified)
+    const column = columns.value.find(c => c.field === field)
+    if (column && column.groupable === false) {
+      draggedColumnField.value = null
+      return
+    }
+    
+    // Check if already grouped
+    if (!groupState.value.find(g => g.field === field)) {
+      const newGroup: GroupDescriptor[] = [...groupState.value, { field, dir: 'asc' as const }]
+      groupState.value = newGroup
+      emit('update:group', newGroup)
+      emit('group', { groups: newGroup })
+    }
+    draggedColumnField.value = null
+  }
+  
+  // Handle reordering group badges
+  if (draggedGroupBadge.value) {
+    const draggedField = draggedGroupBadge.value.field
+    // Find drop position based on mouse position
+    const dropzone = e.currentTarget as HTMLElement
+    const badges = dropzone.querySelectorAll('.v3grid__groupable-dropzone__badge')
+    let insertIndex = badges.length
+    
+    for (let i = 0; i < badges.length; i++) {
+      const badge = badges[i] as HTMLElement
+      const rect = badge.getBoundingClientRect()
+      if (e.clientX < rect.left + rect.width / 2) {
+        insertIndex = i
+        break
+      }
+    }
+    
+    // Reorder groups
+    const currentIndex = groupState.value.findIndex(g => g.field === draggedField)
+    if (currentIndex !== -1) {
+      const newGroup: GroupDescriptor[] = [...groupState.value]
+      const [removed] = newGroup.splice(currentIndex, 1)
+      const targetIndex = insertIndex > currentIndex ? insertIndex - 1 : insertIndex
+      newGroup.splice(targetIndex, 0, removed)
+      groupState.value = newGroup
+      emit('update:group', newGroup)
+      emit('group', { groups: newGroup })
+    }
+    draggedGroupBadge.value = null
+  }
+}
+
+function onGroupBadgeDragStart(group: GroupDescriptor, e: DragEvent) {
+  draggedGroupBadge.value = group
+  e.dataTransfer?.setData('text/plain', group.field)
+  e.dataTransfer!.effectAllowed = 'move'
+}
+
+function onGroupBadgeDragEnd() {
+  draggedGroupBadge.value = null
+  isDraggingColumn.value = false
+}
+
+function handleHeaderDragStart(col: ColumnDef, e: DragEvent) {
+  if (props.groupable && col.field && col.groupable !== false) {
+    // Grouping drag
+    draggedColumnField.value = String(col.field)
+    e.dataTransfer?.setData('text/plain', String(col.field))
+    e.dataTransfer!.effectAllowed = 'move'
+    e.dataTransfer!.dropEffect = 'move'
+  } else if (props.enableColumnReorder) {
+    // Column reorder drag - use type assertion for internal property
+    const colWithIndex = col as ColumnDef & { _orderIndex?: number }
+    if (colWithIndex._orderIndex != null && colWithIndex._orderIndex >= 0) {
+      onDragStart(colWithIndex._orderIndex, e)
+    }
+  }
 }
 
 // Helper function to get row class for grouped rows with proper striped alternation

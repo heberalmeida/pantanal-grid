@@ -92,6 +92,8 @@ export interface Messages {
   aggregateMin?: string
   aggregateMax?: string
   aggregateCount?: string
+  // Groupable messages
+  groupableDropZonePlaceholder?: string
 }
 
 export interface ColumnTemplateContext<T = Row> {
@@ -310,6 +312,7 @@ export interface GridProps<T = Row> {
   group?: GroupDescriptor[]
   aggregates?: Record<string, AggregateName[]>
   showGroupFooters?: boolean
+  groupable?: boolean  // Enable drag-and-drop grouping UI
 
   responsive?: ResponsiveMode
   cardBreakpoint?: number
