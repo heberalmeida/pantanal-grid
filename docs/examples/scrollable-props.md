@@ -2,14 +2,15 @@
 
 Pantanal Grid provides advanced scrolling capabilities through `scrollable-virtual` and `scrollable-endless` props, enabling efficient handling of large datasets.
 
-<ExamplePreview>
-  <ScrollableVirtualCompleteExample />
-</ExamplePreview>
-
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import ScrollableVirtualCompleteExample from './components/ScrollableVirtualCompleteExample.vue'
+import ScrollableEndlessCompleteExample from './components/ScrollableEndlessCompleteExample.vue'
 </script>
+
+<ExamplePreview>
+  <ScrollableVirtualCompleteExample />
+</ExamplePreview>
 
 ## scrollable-virtual
 
@@ -110,10 +111,6 @@ The `scrollable-endless` prop enables infinite scrolling, progressively loading 
 <ExamplePreview>
   <ScrollableEndlessCompleteExample />
 </ExamplePreview>
-
-<script setup>
-import ScrollableEndlessCompleteExample from './components/ScrollableEndlessCompleteExample.vue'
-</script>
 
 ### Basic Usage
 
@@ -470,5 +467,4 @@ const columns: ColumnDef[] = [
 - [Virtual Scrolling Guide](/guide/virtual-scrolling) - Complete virtual scrolling documentation
 - [ScrollableProps API](/api/scrollable-props) - API reference
 - [Grid Props API](/api/grid-props) - All grid props
-- [Performance Guide](/guide/performance) - Optimization tips
 

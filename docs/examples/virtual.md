@@ -107,5 +107,4 @@ For variable row heights, omit `row-height` (performance may be slightly reduced
 ## See Also
 
 - [Server-Side Mode](/guide/server-side) - For extremely large datasets
-- [Performance Guide](/guide/performance) - Optimization tips
 

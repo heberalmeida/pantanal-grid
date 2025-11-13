@@ -137,8 +137,8 @@ const group: GroupDescriptor[] = [
 ### ColumnTemplateContext
 
 ```typescript
-interface ColumnTemplateContext<T = Row> {
-  column: ColumnDef<T>
+interface ColumnTemplateContext&lt;T = Row&gt; {
+  column: ColumnDef&lt;T&gt;
   row: T
   value: any
   rowIndex: number
@@ -152,7 +152,7 @@ Context passed to column template functions.
 
 ```typescript
 type ColumnTemplateResult = VNodeChild | string | null | undefined
-type ColumnTemplateFn<T = Row> = (ctx?: ColumnTemplateContext<T>) => ColumnTemplateResult
+type ColumnTemplateFn&lt;T = Row&gt; = (ctx?: ColumnTemplateContext&lt;T&gt;) => ColumnTemplateResult
 ```
 
 Template function type.
@@ -190,7 +190,7 @@ Arguments passed to data provider function.
 ### DataProviderResult
 
 ```typescript
-interface DataProviderResult<T = Row> {
+interface DataProviderResult&lt;T = Row&gt; {
   rows: T[]
   total?: number
 }
@@ -201,7 +201,7 @@ Result returned by data provider function.
 ### DataProvider
 
 ```typescript
-type DataProvider<T = Row> = (args: DataProviderArgs) => Promise<DataProviderResult<T>>
+type DataProvider&lt;T = Row&gt; = (args: DataProviderArgs) => Promise&lt;DataProviderResult&lt;T&gt;&gt;
 ```
 
 Data provider function type.
@@ -228,18 +228,18 @@ Available filter operators:
 
 ## Type Utilities
 
-### Partial<Messages>
+### Partial&lt;Messages&gt;
 
 All message properties are optional when using the `messages` prop:
 
 ```typescript
-const customMessages: Partial<Messages> = {
+const customMessages: Partial&lt;Messages&gt; = {
   create: 'Add New',
   save: 'Save All'
 }
 ```
 
-### ColumnDef<T>
+### ColumnDef&lt;T&gt;
 
 Generic column definition with row type:
 
@@ -250,7 +250,7 @@ interface Product {
   price: number
 }
 
-const columns: ColumnDef<Product>[] = [
+const columns: ColumnDef&lt;Product&gt;[] = [
   { field: 'id', title: 'ID' },
   { field: 'name', title: 'Name' },
   { field: 'price', title: 'Price' }
