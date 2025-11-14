@@ -23,7 +23,7 @@ export function decodeHtmlEntities(str: string): string {
  * @param preferSingle - If true, prefers single quotes, otherwise double quotes
  * @returns The normalized string
  */
-export function normalizeQuotes(str: string, preferSingle = false): string {
+export function normalizeQuotes(str: string, preferSingle = true): string {
   if (typeof str !== 'string') return str
   
   // Map of various quote characters to standard quotes

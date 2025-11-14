@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
 import PantanalGrid from '../src/components/Grid.vue'
 import type { ColumnDef, DataProvider, DataProviderArgs } from '../src/types'
@@ -90,6 +90,9 @@ describe('Data Binding', () => {
       })
       
       await nextTick()
+      await flushPromises()
+      // Wait for async refresh() to complete
+      await new Promise(resolve => setTimeout(resolve, 100))
       
       expect(dataProvider).toHaveBeenCalled()
       const callArgs = dataProvider.mock.calls[0][0]
@@ -156,6 +159,9 @@ describe('Data Binding', () => {
       })
       
       await nextTick()
+      await flushPromises()
+      // Wait for async refresh() to complete
+      await new Promise(resolve => setTimeout(resolve, 100))
       
       expect(dataProvider).toHaveBeenCalled()
     })

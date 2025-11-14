@@ -41,12 +41,18 @@ The playground aliases `@pantanal/grid` to the local source, so every change you
 ```bash
 yarn test           # executes vitest on the library workspace
 yarn build          # builds the library (vite) and type definitions (vue-tsc)
-yarn workspace pantanal-grid-playground build   # builds the playground itself
+yarn playground:build  # builds the playground itself
 yarn docs:dev       # starts VitePress dev server for documentation
 yarn docs:build     # builds the documentation site
 yarn docs:preview   # previews the built documentation
+yarn validate       # runs all tests and builds (test, build, playground:build, docs:build)
+yarn prepare        # installs Git hooks (runs automatically on yarn install)
 yarn workspace @pantanal/grid lint              # run eslint (if configured)
 ```
+
+### Git Hooks
+
+Git hooks are automatically installed when you run `yarn install` or `yarn prepare`. The pre-push hook validates all builds and tests before allowing a push. See [.husky/README.md](.husky/README.md) for details.
 
 ---
 

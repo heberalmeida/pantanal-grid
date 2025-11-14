@@ -34,9 +34,12 @@ describe('PantanalGrid scrollableProps', () => {
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(wrapper.props('scrollableVirtual')).toBe(true)
-      // Virtual mode should be enabled
-      const virtualBody = wrapper.find('[style*="overflowY: auto"]')
+      // Virtual mode should be enabled - find by height style
+      const virtualBody = wrapper.find('[style*="height: 400px"]')
       expect(virtualBody.exists()).toBe(true)
+      // Verify it has overflow style
+      const styleAttr = virtualBody.attributes('style') || ''
+      expect(styleAttr).toMatch(/overflow-y:\s*auto|overflowY:\s*auto/i)
     })
 
     it('works with scrollable object virtual property', async () => {
@@ -54,8 +57,10 @@ describe('PantanalGrid scrollableProps', () => {
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(wrapper.props('scrollable')).toEqual({ virtual: true })
-      const virtualBody = wrapper.find('[style*="overflowY: auto"]')
+      const virtualBody = wrapper.find('[style*="height: 400px"]')
       expect(virtualBody.exists()).toBe(true)
+      const styleAttr = virtualBody.attributes('style') || ''
+      expect(styleAttr).toMatch(/overflow-y:\s*auto|overflowY:\s*auto/i)
     })
 
     it('prioritizes scrollableVirtual over scrollable object', async () => {
@@ -74,8 +79,10 @@ describe('PantanalGrid scrollableProps', () => {
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(wrapper.props('scrollableVirtual')).toBe(true)
-      const virtualBody = wrapper.find('[style*="overflowY: auto"]')
+      const virtualBody = wrapper.find('[style*="height: 400px"]')
       expect(virtualBody.exists()).toBe(true)
+      const styleAttr = virtualBody.attributes('style') || ''
+      expect(styleAttr).toMatch(/overflow-y:\s*auto|overflowY:\s*auto/i)
     })
 
     it('renders only visible rows in virtual mode', async () => {
@@ -116,8 +123,10 @@ describe('PantanalGrid scrollableProps', () => {
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(wrapper.props('scrollableEndless')).toBe(true)
-      const endlessBody = wrapper.find('[style*="overflowY: auto"]')
+      const endlessBody = wrapper.find('[style*="height: 400px"]')
       expect(endlessBody.exists()).toBe(true)
+      const styleAttr = endlessBody.attributes('style') || ''
+      expect(styleAttr).toMatch(/overflow-y:\s*auto|overflowY:\s*auto/i)
     })
 
     it('works with scrollable object endless property', async () => {
@@ -136,8 +145,10 @@ describe('PantanalGrid scrollableProps', () => {
       await new Promise(resolve => setTimeout(resolve, 50))
 
       expect(wrapper.props('scrollable')).toEqual({ endless: true })
-      const endlessBody = wrapper.find('[style*="overflowY: auto"]')
+      const endlessBody = wrapper.find('[style*="height: 400px"]')
       expect(endlessBody.exists()).toBe(true)
+      const styleAttr = endlessBody.attributes('style') || ''
+      expect(styleAttr).toMatch(/overflow-y:\s*auto|overflowY:\s*auto/i)
     })
 
     it('initially loads pageSize items', async () => {
@@ -202,8 +213,10 @@ describe('PantanalGrid scrollableProps', () => {
       await new Promise(resolve => setTimeout(resolve, 50))
 
       // Virtual should take precedence
-      const virtualBody = wrapper.find('[style*="overflowY: auto"]')
+      const virtualBody = wrapper.find('[style*="height: 400px"]')
       expect(virtualBody.exists()).toBe(true)
+      const styleAttr = virtualBody.attributes('style') || ''
+      expect(styleAttr).toMatch(/overflow-y:\s*auto|overflowY:\s*auto/i)
       
       // Should use virtual scrolling (renders only visible rows)
       const renderedRows = wrapper.findAll('.v3grid__row')

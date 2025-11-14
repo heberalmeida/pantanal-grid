@@ -36,8 +36,8 @@ describe('string utils', () => {
 
     it('should handle various quote characters', () => {
       expect(normalizeQuotes('"Hello"')).toBe("'Hello'")
-      expect(normalizeQuotes(''Hello'')).toBe("'Hello'")
-      expect(normalizeQuotes(''Hello'')).toBe("'Hello'")
+      expect(normalizeQuotes('\u2018Hello\u2019')).toBe("'Hello'") // Left/Right single quotation mark
+      expect(normalizeQuotes('\u201CHello\u201D')).toBe("'Hello'") // Left/Right double quotation mark
     })
 
     it('should return non-strings as-is', () => {

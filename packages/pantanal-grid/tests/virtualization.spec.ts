@@ -116,8 +116,13 @@ describe('Virtualization', () => {
 
     await nextTick()
 
-    const virtualBody = wrapper.find('[style*="overflowY: auto"]')
+    // Find virtual body by height style (more reliable than overflowY which Vue may render differently)
+    const virtualBody = wrapper.find('[style*="height: 300px"]')
     expect(virtualBody.exists()).toBe(true)
+    
+    // Verify it has overflow style (check both possible renderings: overflowY or overflow-y)
+    const styleAttr = virtualBody.attributes('style') || ''
+    expect(styleAttr).toMatch(/overflow-y:\s*auto|overflowY:\s*auto/i)
   })
 
   it('should not enable virtual scrolling when disabled', () => {
@@ -134,7 +139,13 @@ describe('Virtualization', () => {
     })
 
     // Should render normal body, not virtual body
-    const virtualBody = wrapper.find('[style*="overflowY: auto"]')
+    // Check for virtual body (should not exist when disabled)
+    const virtualBody = wrapper.find('[style*="height"]')
+    // If virtual body exists, it should not have overflow-y auto
+    if (virtualBody.exists()) {
+      const styleAttr = virtualBody.attributes('style') || ''
+      expect(styleAttr).not.toMatch(/overflow-y:\s*auto|overflowY:\s*auto/i)
+    }
     // Normal body should exist
     const normalBody = wrapper.find('.v3grid__body')
     expect(normalBody.exists()).toBe(true)
@@ -206,8 +217,13 @@ describe('Virtualization', () => {
 
     await nextTick()
 
-    const virtualBody = wrapper.find('[style*="overflowY: auto"]')
+    // Find virtual body by height style (more reliable than overflowY which Vue may render differently)
+    const virtualBody = wrapper.find('[style*="height: 300px"]')
     expect(virtualBody.exists()).toBe(true)
+
+    // Verify it has overflow style (check both possible renderings: overflowY or overflow-y)
+    const styleAttr = virtualBody.attributes('style') || ''
+    expect(styleAttr).toMatch(/overflow-y:\s*auto|overflowY:\s*auto/i)
 
     // Simulate scroll
     const scrollElement = virtualBody.element as HTMLElement
