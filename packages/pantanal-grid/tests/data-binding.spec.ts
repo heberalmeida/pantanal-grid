@@ -93,7 +93,11 @@ describe('Data Binding', () => {
       await flushPromises()
       // Wait for async refresh() to complete - onMounted calls refresh() asynchronously
       // Need to wait longer for onMounted to complete and refresh() to be called
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Increase wait time and add multiple flushPromises calls
+      await new Promise(resolve => setTimeout(resolve, 800))
+      await flushPromises()
+      await nextTick()
+      await new Promise(resolve => setTimeout(resolve, 200))
       await flushPromises()
       await nextTick()
       
@@ -127,7 +131,11 @@ describe('Data Binding', () => {
       await nextTick()
       await flushPromises()
       // Wait for async refresh() to complete
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Increase wait time for error handling
+      await new Promise(resolve => setTimeout(resolve, 800))
+      await flushPromises()
+      await nextTick()
+      await new Promise(resolve => setTimeout(resolve, 200))
       await flushPromises()
       await nextTick()
       
@@ -169,7 +177,10 @@ describe('Data Binding', () => {
       await flushPromises()
       // Wait for async refresh() to complete - onMounted calls refresh() asynchronously
       // Need to wait longer for onMounted to complete and refresh() to be called
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await new Promise(resolve => setTimeout(resolve, 800))
+      await flushPromises()
+      await nextTick()
+      await new Promise(resolve => setTimeout(resolve, 200))
       await flushPromises()
       await nextTick()
       

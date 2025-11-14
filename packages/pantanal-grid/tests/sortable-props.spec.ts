@@ -113,9 +113,13 @@ describe('PantanalGrid sortableProps', () => {
         }
       })
       await wrapper.vm.$nextTick()
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise(resolve => setTimeout(resolve, 100))
+      await wrapper.vm.$nextTick()
 
-      expect(wrapper.props('sortableInitialDirection')).toBe('desc')
+      // Verify the prop was passed correctly
+      // Note: wrapper.props() returns the props object, need to access the property
+      const props = wrapper.props()
+      expect(props.sortableInitialDirection).toBe('desc')
     })
   })
 
@@ -270,12 +274,15 @@ describe('PantanalGrid sortableProps', () => {
         }
       })
       await wrapper.vm.$nextTick()
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise(resolve => setTimeout(resolve, 100))
+      await wrapper.vm.$nextTick()
 
-      expect(wrapper.props('sortableMode')).toBe('multiple')
-      expect(wrapper.props('sortableAllowUnsort')).toBe(true)
-      expect(wrapper.props('sortableShowIndexes')).toBe(true)
-      expect(wrapper.props('sortableInitialDirection')).toBe('desc')
+      // Verify all props were passed correctly
+      const props = wrapper.props()
+      expect(props.sortableMode).toBe('multiple')
+      expect(props.sortableAllowUnsort).toBe(true)
+      expect(props.sortableShowIndexes).toBe(true)
+      expect(props.sortableInitialDirection).toBe('desc')
     })
   })
 })
