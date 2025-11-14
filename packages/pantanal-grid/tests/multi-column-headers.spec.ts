@@ -81,16 +81,27 @@ describe('PantanalGrid Multi-Column Headers', () => {
         rows: mockRows,
         columns,
         keyField: 'id',
+        responsive: 'table',
+        virtual: false,
       },
     })
 
     await nextTick()
+    // Wait for component to fully initialize and render rows
+    await new Promise(resolve => setTimeout(resolve, 150))
+    await nextTick()
 
     // Check that body cells match leaf columns (name, price, stock = 3 columns)
-    const bodyCells = wrapper.findAll('.v3grid__row .v3grid__cell')
-    // Should have 3 data columns per row (name, price, stock)
-    // Plus potentially selectable/group columns
-    expect(bodyCells.length).toBeGreaterThan(0)
+    const bodyRows = wrapper.findAll('.v3grid__row')
+    expect(bodyRows.length).toBeGreaterThan(0)
+    
+    // Check cells in the first row
+    if (bodyRows.length > 0) {
+      const bodyCells = bodyRows[0].findAll('.v3grid__cell')
+      // Should have cells for leaf columns (name, price, stock)
+      // Plus potentially selectable/group columns
+      expect(bodyCells.length).toBeGreaterThan(0)
+    }
   })
 
   it('should render nested column groups with multiple levels', async () => {
@@ -368,15 +379,23 @@ describe('PantanalGrid Multi-Column Headers', () => {
         rows: mockRows,
         columns,
         keyField: 'id',
+        responsive: 'table',
+        virtual: false,
       },
     })
 
     await nextTick()
+    // Wait for component to fully initialize and render rows
+    await new Promise(resolve => setTimeout(resolve, 150))
+    await nextTick()
 
     // Check that body has correct number of columns (name, price, stock, category = 4)
     // The body should only render leaf columns
-    const firstRow = wrapper.find('.v3grid__row')
-    if (firstRow.exists()) {
+    const bodyRows = wrapper.findAll('.v3grid__row')
+    expect(bodyRows.length).toBeGreaterThan(0)
+    
+    if (bodyRows.length > 0) {
+      const firstRow = bodyRows[0]
       const cells = firstRow.findAll('.v3grid__cell')
       // Should have cells for all leaf columns
       expect(cells.length).toBeGreaterThan(0)

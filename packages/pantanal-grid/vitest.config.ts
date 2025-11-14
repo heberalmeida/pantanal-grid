@@ -8,6 +8,13 @@ export default defineConfig({
     globals: true,
     css: true,
     setupFiles: './tests/setup.ts',
+    watch: true,
+    watchExclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.git/**',
+      '**/coverage/**'
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

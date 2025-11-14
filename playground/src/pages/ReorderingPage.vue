@@ -153,8 +153,8 @@ const basicRows = ref<Product[]>([
   { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39, discontinued: false },
   { productID: 2, productName: 'Chang', unitPrice: 19, unitsInStock: 17, discontinued: false },
   { productID: 3, productName: 'Aniseed Syrup', unitPrice: 10, unitsInStock: 13, discontinued: false },
-  { productID: 4, productName: "Chef Anton's Cajun Seasoning", unitPrice: 22, unitsInStock: 53, discontinued: false },
-  { productID: 5, productName: "Chef Anton's Gumbo Mix", unitPrice: 21.35, unitsInStock: 0, discontinued: true },
+  { productID: 4, productName: 'Chef Anton\'s Cajun Seasoning', unitPrice: 22, unitsInStock: 53, discontinued: false },
+  { productID: 5, productName: 'Chef Anton\'s Gumbo Mix', unitPrice: 21.35, unitsInStock: 0, discontinued: true },
   { productID: 6, productName: "Boysenberry Spread", unitPrice: 25, unitsInStock: 120, discontinued: false },
 ])
 

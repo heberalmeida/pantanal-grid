@@ -30,9 +30,14 @@ describe('PantanalGrid Groupable Props', () => {
           columns,
           keyField: 'id',
           group,
+          responsive: 'table',
+          virtual: false,
         },
       })
 
+      await nextTick()
+      // Wait for component to fully initialize and groups to be processed
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
 
       // Grid should render with grouping
@@ -85,9 +90,14 @@ describe('PantanalGrid Groupable Props', () => {
           columns,
           keyField: 'id',
           group,
+          responsive: 'table',
+          virtual: false,
         },
       })
 
+      await nextTick()
+      // Wait for component to fully initialize and groups to be processed
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
 
       // Grid should render with grouping using column's groupableSortDir
@@ -111,9 +121,14 @@ describe('PantanalGrid Groupable Props', () => {
           columns,
           keyField: 'id',
           group,
+          responsive: 'table',
+          virtual: false,
         },
       })
 
+      await nextTick()
+      // Wait for component to fully initialize and groups to be processed
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
 
       // Grid should render with grouping using group descriptor's dir
@@ -146,9 +161,14 @@ describe('PantanalGrid Groupable Props', () => {
           columns,
           keyField: 'id',
           group,
+          responsive: 'table',
+          virtual: false,
         },
       })
 
+      await nextTick()
+      // Wait for component to fully initialize and groups to be processed
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
 
       // Grid should render with grouping using custom comparison
@@ -178,9 +198,14 @@ describe('PantanalGrid Groupable Props', () => {
           columns,
           keyField: 'id',
           group,
+          responsive: 'table',
+          virtual: false,
         },
       })
 
+      await nextTick()
+      // Wait for component to fully initialize and groups to be processed
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
 
       // Grid should render with grouping using reversed custom comparison
@@ -301,9 +326,14 @@ describe('PantanalGrid Groupable Props', () => {
           keyField: 'id',
           group,
           showGroupFooters: true,
+          responsive: 'table',
+          virtual: false,
         },
       })
 
+      await nextTick()
+      // Wait for component to fully initialize and groups to be processed
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
 
       // Grid should render with all properties applied
@@ -335,9 +365,14 @@ describe('PantanalGrid Groupable Props', () => {
           group,
           aggregates,
           showGroupFooters: true,
+          responsive: 'table',
+          virtual: false,
         },
       })
 
+      await nextTick()
+      // Wait for component to fully initialize and groups to be processed
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
 
       // Grid should render with grouping and aggregates
@@ -368,9 +403,14 @@ describe('PantanalGrid Groupable Props', () => {
           keyField: 'id',
           group,
           showGroupFooters: true,
+          responsive: 'table',
+          virtual: false,
         },
       })
 
+      await nextTick()
+      // Wait for component to fully initialize and groups to be processed
+      await new Promise(resolve => setTimeout(resolve, 150))
       await nextTick()
 
       // Grid should render with nested grouping

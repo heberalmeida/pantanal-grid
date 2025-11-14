@@ -9,13 +9,20 @@
   "scripts": {
     "dev": "yarn workspace pantanal-grid-playground dev",
     "build": "yarn workspace @pantanal/grid build",
+    "playground:build": "yarn workspace pantanal-grid-playground build",
     "docs:dev": "yarn workspace pantanal-grid-docs dev",
     "docs:build": "yarn workspace pantanal-grid-docs build",
     "docs:preview": "yarn workspace pantanal-grid-docs preview",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "changeset publish",
-    "test": "yarn workspace @pantanal/grid test"
+    "test": "yarn workspace @pantanal/grid test",
+    "test:watch": "yarn workspace @pantanal/grid test:watch",
+    "test:ui": "yarn workspace @pantanal/grid test:ui",
+    "validate": "yarn test && yarn build && yarn playground:build && yarn docs:build",
+    "prepare": "node scripts/install-hooks.js || true",
+    "postinstall": "yarn prepare",
+    "fix-install": "powershell -ExecutionPolicy Bypass -File ./scripts/fix-yarn-install.ps1"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.5"

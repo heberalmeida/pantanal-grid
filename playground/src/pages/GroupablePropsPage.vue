@@ -156,9 +156,9 @@ const groupableRows = ref<Product[]>([
   { productID: 1, productName: 'Chai', category: 'Beverages', supplier: 'Exotic Liquids', unitPrice: 18, unitsInStock: 39, discontinued: false },
   { productID: 2, productName: 'Chang', category: 'Beverages', supplier: 'Exotic Liquids', unitPrice: 19, unitsInStock: 17, discontinued: false },
   { productID: 3, productName: 'Aniseed Syrup', category: 'Condiments', supplier: 'Exotic Liquids', unitPrice: 10, unitsInStock: 13, discontinued: false },
-  { productID: 4, productName: "Chef Anton's Cajun Seasoning", category: 'Condiments', supplier: 'New Orleans Cajun Delights', unitPrice: 22, unitsInStock: 53, discontinued: false },
-  { productID: 5, productName: "Chef Anton's Gumbo Mix", category: 'Condiments', supplier: 'New Orleans Cajun Delights', unitPrice: 21.35, unitsInStock: 0, discontinued: true },
-  { productID: 6, productName: "Boysenberry Spread", category: 'Condiments', supplier: "Grandma Kelly's Homestead", unitPrice: 25, unitsInStock: 120, discontinued: false },
+  { productID: 4, productName: 'Chef Anton\'s Cajun Seasoning', category: 'Condiments', supplier: 'New Orleans Cajun Delights', unitPrice: 22, unitsInStock: 53, discontinued: false },
+  { productID: 5, productName: 'Chef Anton\'s Gumbo Mix', category: 'Condiments', supplier: 'New Orleans Cajun Delights', unitPrice: 21.35, unitsInStock: 0, discontinued: true },
+  { productID: 6, productName: 'Boysenberry Spread', category: 'Condiments', supplier: 'Grandma Kelly\'s Homestead', unitPrice: 25, unitsInStock: 120, discontinued: false },
 ])
 
 const groupableColumns: ColumnDef<Product>[] = [

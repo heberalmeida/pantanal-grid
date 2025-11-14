@@ -1,0 +1,59 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Running pre-push validation..."
+echo ""
+
+# Function to print error and exit
+fail() {
+    echo "ERROR: $1"
+    echo ""
+    echo "Pre-push hook failed. Push aborted."
+    echo "Please fix the errors above before pushing."
+    exit 1
+}
+
+# Function to print success
+success() {
+    echo "OK: $1"
+}
+
+# Check if yarn is available
+if ! command -v yarn >/dev/null 2>&1; then
+    fail "yarn command not found. Please install yarn."
+fi
+
+echo "Running tests..."
+if ! yarn test; then
+    fail "Tests failed"
+fi
+success "Tests passed"
+echo ""
+
+echo "Building @pantanal/grid..."
+if ! yarn build; then
+    fail "Build failed"
+fi
+success "Build completed"
+echo ""
+
+echo "Building playground..."
+if ! yarn playground:build; then
+    fail "Playground build failed"
+fi
+success "Playground build completed"
+echo ""
+
+echo "Building docs..."
+if ! yarn docs:build; then
+    fail "Docs build failed"
+fi
+success "Docs build completed"
+echo ""
+
+echo "All validations passed! Proceeding with push..."
+exit 0
+
+
+
+

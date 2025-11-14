@@ -15,3 +15,4 @@ export { default as Pagination } from './components/Pagination.vue'
 
 export * from './types'
 export { registerLocale, getMessages } from './i18n/messages'
+export * from './utils/string'

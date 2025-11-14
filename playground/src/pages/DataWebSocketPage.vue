@@ -36,8 +36,8 @@
         </button>
       </div>
       <p class="text-sm text-slate-600 dark:text-slate-400 mt-2">
-        Note: This is a simulated WebSocket example. In a real application, you would connect to an actual WebSocket server.
-        Open this page in multiple browser windows to see real-time updates.
+        ℹ️ This example uses <code>wss://echo.websocket.org/</code> (public echo server) for WebSocket connection testing.
+        The echo server returns messages sent to it. For production, replace with your own WebSocket server.
       </p>
     </div>
 
@@ -49,6 +49,7 @@
       :sortable="true"
       :filterable="true"
       :selectable="'multiple'"
+      :clean-strings="true"
       v-model:sort="sort"
       v-model:filter="filter"
       v-model:page="page"
@@ -160,7 +161,7 @@ function clearLog() {
   eventLog.value = []
 }
 
-// Simulated WebSocket connection
+// Real WebSocket connection using public echo server
 function connect() {
   if (ws.value?.readyState === WebSocket.OPEN) {
     return
@@ -168,18 +169,55 @@ function connect() {
 
   addLog('Connecting to WebSocket...')
   
-  // Simulate WebSocket connection
-  // In a real app, you would use: ws.value = new WebSocket('wss://your-server.com')
-  setTimeout(() => {
-    isConnected.value = true
-    addLog('Connected to WebSocket')
+  try {
+    // Using public WebSocket echo server for testing
+    // Options: wss://echo.websocket.org/, wss://ws.postman-echo.com/raw, wss://demos.kaazing.com/echo
+    const host = 'wss://echo.websocket.org/'
+    ws.value = new WebSocket(host)
     
-    // Simulate initial data load
-    loadInitialData()
+    ws.value.onopen = () => {
+      isConnected.value = true
+      addLog('Connected to WebSocket')
+      
+      // Load initial data (simulated, since echo server just echoes back)
+      loadInitialData()
+      
+      // Send initial message
+      if (ws.value) {
+        ws.value.send(JSON.stringify({ 
+          type: 'read', 
+          timestamp: Date.now(),
+          message: 'Connected to WebSocket echo server' 
+        }))
+      }
+      
+      // Simulate receiving push updates
+      simulatePushUpdates()
+    }
     
-    // Simulate receiving push updates
-    simulatePushUpdates()
-  }, 500)
+    ws.value.onmessage = (event) => {
+      try {
+        const result = JSON.parse(event.data)
+        addLog(`Message received: ${JSON.stringify(result)}`)
+      } catch (error) {
+        addLog(`Echo received: ${event.data}`)
+      }
+    }
+    
+    ws.value.onerror = (error) => {
+      console.error('WebSocket error:', error)
+      addLog('WebSocket error occurred')
+    }
+    
+    ws.value.onclose = () => {
+      isConnected.value = false
+      addLog('Disconnected from WebSocket')
+      ws.value = null
+    }
+  } catch (error) {
+    console.error('Connection error:', error)
+    addLog('Failed to connect to WebSocket')
+  }
 }
 
 function disconnect() {
@@ -197,8 +235,8 @@ function loadInitialData() {
     { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39, discontinued: false },
     { productID: 2, productName: 'Chang', unitPrice: 17, unitsInStock: 40, discontinued: false },
     { productID: 3, productName: 'Aniseed Syrup', unitPrice: 10, unitsInStock: 13, discontinued: false },
-    { productID: 4, productName: "Chef Anton's Cajun Seasoning", unitPrice: 22, unitsInStock: 53, discontinued: false },
-    { productID: 5, productName: "Chef Anton's Gumbo Mix", unitPrice: 21.35, unitsInStock: 0, discontinued: true },
+    { productID: 4, productName: 'Chef Anton\'s Cajun Seasoning', unitPrice: 22, unitsInStock: 53, discontinued: false },
+    { productID: 5, productName: 'Chef Anton\'s Gumbo Mix', unitPrice: 21.35, unitsInStock: 0, discontinued: true },
   ]
   addLog('Initial data loaded')
 }

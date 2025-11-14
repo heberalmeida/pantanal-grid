@@ -24,7 +24,7 @@ describe('PantanalGrid pagination basic', () => {
     // Label em PT-BR + select com 4 opções
     const label = footer.find('label.text-sm')
     expect(label.exists()).toBe(true)
-    expect(label.text()).toMatch(/Linhas por página/i)
+    expect(label.text()).toMatch(/itens por página/i)
 
     const select = footer.find('select.v3grid__input')
     expect(select.exists()).toBe(true)

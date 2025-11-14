@@ -41,12 +41,18 @@ The playground aliases `@pantanal/grid` to the local source, so every change you
 ```bash
 yarn test           # executes vitest on the library workspace
 yarn build          # builds the library (vite) and type definitions (vue-tsc)
-yarn workspace pantanal-grid-playground build   # builds the playground itself
+yarn playground:build  # builds the playground itself
 yarn docs:dev       # starts VitePress dev server for documentation
 yarn docs:build     # builds the documentation site
 yarn docs:preview   # previews the built documentation
+yarn validate       # runs all tests and builds (test, build, playground:build, docs:build)
+yarn prepare        # installs Git hooks (runs automatically on yarn install)
 yarn workspace @pantanal/grid lint              # run eslint (if configured)
 ```
+
+### Git Hooks
+
+Git hooks are automatically installed when you run `yarn install` or `yarn prepare`. The pre-push hook validates all builds and tests before allowing a push. See [.husky/README.md](.husky/README.md) for details.
 
 ---
 
@@ -110,6 +116,7 @@ const columns: ColumnDef[] = [
 - Internationalization (en, es, pt) with pluggable messages
 - Grouping with drag-and-drop UI, aggregations and expandable tree nodes
 - Aggregates (sum, avg, min, max, count) with customizable templates
+- Flexible data binding: Local arrays, REST APIs, GraphQL, WebSocket, and offline mode
 
 ---
 
@@ -252,6 +259,79 @@ Calculate aggregates (sum, avg, min, max, count) for grouped or ungrouped data:
 - Use the built-in footer buttons (or `toggleGroup` event) to expand/collapse all groups at once.
 - For server-side grouping, compute aggregates on the backend and feed the grid with pre-grouped rows.
 - See [Grouping Basics Examples](/examples/grouping-basics) and [Aggregates Examples](/examples/aggregates) for more details.
+
+---
+
+## Data Binding
+
+Pantanal Grid supports flexible data binding to various data sources:
+
+### Local Data Arrays
+
+The simplest way to provide data is using a local array. All operations are performed client-side:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  key-field="id"
+/>
+```
+
+### Remote Data Services (REST)
+
+Use the `dataProvider` prop to fetch data from REST APIs:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :data-provider="dataProvider"
+  server-side
+  key-field="id"
+/>
+```
+
+### GraphQL
+
+Bind to GraphQL services with queries and mutations:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  :data-provider="graphqlDataProvider"
+  server-side
+  key-field="productID"
+/>
+```
+
+### WebSocket (Real-time)
+
+Connect to WebSocket servers for real-time updates:
+
+```vue
+<PantanalGrid
+  :rows="wsRows"
+  :columns="columns"
+  key-field="id"
+/>
+```
+
+### Offline Mode
+
+Work offline with localStorage persistence:
+
+```vue
+<PantanalGrid
+  :rows="offlineRows"
+  :columns="columns"
+  key-field="id"
+  editable="inline"
+/>
+```
+
+See [Data Binding Examples](/examples/data-binding) for complete examples.
 
 ---
 

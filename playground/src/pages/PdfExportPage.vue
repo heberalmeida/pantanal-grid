@@ -295,8 +295,8 @@ const basicRows = ref<Product[]>([
   { productID: 1, productName: 'Chai', contactName: 'John Doe', contactTitle: 'Sales Manager', companyName: 'Company A', country: 'USA', unitPrice: 18, unitsInStock: 39, discontinued: false, category: 'Beverages' },
   { productID: 2, productName: 'Chang', contactName: 'Jane Smith', contactTitle: 'Sales Representative', companyName: 'Company B', country: 'UK', unitPrice: 19, unitsInStock: 17, discontinued: false, category: 'Beverages' },
   { productID: 3, productName: 'Aniseed Syrup', contactName: 'Bob Johnson', contactTitle: 'Sales Manager', companyName: 'Company C', country: 'Canada', unitPrice: 10, unitsInStock: 13, discontinued: false, category: 'Condiments' },
-  { productID: 4, productName: "Chef Anton's Cajun Seasoning", contactName: 'Alice Brown', contactTitle: 'Sales Representative', companyName: 'Company D', country: 'USA', unitPrice: 22, unitsInStock: 53, discontinued: false, category: 'Condiments' },
-  { productID: 5, productName: "Chef Anton's Gumbo Mix", contactName: 'Charlie Wilson', contactTitle: 'Sales Manager', companyName: 'Company E', country: 'France', unitPrice: 21.35, unitsInStock: 0, discontinued: true, category: 'Condiments' },
+  { productID: 4, productName: 'Chef Anton\'s Cajun Seasoning', contactName: 'Alice Brown', contactTitle: 'Sales Representative', companyName: 'Company D', country: 'USA', unitPrice: 22, unitsInStock: 53, discontinued: false, category: 'Condiments' },
+  { productID: 5, productName: 'Chef Anton\'s Gumbo Mix', contactName: 'Charlie Wilson', contactTitle: 'Sales Manager', companyName: 'Company E', country: 'France', unitPrice: 21.35, unitsInStock: 0, discontinued: true, category: 'Condiments' },
 ])
 
 const basicColumns: ColumnDef[] = [

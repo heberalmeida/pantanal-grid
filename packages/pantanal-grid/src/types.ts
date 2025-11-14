@@ -295,6 +295,9 @@ export interface GridProps<T = Row> {
   scrollableVirtual?: boolean
   scrollableEndless?: boolean
 
+  // String cleaning: automatically clean HTML entities and normalize quotes in string values
+  cleanStrings?: boolean
+
   persistStateKey?: string
 
   virtual?: boolean

@@ -18,16 +18,23 @@ describe('Grouping Basics', () => {
     { field: 'price', title: 'Price' },
   ]
 
-  it('should render drop zone when groupable is true', () => {
+  it('should render drop zone when groupable is true', async () => {
     const wrapper = mount(PantanalGrid, {
       props: {
         rows: sampleRows,
         columns,
         groupable: true,
         keyField: 'id',
+        responsive: 'table',
+        virtual: false,
       },
     })
 
+    await nextTick()
+    // Wait for component to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 100))
+    await nextTick()
+    
     const dropzone = wrapper.find('.v3grid__groupable-dropzone')
     expect(dropzone.exists()).toBe(true)
   })
@@ -46,16 +53,23 @@ describe('Grouping Basics', () => {
     expect(dropzone.exists()).toBe(false)
   })
 
-  it('should show placeholder when no groups are active', () => {
+  it('should show placeholder when no groups are active', async () => {
     const wrapper = mount(PantanalGrid, {
       props: {
         rows: sampleRows,
         columns,
         groupable: true,
         keyField: 'id',
+        responsive: 'table',
+        virtual: false,
       },
     })
 
+    await nextTick()
+    // Wait for component to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 100))
+    await nextTick()
+    
     const placeholder = wrapper.find('.v3grid__groupable-dropzone__placeholder')
     expect(placeholder.exists()).toBe(true)
     expect(placeholder.text()).toContain('Drag a column header')
@@ -69,9 +83,14 @@ describe('Grouping Basics', () => {
         groupable: true,
         group: [{ field: 'category', dir: 'asc' }],
         keyField: 'id',
+        responsive: 'table',
+        virtual: false,
       },
     })
 
+    await nextTick()
+    // Wait for component to fully initialize and groups to be processed
+    await new Promise(resolve => setTimeout(resolve, 100))
     await nextTick()
 
     const badges = wrapper.findAll('.v3grid__groupable-dropzone__badge')
@@ -124,15 +143,22 @@ describe('Grouping Basics', () => {
         groupable: true,
         group: [{ field: 'category', dir: 'asc' }],
         keyField: 'id',
+        responsive: 'table',
+        virtual: false,
       },
     })
 
+    await nextTick()
+    // Wait for component to fully initialize and groups to be processed
+    await new Promise(resolve => setTimeout(resolve, 100))
     await nextTick()
 
     const closeButton = wrapper.find('.v3grid__groupable-dropzone__close')
     expect(closeButton.exists()).toBe(true)
 
     await closeButton.trigger('click')
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 50))
     await nextTick()
 
     expect(wrapper.emitted('update:group')).toBeTruthy()
@@ -150,9 +176,14 @@ describe('Grouping Basics', () => {
         columns,
         groupable: true,
         keyField: 'id',
+        responsive: 'table',
+        virtual: false,
       },
     })
 
+    await nextTick()
+    // Wait for component to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 100))
     await nextTick()
 
     const dropzone = wrapper.find('.v3grid__groupable-dropzone')
