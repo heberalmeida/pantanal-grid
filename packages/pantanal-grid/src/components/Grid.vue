@@ -5596,17 +5596,15 @@ function getOptions(): GridOptions {
     options.sort = [...sortState.value]
   }
   
-  if (filters.value.length > 0) {
+  if (!props.serverSide && filters.value.length > 0) {
     options.filter = [...filters.value]
   }
   
-  if (page.value !== props.page) {
-    options.page = page.value
-  }
+  // Always include page and pageSize when they differ from props or are explicitly set
+  // This allows getOptions to return current state even if it matches initial props
+  options.page = page.value
   
-  if (pageSize.value !== props.pageSize) {
-    options.pageSize = pageSize.value
-  }
+  options.pageSize = pageSize.value
   
   if (order.value.length > 0) {
     options.order = [...order.value]

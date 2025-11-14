@@ -19,8 +19,7 @@
     "test": "yarn workspace @pantanal/grid test",
     "test:watch": "yarn workspace @pantanal/grid test:watch",
     "test:ui": "yarn workspace @pantanal/grid test:ui",
-    "validateall": "yarn test && yarn build && yarn playground:build && yarn docs:build",
-    "validate": "yarn build && yarn playground:build && yarn docs:build",
+    "validate": "yarn test && yarn build && yarn playground:build && yarn docs:build",
     "prepare": "node scripts/install-hooks.js || true",
     "postinstall": "yarn prepare",
     "fix-install": "powershell -ExecutionPolicy Bypass -File ./scripts/fix-yarn-install.ps1"

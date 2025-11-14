@@ -27,3 +27,5 @@ if (Test-Path ".husky\_\husky.sh") {
 Write-Host "Git hooks installation complete!" -ForegroundColor Green
 
 
+
+
