@@ -91,8 +91,11 @@ describe('Data Binding', () => {
       
       await nextTick()
       await flushPromises()
-      // Wait for async refresh() to complete
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for async refresh() to complete - onMounted calls refresh() asynchronously
+      // Need to wait longer for onMounted to complete and refresh() to be called
+      await new Promise(resolve => setTimeout(resolve, 500))
+      await flushPromises()
+      await nextTick()
       
       expect(dataProvider).toHaveBeenCalled()
       const callArgs = dataProvider.mock.calls[0][0]
@@ -122,7 +125,11 @@ describe('Data Binding', () => {
       })
       
       await nextTick()
-      await new Promise(resolve => setTimeout(resolve, 100))
+      await flushPromises()
+      // Wait for async refresh() to complete
+      await new Promise(resolve => setTimeout(resolve, 500))
+      await flushPromises()
+      await nextTick()
       
       consoleError.mockRestore()
       expect(dataProvider).toHaveBeenCalled()
@@ -160,8 +167,11 @@ describe('Data Binding', () => {
       
       await nextTick()
       await flushPromises()
-      // Wait for async refresh() to complete
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for async refresh() to complete - onMounted calls refresh() asynchronously
+      // Need to wait longer for onMounted to complete and refresh() to be called
+      await new Promise(resolve => setTimeout(resolve, 500))
+      await flushPromises()
+      await nextTick()
       
       expect(dataProvider).toHaveBeenCalled()
     })

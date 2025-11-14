@@ -60,6 +60,9 @@ describe('PantanalGrid Persist State', () => {
     })
 
     await nextTick()
+    // Wait for component to be fully mounted and state to be initialized
+    await new Promise(resolve => setTimeout(resolve, 100))
+    await nextTick()
 
     const vm = wrapper.vm as any
     const options = vm.getOptions()
@@ -67,6 +70,7 @@ describe('PantanalGrid Persist State', () => {
     expect(options).toBeDefined()
     expect(options.sort).toEqual([{ field: 'name', dir: 'asc' }])
     expect(options.filter).toEqual([{ field: 'category', operator: 'eq', value: 'Electronics' }])
+    // getOptions() always includes page and pageSize from internal state
     expect(options.page).toBe(2)
     expect(options.pageSize).toBe(10)
   })
@@ -168,11 +172,15 @@ describe('PantanalGrid Persist State', () => {
     })
 
     await nextTick()
+    // Wait for component to be fully mounted
+    await new Promise(resolve => setTimeout(resolve, 100))
+    await nextTick()
 
     const vm = wrapper.vm as any
     const options = vm.getOptions()
 
-    // Server-side sort and filter should not be included
+    // Server-side sort and filter should not be included when serverSide is true
+    // getOptions() only includes sort/filter when !props.serverSide
     expect(options.sort).toBeUndefined()
     expect(options.filter).toBeUndefined()
   })
@@ -267,15 +275,21 @@ describe('PantanalGrid Persist State', () => {
     })
 
     await nextTick()
+    // Wait for component to be fully mounted
+    await new Promise(resolve => setTimeout(resolve, 100))
+    await nextTick()
 
     const vm = wrapper.vm as any
     
     // Set only page
     vm.setOptions({ page: 2 })
     await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 50))
+    await nextTick()
 
     const options = vm.getOptions()
     expect(options.page).toBe(2)
+    // getOptions() always includes pageSize from internal state
     expect(options.pageSize).toBe(20) // Should remain unchanged
   })
 
