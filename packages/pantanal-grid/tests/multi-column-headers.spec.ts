@@ -81,12 +81,14 @@ describe('PantanalGrid Multi-Column Headers', () => {
         rows: mockRows,
         columns,
         keyField: 'id',
+        responsive: 'table',
+        virtual: false,
       },
     })
 
     await nextTick()
     // Wait for component to fully initialize and render rows
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 150))
     await nextTick()
 
     // Check that body cells match leaf columns (name, price, stock = 3 columns)
@@ -377,12 +379,14 @@ describe('PantanalGrid Multi-Column Headers', () => {
         rows: mockRows,
         columns,
         keyField: 'id',
+        responsive: 'table',
+        virtual: false,
       },
     })
 
     await nextTick()
     // Wait for component to fully initialize and render rows
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 150))
     await nextTick()
 
     // Check that body has correct number of columns (name, price, stock, category = 4)

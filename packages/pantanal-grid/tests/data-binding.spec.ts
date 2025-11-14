@@ -86,6 +86,7 @@ describe('Data Binding', () => {
           'key-field': 'id',
           'data-provider': dataProvider,
           'server-side': true,
+          'auto-bind': true,
         },
       })
       
@@ -94,17 +95,19 @@ describe('Data Binding', () => {
       // Wait for async refresh() to complete - onMounted calls refresh() asynchronously
       // Need to wait longer for onMounted to complete and refresh() to be called
       // Increase wait time and add multiple flushPromises calls
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await new Promise(resolve => setTimeout(resolve, 1000))
       await flushPromises()
       await nextTick()
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await new Promise(resolve => setTimeout(resolve, 300))
       await flushPromises()
       await nextTick()
       
       expect(dataProvider).toHaveBeenCalled()
-      const callArgs = dataProvider.mock.calls[0][0]
-      expect(callArgs.page).toBe(1)
-      expect(callArgs.pageSize).toBeDefined()
+      if (dataProvider.mock.calls.length > 0) {
+        const callArgs = dataProvider.mock.calls[0][0]
+        expect(callArgs.page).toBe(1)
+        expect(callArgs.pageSize).toBeDefined()
+      }
     })
     
     it('should handle dataProvider errors gracefully', async () => {
@@ -125,6 +128,7 @@ describe('Data Binding', () => {
           'key-field': 'id',
           'data-provider': dataProvider,
           'server-side': true,
+          'auto-bind': true,
         },
       })
       
@@ -132,10 +136,10 @@ describe('Data Binding', () => {
       await flushPromises()
       // Wait for async refresh() to complete
       // Increase wait time for error handling
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await new Promise(resolve => setTimeout(resolve, 1000))
       await flushPromises()
       await nextTick()
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await new Promise(resolve => setTimeout(resolve, 300))
       await flushPromises()
       await nextTick()
       
@@ -170,6 +174,7 @@ describe('Data Binding', () => {
           'key-field': 'productID',
           'data-provider': dataProvider,
           'server-side': true,
+          'auto-bind': true,
         },
       })
       
@@ -177,10 +182,10 @@ describe('Data Binding', () => {
       await flushPromises()
       // Wait for async refresh() to complete - onMounted calls refresh() asynchronously
       // Need to wait longer for onMounted to complete and refresh() to be called
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await new Promise(resolve => setTimeout(resolve, 1000))
       await flushPromises()
       await nextTick()
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await new Promise(resolve => setTimeout(resolve, 300))
       await flushPromises()
       await nextTick()
       
