@@ -215,12 +215,12 @@
               :indeterminate="someVisibleSelected" @change="toggleAllVisible(selectableRowsOnPage)" />
           </div>
           <div v-if="!c.selectable" class="v3grid__cell v3grid__headercell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]" 
-            :draggable="((props.enableColumnReorder && ((c as ColumnDef & { _orderIndex?: number })._orderIndex != null) && ((c as ColumnDef & { _orderIndex?: number })._orderIndex! >= 0)) || (props.groupable && c.field && c.groupable !== false)) ? true : undefined"
+            :draggable="canDragColumn(c) ? true : undefined"
             :tabindex="props.navigatable ? 0 : undefined"
-            :ref="(el) => { if (el) (el as any).__column = c }"
+            :ref="(el: any) => { if (el) el.__column = c }"
             @dragstart="handleHeaderDragStart(c, $event)"
             @dragover="props.enableColumnReorder && onDragOver($event)"
-            @drop="props.enableColumnReorder && ((c as ColumnDef & { _orderIndex?: number })._orderIndex != null) && handleHeaderDrop((c as ColumnDef & { _orderIndex?: number })._orderIndex!)"
+            @drop="handleHeaderDropForColumn(c)"
             @click="handleHeaderCellClick(c, $event)"
             @keydown="props.navigatable && handleKeydown($event, undefined, c._idx)">
             <span style="flex:1 1 auto; display:inline-flex; align-items:center; gap:.25rem;">
@@ -248,7 +248,7 @@
             </button>
 
             <span v-if="props.enableColumnResize && (c.resizable ?? true)" class="v3grid__resizer"
-              @mousedown="(e: any) => { onResizeDown(e, c._orderIndex); handleColumnResize(c, effW(c._orderIndex, c, 0)) }"
+              @mousedown="(e: any) => { const idx = getColumnOrderIndex(c); if (idx != null) { onResizeDown(e, idx); handleColumnResize(c, effW(idx, c, 0)) } }"
               :style="{ width: (props.columnResizeHandleWidth ?? 4) * 2 + 'px', right: '-' + (props.columnResizeHandleWidth ?? 4) + 'px' }"></span>
           </div>
         </template>
@@ -361,7 +361,10 @@
                     @click.stop="handleCommand(cmd, row, c)"
                     class="v3grid__btn--command"
                     :class="getCommandClasses(cmd, c)">
-                    <span v-if="getCommandIconClass(cmd, row, c)" :class="getCommandIconClass(cmd, row, c)"></span>
+                    <template v-if="getCommandIconClass(cmd, row, c)">
+                      <span v-if="!isEmoji(getCommandIconClass(cmd, row, c))" :class="getCommandIconClass(cmd, row, c)"></span>
+                      <span v-else>{{ getCommandIconClass(cmd, row, c) }}</span>
+                    </template>
                     <span v-html="getCommandContent(cmd, row, c)"></span>
                   </button>
                 </template>
@@ -429,7 +432,10 @@
                     @click.stop="handleCommand(cmd, row, c)"
                     class="v3grid__btn--command"
                     :class="getCommandClasses(cmd, c)">
-                    <span v-if="getCommandIconClass(cmd, row, c)" :class="getCommandIconClass(cmd, row, c)"></span>
+                    <template v-if="getCommandIconClass(cmd, row, c)">
+                      <span v-if="!isEmoji(getCommandIconClass(cmd, row, c))" :class="getCommandIconClass(cmd, row, c)"></span>
+                      <span v-else>{{ getCommandIconClass(cmd, row, c) }}</span>
+                    </template>
                     <span v-html="getCommandContent(cmd, row, c)"></span>
                   </button>
                 </template>
@@ -562,6 +568,23 @@
                           :template="c.template!"
                           :payload="{ column: c, row: n.row, value: columnValue(n.row, c, (start ?? 0) + r), rowIndex: (start ?? 0) + r, columnIndex: i }"
                         />
+                        <template v-else-if="hasCommands(c.command)">
+                          <div class="v3grid__command-cell">
+                            <template v-for="(cmd, cmdIdx) in getCommandArray(c.command)" :key="cmdIdx">
+                              <button
+                                v-if="shouldShowCommand(cmd, n.row, c)"
+                                @click.stop="handleCommand(cmd, n.row, c, $event)"
+                                class="v3grid__btn--command"
+                                :class="getCommandClasses(cmd, c)">
+                                <template v-if="getCommandIconClass(cmd, c)">
+                                  <span v-if="!isEmoji(getCommandIconClass(cmd, c))" :class="getCommandIconClass(cmd, c)"></span>
+                                  <span v-else>{{ getCommandIconClass(cmd, c) }}</span>
+                                </template>
+                                <span v-html="getCommandContent(cmd, n.row, c)"></span>
+                              </button>
+                            </template>
+                          </div>
+                        </template>
                         <slot v-else name="cell" :column="c" :row="n.row" :value="columnValue(n.row, c, (start ?? 0) + r)"
                           :rowIndex="(start ?? 0) + r" :columnIndex="i">
                           <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(n.row, c, (start ?? 0) + r), c, n.row as any)"></span>
@@ -621,6 +644,23 @@
                         :template="c.template!"
                         :payload="{ column: c, row, value: columnValue(row, c, (start ?? 0) + r), rowIndex: (start ?? 0) + r, columnIndex: i }"
                       />
+                      <template v-else-if="hasCommands(c.command)">
+                        <div class="v3grid__command-cell">
+                          <template v-for="(cmd, cmdIdx) in getCommandArray(c.command)" :key="cmdIdx">
+                            <button
+                              v-if="shouldShowCommand(cmd, row, c)"
+                              @click.stop="handleCommand(cmd, row, c, $event)"
+                              class="v3grid__btn--command"
+                              :class="getCommandClasses(cmd, c)">
+                              <template v-if="getCommandIconClass(cmd, c)">
+                                <span v-if="!isEmoji(getCommandIconClass(cmd, c))" :class="getCommandIconClass(cmd, c)"></span>
+                                <span v-else>{{ getCommandIconClass(cmd, c) }}</span>
+                              </template>
+                              <span v-html="getCommandContent(cmd, row, c)"></span>
+                            </button>
+                          </template>
+                        </div>
+                      </template>
                       <slot v-else name="cell" :column="c" :row="row" :value="columnValue(row, c, (start ?? 0) + r)"
                         :rowIndex="(start ?? 0) + r" :columnIndex="i">
                         <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, (start ?? 0) + r), c, row as any)"></span>
@@ -824,7 +864,10 @@
                             @click.stop="handleCommand(cmd, row, c, $event)"
                             class="v3grid__btn--command"
                             :class="getCommandClasses(cmd, c)">
-                            <span v-if="getCommandIconClass(cmd, c)" :class="getCommandIconClass(cmd, c)"></span>
+                            <template v-if="getCommandIconClass(cmd, c)">
+                              <span v-if="!isEmoji(getCommandIconClass(cmd, c))" :class="getCommandIconClass(cmd, c)"></span>
+                              <span v-else>{{ getCommandIconClass(cmd, c) }}</span>
+                            </template>
                             <span v-html="getCommandContent(cmd, row, c)"></span>
                           </button>
                         </template>
@@ -1547,9 +1590,16 @@ function normalizeCommand(command: ColumnDef['command']): ColumnDef['command'] {
 const columns = computed<ColumnDef[]>(() => {
   const cols = (slotColumnDefs.value.length > 0 ? slotColumnDefs.value : (props.columns ?? [])) as ColumnDef[]
   // Normalize command property and apply internal state
-  return cols.map(col => {
-    const fieldStr = col.field ? String(col.field) : null
+  return cols.map((col, idx) => {
+    let fieldStr = col.field ? String(col.field) : null
     const enhancedCol = { ...col } as ColumnDef
+    
+    // If column has command but no field, assign a temporary field for internal processing
+    // This allows columns with commands to be included in the column list
+    if (!fieldStr && col.command) {
+      fieldStr = `__command_${idx}`
+      enhancedCol.field = fieldStr
+    }
     
     // Apply normalized command
     if (col.command) {
@@ -1917,8 +1967,8 @@ function flattenColumns(cols: ColumnDef[], level = 0): ColumnDef[] {
       // This is a group column, recursively flatten its children
       const children = flattenColumns(col.columns, level + 1)
       result.push(...children)
-    } else if (col.field) {
-      // This is a leaf column (has a field)
+    } else if (col.field || col.command) {
+      // This is a leaf column (has a field) OR has commands (can be rendered without field)
       result.push(col)
     }
   }
@@ -1947,6 +1997,32 @@ onMounted(() => { ensureOrder(); ensureWidths() })
 function handleHeaderDrop(idx: number) {
   const result = onDrop(idx)
   if (result) emit('columnReorder', result)
+}
+
+// Helper functions for type-safe access to _orderIndex in templates
+function getColumnOrderIndex(col: ColumnDef): number | undefined {
+  const colWithIndex = col as ColumnDef & { _orderIndex?: number }
+  return colWithIndex._orderIndex
+}
+
+function canReorderColumn(col: ColumnDef): boolean {
+  if (!props.enableColumnReorder) return false
+  const orderIndex = getColumnOrderIndex(col)
+  return orderIndex != null && orderIndex >= 0
+}
+
+function canDragColumn(col: ColumnDef): boolean {
+  if (canReorderColumn(col)) return true
+  if (props.groupable && col.field && col.groupable !== false) return true
+  return false
+}
+
+function handleHeaderDropForColumn(col: ColumnDef): void {
+  if (!props.enableColumnReorder) return
+  const orderIndex = getColumnOrderIndex(col)
+  if (orderIndex != null) {
+    handleHeaderDrop(orderIndex)
+  }
 }
 
 type PinSide = 'left' | 'right' | null
@@ -2667,7 +2743,7 @@ function calculateHeaderLevels(cols: ColumnDef[]): { headers: HeaderCell[][], le
       if (col.columns && col.columns.length > 0) {
         const childDepth = getMaxDepth(col.columns, depth + 1)
         max = Math.max(max, childDepth)
-      } else if (col.field) {
+      } else if (col.field || col.command) {
         max = Math.max(max, depth)
       }
     }
@@ -2686,7 +2762,7 @@ function calculateHeaderLevels(cols: ColumnDef[]): { headers: HeaderCell[][], le
     for (const col of columns) {
       if (col.columns && col.columns.length > 0) {
         count += countLeafColumns(col.columns)
-      } else if (col.field) {
+      } else if (col.field || col.command) {
         count++
       }
     }
@@ -2708,8 +2784,8 @@ function calculateHeaderLevels(cols: ColumnDef[]): { headers: HeaderCell[][], le
           // Process children at next level
           processColumns(col.columns, currentLevel + 1)
         }
-      } else if (col.field) {
-        // Leaf column
+      } else if (col.field || col.command) {
+        // Leaf column (has field) OR column with command
         leafColumns.push(col)
         const rowspan = maxLevel - currentLevel + 1
         headers[currentLevel].push({
@@ -3491,8 +3567,8 @@ const bodyCols = computed(() => {
         }
         // Filter out columns not in menu (if menu prop is false)
         if (c.menu === false && props.columnMenu) return false
-        // Only include columns with field (leaf columns)
-        if (!c.field) return false
+        // Include columns with field (leaf columns) OR columns with command
+        if (!c.field && !c.command) return false
         return true
       })
   }
@@ -3521,8 +3597,8 @@ const bodyCols = computed(() => {
       }
       // Filter out columns not in menu (if menu prop is false)
       if (c.menu === false && props.columnMenu) return false
-      // Only include columns with field (leaf columns) - filter out group columns
-      if (!c.field) return false
+      // Include columns with field (leaf columns) OR columns with command
+      if (!c.field && !c.command) return false
       return true
     })
 })
@@ -4371,6 +4447,14 @@ function getCommandIconClass(cmd: string | { name: string; iconClass?: string; i
     case 'cancel': return 'v3grid__icon--cancel'
     default: return undefined
   }
+}
+
+// Helper function to check if a string is an emoji
+function isEmoji(str: string | undefined | null): boolean {
+  if (!str) return false
+  // Check if string contains emoji characters (Unicode ranges for emojis)
+  const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{200D}]|[\u{FE0F}]|[\u{0023}-\u{0039}]\u{FE0F}?\u{20E3}/u
+  return emojiRegex.test(str)
 }
 
 function getCommandClasses(cmd: string | { name: string; className?: string }, _column?: ColumnDef): string {

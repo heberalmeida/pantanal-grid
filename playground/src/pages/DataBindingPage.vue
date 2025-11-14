@@ -505,7 +505,6 @@ onBeforeUnmount(() => {
 
 // Example 5: Working Offline
 const offlineRows = ref<any[]>([])
-const offlineLoading = ref(false)
 const isOnline = ref(navigator.onLine)
 
 const offlineColumns: ColumnDef[] = [
@@ -543,15 +542,10 @@ function syncOfflineData() {
   // In a real app, sync pending changes to server
   const pending = localStorage.getItem('offline-pending')
   if (pending) {
-    const changes = JSON.parse(pending)
     // Send changes to server...
+    // const changes = JSON.parse(pending)
     localStorage.removeItem('offline-pending')
   }
-}
-
-// Save to localStorage on changes
-function saveOfflineData() {
-  localStorage.setItem('offline-products', JSON.stringify(offlineRows.value))
 }
 
 const offlineCode = `<script setup lang="ts">
@@ -1118,6 +1112,773 @@ function handleError(error: any) {
     :clean-strings="true"
   />
 <\/template>`
+
+// Example 9: REST API Users (Auto-loaded)
+const usersDataSourceRef = ref<DataSourceInstance | null>(null)
+const usersDataSourceRows = ref<any[]>([])
+const usersDataSourceTotal = ref(0)
+const usersDataSourceLoading = ref(false)
+const usersDataSourcePage = ref(1)
+const usersDataSourcePageSize = ref(10)
+const usersDataSourceSort = ref<SortDescriptor[]>([])
+const usersDataSourceFilter = ref<FilterDescriptor[]>([])
+
+const usersDataSourceColumns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true, filterable: true },
+  { field: 'firstName', title: 'First Name', width: 150, sortable: true, filterable: true },
+  { field: 'lastName', title: 'Last Name', width: 150, sortable: true, filterable: true },
+  { field: 'email', title: 'Email', width: 200, sortable: true, filterable: true },
+  { field: 'age', title: 'Age', width: 80, sortable: true },
+  { field: 'gender', title: 'Gender', width: 100, filterable: true },
+]
+
+const usersDataSourceTransport: DataSourceTransport = {
+  read: async (options: any) => {
+    const params = options.data || {}
+    const url = new URL('https://dummyjson.com/users')
+    url.searchParams.set('limit', String(params.pageSize || 10))
+    url.searchParams.set('skip', String((params.page - 1) * (params.pageSize || 10)))
+    
+    if (params.filter) {
+      try {
+        const filterObj = JSON.parse(params.filter)
+        const searchFilter = filterObj.find((f: FilterDescriptor) => f.field === 'firstName' || f.field === 'lastName' || f.field === 'email')
+        if (searchFilter?.value) {
+          const searchUrl = new URL('https://dummyjson.com/users/search')
+          searchUrl.searchParams.set('q', String(searchFilter.value))
+          searchUrl.searchParams.set('limit', String(params.pageSize || 10))
+          searchUrl.searchParams.set('skip', String((params.page - 1) * (params.pageSize || 10)))
+          const res = await fetch(searchUrl.toString(), { signal: options.signal })
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          return res.json()
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    
+    const res = await fetch(url.toString(), { signal: options.signal })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return res.json()
+  },
+  parameterMap: (data: any) => {
+    return {
+      page: usersDataSourcePage.value,
+      pageSize: usersDataSourcePageSize.value,
+      sort: usersDataSourceSort.value.length > 0 ? JSON.stringify(usersDataSourceSort.value) : undefined,
+      filter: usersDataSourceFilter.value.length > 0 ? JSON.stringify(usersDataSourceFilter.value) : undefined,
+      ...data,
+    }
+  },
+}
+
+const usersDataSourceSchema: DataSourceSchema = {
+  data: (response: any) => response.users || [],
+  total: (response: any) => response.total || 0,
+}
+
+function handleUsersDataSourceChange(data: any[]) {
+  usersDataSourceRows.value = data
+  if (usersDataSourceRef.value) {
+    const totalCount = usersDataSourceRef.value.total()
+    if (totalCount > 0) {
+      usersDataSourceTotal.value = totalCount
+    }
+  }
+}
+
+function handleUsersDataSourceError(error: any) {
+  console.error('Users DataSource error:', error)
+  usersDataSourceLoading.value = false
+}
+
+const usersDataSourceCode = `<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, PantanalDataSource, type ColumnDef, type SortDescriptor, type FilterDescriptor, type DataSourceInstance, type DataSourceTransport, type DataSourceSchema } from '@pantanal/grid'
+
+const dataSourceRef = ref<DataSourceInstance | null>(null)
+const rows = ref<any[]>([])
+const total = ref(0)
+const loading = ref(false)
+const page = ref(1)
+const pageSize = ref(10)
+const sort = ref<SortDescriptor[]>([])
+const filter = ref<FilterDescriptor[]>([])
+
+const columns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true, filterable: true },
+  { field: 'firstName', title: 'First Name', width: 150, sortable: true, filterable: true },
+  { field: 'lastName', title: 'Last Name', width: 150, sortable: true, filterable: true },
+  { field: 'email', title: 'Email', width: 200, sortable: true, filterable: true },
+  { field: 'age', title: 'Age', width: 80, sortable: true },
+]
+
+const transport: DataSourceTransport = {
+  read: async (options: any) => {
+    const params = options.data || {}
+    const url = new URL('https://dummyjson.com/users')
+    url.searchParams.set('limit', String(params.pageSize || 10))
+    url.searchParams.set('skip', String((params.page - 1) * (params.pageSize || 10)))
+    
+    const res = await fetch(url.toString(), { signal: options.signal })
+    if (!res.ok) throw new Error(\`HTTP \${res.status}\`)
+    return res.json()
+  },
+  parameterMap: (data: any) => {
+    return {
+      page: page.value,
+      pageSize: pageSize.value,
+      sort: sort.value.length > 0 ? JSON.stringify(sort.value) : undefined,
+      filter: filter.value.length > 0 ? JSON.stringify(filter.value) : undefined,
+      ...data,
+    }
+  },
+}
+
+const schema: DataSourceSchema = {
+  data: (response: any) => response.users || [],
+  total: (response: any) => response.total || 0,
+}
+
+function handleChange(data: any[]) {
+  rows.value = data
+  if (dataSourceRef.value) {
+    const totalCount = dataSourceRef.value.total()
+    if (totalCount > 0) {
+      total.value = totalCount
+    }
+  }
+}
+
+function handleError(error: any) {
+  console.error('DataSource error:', error)
+  loading.value = false
+}
+<\/script>
+
+<template>
+  <PantanalDataSource
+    ref="dataSourceRef"
+    type="remote"
+    :transport="transport"
+    :schema="schema"
+    :server-paging="true"
+    :server-sorting="true"
+    :server-filtering="true"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    v-model:sort="sort"
+    v-model:filter="filter"
+    @change="handleChange"
+    @error="handleError"
+    @requestStart="loading = true"
+    @requestEnd="loading = false"
+  />
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :total="total"
+    key-field="id"
+    server-side
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    v-model:sort="sort"
+    v-model:filter="filter"
+    :loading="loading"
+    :clean-strings="true"
+  />
+<\/template>`
+
+// Example 10: REST API Posts (Auto-loaded)
+const postsDataSourceRef = ref<DataSourceInstance | null>(null)
+const postsDataSourceRows = ref<any[]>([])
+const postsDataSourceTotal = ref(0)
+const postsDataSourceLoading = ref(false)
+const postsDataSourcePage = ref(1)
+const postsDataSourcePageSize = ref(20)
+const postsDataSourceSort = ref<SortDescriptor[]>([])
+
+const postsDataSourceColumns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true },
+  { field: 'title', title: 'Title', width: 400, sortable: true },
+  { field: 'body', title: 'Body', width: 300 },
+  { field: 'userId', title: 'User ID', width: 100, sortable: true },
+]
+
+const postsDataSourceTransport: DataSourceTransport = {
+  read: async (options: any) => {
+    const params = options.data || {}
+    const page = params.page || 1
+    const pageSize = params.pageSize || 20
+    const start = (page - 1) * pageSize
+    const end = start + pageSize
+    
+    const res = await fetch('https://jsonplaceholder.typicode.com/posts', { signal: options.signal })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const allPosts = await res.json()
+    
+    // Client-side pagination (JSONPlaceholder doesn't support server-side pagination)
+    const paginatedPosts = allPosts.slice(start, end)
+    
+    return {
+      data: paginatedPosts,
+      total: allPosts.length
+    }
+  },
+  parameterMap: (data: any) => {
+    return {
+      page: postsDataSourcePage.value,
+      pageSize: postsDataSourcePageSize.value,
+      sort: postsDataSourceSort.value.length > 0 ? JSON.stringify(postsDataSourceSort.value) : undefined,
+      ...data,
+    }
+  },
+}
+
+const postsDataSourceSchema: DataSourceSchema = {
+  data: (response: any) => response.data || [],
+  total: (response: any) => response.total || 0,
+}
+
+function handlePostsDataSourceChange(data: any[]) {
+  postsDataSourceRows.value = data
+  if (postsDataSourceRef.value) {
+    const totalCount = postsDataSourceRef.value.total()
+    if (totalCount > 0) {
+      postsDataSourceTotal.value = totalCount
+    }
+  }
+}
+
+function handlePostsDataSourceError(error: any) {
+  console.error('Posts DataSource error:', error)
+  postsDataSourceLoading.value = false
+}
+
+const postsDataSourceCode = `<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, PantanalDataSource, type ColumnDef, type SortDescriptor, type DataSourceInstance, type DataSourceTransport, type DataSourceSchema } from '@pantanal/grid'
+
+const dataSourceRef = ref<DataSourceInstance | null>(null)
+const rows = ref<any[]>([])
+const total = ref(0)
+const loading = ref(false)
+const page = ref(1)
+const pageSize = ref(20)
+const sort = ref<SortDescriptor[]>([])
+
+const columns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true },
+  { field: 'title', title: 'Title', width: 400, sortable: true },
+  { field: 'body', title: 'Body', width: 300 },
+  { field: 'userId', title: 'User ID', width: 100, sortable: true },
+]
+
+const transport: DataSourceTransport = {
+  read: async (options: any) => {
+    const params = options.data || {}
+    const page = params.page || 1
+    const pageSize = params.pageSize || 20
+    const start = (page - 1) * pageSize
+    const end = start + pageSize
+    
+    const res = await fetch('https://jsonplaceholder.typicode.com/posts', { signal: options.signal })
+    if (!res.ok) throw new Error(\`HTTP \${res.status}\`)
+    const allPosts = await res.json()
+    
+    // Client-side pagination (JSONPlaceholder doesn't support server-side pagination)
+    const paginatedPosts = allPosts.slice(start, end)
+    
+    return {
+      data: paginatedPosts,
+      total: allPosts.length
+    }
+  },
+  parameterMap: (data: any) => {
+    return {
+      page: page.value,
+      pageSize: pageSize.value,
+      sort: sort.value.length > 0 ? JSON.stringify(sort.value) : undefined,
+      ...data,
+    }
+  },
+}
+
+const schema: DataSourceSchema = {
+  data: (response: any) => response.data || [],
+  total: (response: any) => response.total || 0,
+}
+
+function handleChange(data: any[]) {
+  rows.value = data
+  if (dataSourceRef.value) {
+    const totalCount = dataSourceRef.value.total()
+    if (totalCount > 0) {
+      total.value = totalCount
+    }
+  }
+}
+
+function handleError(error: any) {
+  console.error('DataSource error:', error)
+  loading.value = false
+}
+<\/script>
+
+<template>
+  <PantanalDataSource
+    ref="dataSourceRef"
+    type="remote"
+    :transport="transport"
+    :schema="schema"
+    :server-paging="true"
+    :server-sorting="true"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    v-model:sort="sort"
+    @change="handleChange"
+    @error="handleError"
+    @requestStart="loading = true"
+    @requestEnd="loading = false"
+  />
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :total="total"
+    key-field="id"
+    server-side
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    v-model:sort="sort"
+    :loading="loading"
+    :clean-strings="true"
+  />
+<\/template>`
+
+// Example 11: REST API Quotes (Lazy Load - Manual Load)
+const quotesDataSourceRef = ref<DataSourceInstance | null>(null)
+const quotesDataSourceRows = ref<any[]>([])
+const quotesDataSourceTotal = ref(0)
+const quotesDataSourceLoading = ref(false)
+const quotesDataSourcePage = ref(1)
+const quotesDataSourcePageSize = ref(10)
+const quotesDataSourceSort = ref<SortDescriptor[]>([])
+const quotesDataSourceInitialized = ref(false)
+
+const quotesDataSourceColumns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true },
+  { field: 'quote', title: 'Quote', width: 500, sortable: true },
+  { field: 'author', title: 'Author', width: 150, sortable: true },
+]
+
+const quotesDataSourceTransport: DataSourceTransport = {
+  read: async (options: any) => {
+    // Don't load on mount - wait for manual trigger
+    if (!quotesDataSourceInitialized.value) {
+      return { quotes: [], total: 0 }
+    }
+    
+    const params = options.data || {}
+    const url = new URL('https://dummyjson.com/quotes')
+    url.searchParams.set('limit', String(params.pageSize || 10))
+    url.searchParams.set('skip', String((params.page - 1) * (params.pageSize || 10)))
+    
+    const res = await fetch(url.toString(), { signal: options.signal })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return res.json()
+  },
+  parameterMap: (data: any) => {
+    return {
+      page: quotesDataSourcePage.value,
+      pageSize: quotesDataSourcePageSize.value,
+      sort: quotesDataSourceSort.value.length > 0 ? JSON.stringify(quotesDataSourceSort.value) : undefined,
+      ...data,
+    }
+  },
+}
+
+const quotesDataSourceSchema: DataSourceSchema = {
+  data: (response: any) => response.quotes || [],
+  total: (response: any) => response.total || 0,
+}
+
+function handleQuotesDataSourceChange(data: any[]) {
+  quotesDataSourceRows.value = data
+  if (quotesDataSourceRef.value) {
+    const totalCount = quotesDataSourceRef.value.total()
+    if (totalCount > 0) {
+      quotesDataSourceTotal.value = totalCount
+    }
+  }
+}
+
+function handleQuotesDataSourceError(error: any) {
+  console.error('Quotes DataSource error:', error)
+  quotesDataSourceLoading.value = false
+}
+
+async function loadQuotesData() {
+  quotesDataSourceInitialized.value = true
+  if (quotesDataSourceRef.value) {
+    await quotesDataSourceRef.value.read()
+  }
+}
+
+async function refreshQuotesData() {
+  if (quotesDataSourceRef.value) {
+    await quotesDataSourceRef.value.read()
+  }
+}
+
+const quotesDataSourceCode = `<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, PantanalDataSource, type ColumnDef, type SortDescriptor, type DataSourceInstance, type DataSourceTransport, type DataSourceSchema } from '@pantanal/grid'
+
+const dataSourceRef = ref<DataSourceInstance | null>(null)
+const rows = ref<any[]>([])
+const total = ref(0)
+const loading = ref(false)
+const page = ref(1)
+const pageSize = ref(10)
+const sort = ref<SortDescriptor[]>([])
+const initialized = ref(false) // Control flag for lazy loading
+
+const columns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true },
+  { field: 'quote', title: 'Quote', width: 500, sortable: true },
+  { field: 'author', title: 'Author', width: 150, sortable: true },
+]
+
+const transport: DataSourceTransport = {
+  read: async (options: any) => {
+    // Don't load on mount - wait for manual trigger
+    if (!initialized.value) {
+      return { quotes: [], total: 0 }
+    }
+    
+    const params = options.data || {}
+    const url = new URL('https://dummyjson.com/quotes')
+    url.searchParams.set('limit', String(params.pageSize || 10))
+    url.searchParams.set('skip', String((params.page - 1) * (params.pageSize || 10)))
+    
+    const res = await fetch(url.toString(), { signal: options.signal })
+    if (!res.ok) throw new Error(\`HTTP \${res.status}\`)
+    return res.json()
+  },
+  parameterMap: (data: any) => {
+    return {
+      page: page.value,
+      pageSize: pageSize.value,
+      sort: sort.value.length > 0 ? JSON.stringify(sort.value) : undefined,
+      ...data,
+    }
+  },
+}
+
+const schema: DataSourceSchema = {
+  data: (response: any) => response.quotes || [],
+  total: (response: any) => response.total || 0,
+}
+
+function handleChange(data: any[]) {
+  rows.value = data
+  if (dataSourceRef.value) {
+    const totalCount = dataSourceRef.value.total()
+    if (totalCount > 0) {
+      total.value = totalCount
+    }
+  }
+}
+
+function handleError(error: any) {
+  console.error('DataSource error:', error)
+  loading.value = false
+}
+
+// Manual load function - sets flag and triggers read
+async function loadData() {
+  initialized.value = true
+  if (dataSourceRef.value) {
+    await dataSourceRef.value.read()
+  }
+}
+
+// Refresh function - just triggers read again
+async function refreshData() {
+  if (dataSourceRef.value) {
+    await dataSourceRef.value.read()
+  }
+}
+<\/script>
+
+<template>
+  <div class="mb-4">
+    <button
+      @click="loadData"
+      :disabled="loading"
+      class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50">
+      {{ loading ? 'Loading...' : 'Load Data' }}
+    </button>
+    <button
+      v-if="rows.length > 0"
+      @click="refreshData"
+      :disabled="loading"
+      class="ml-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50">
+      Refresh
+    </button>
+  </div>
+  <PantanalDataSource
+    ref="dataSourceRef"
+    type="remote"
+    :transport="transport"
+    :schema="schema"
+    :server-paging="true"
+    :server-sorting="true"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    v-model:sort="sort"
+    @change="handleChange"
+    @error="handleError"
+    @requestStart="loading = true"
+    @requestEnd="loading = false"
+  />
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :total="total"
+    key-field="id"
+    server-side
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    v-model:sort="sort"
+    :loading="loading"
+    :clean-strings="true"
+  />
+<\/template>`
+
+// Example 12: REST API Todos (Offset-based Pagination)
+const todosDataSourceRef = ref<DataSourceInstance | null>(null)
+const todosDataSourceRows = ref<any[]>([])
+const todosDataSourceTotal = ref(0)
+const todosDataSourceLoading = ref(false)
+const todosDataSourcePage = ref(1)
+const todosDataSourcePageSize = ref(20)
+const todosDataSourceSort = ref<SortDescriptor[]>([])
+const todosDataSourceFilter = ref<FilterDescriptor[]>([])
+
+const todosDataSourceColumns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true, filterable: true },
+  { field: 'title', title: 'Title', width: 400, sortable: true, filterable: true },
+  { field: 'completed', title: 'Completed', width: 120, filterable: true, template: (row: any) => row.completed ? '✓ Yes' : '✗ No' },
+  { field: 'userId', title: 'User ID', width: 100, sortable: true },
+]
+
+const todosDataSourceTransport: DataSourceTransport = {
+  read: async (options: any) => {
+    const params = options.data || {}
+    const page = params.page || 1
+    const pageSize = params.pageSize || 20
+    const offset = (page - 1) * pageSize
+    
+    const res = await fetch('https://jsonplaceholder.typicode.com/todos', { signal: options.signal })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    let allTodos = await res.json()
+    
+    // Apply filter if provided
+    if (params.filter) {
+      try {
+        const filterObj = JSON.parse(params.filter)
+        const completedFilter = filterObj.find((f: FilterDescriptor) => f.field === 'completed')
+        if (completedFilter?.value !== undefined) {
+          allTodos = allTodos.filter((todo: any) => todo.completed === completedFilter.value)
+        }
+        const titleFilter = filterObj.find((f: FilterDescriptor) => f.field === 'title')
+        if (titleFilter?.value) {
+          allTodos = allTodos.filter((todo: any) => 
+            todo.title.toLowerCase().includes(String(titleFilter.value).toLowerCase())
+          )
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    
+    // Apply sort if provided
+    if (params.sort) {
+      try {
+        const sortObj = JSON.parse(params.sort)
+        if (sortObj.length > 0) {
+          const sortItem = sortObj[0]
+          allTodos.sort((a: any, b: any) => {
+            const aVal = a[sortItem.field]
+            const bVal = b[sortItem.field]
+            if (sortItem.dir === 'asc') {
+              return aVal > bVal ? 1 : aVal < bVal ? -1 : 0
+            } else {
+              return aVal < bVal ? 1 : aVal > bVal ? -1 : 0
+            }
+          })
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    
+    // Apply offset-based pagination
+    const paginatedTodos = allTodos.slice(offset, offset + pageSize)
+    
+    return {
+      data: paginatedTodos,
+      total: allTodos.length
+    }
+  },
+  parameterMap: (data: any) => {
+    return {
+      page: todosDataSourcePage.value,
+      pageSize: todosDataSourcePageSize.value,
+      sort: todosDataSourceSort.value.length > 0 ? JSON.stringify(todosDataSourceSort.value) : undefined,
+      filter: todosDataSourceFilter.value.length > 0 ? JSON.stringify(todosDataSourceFilter.value) : undefined,
+      ...data,
+    }
+  },
+}
+
+const todosDataSourceSchema: DataSourceSchema = {
+  data: (response: any) => response.data || [],
+  total: (response: any) => response.total || 0,
+}
+
+function handleTodosDataSourceChange(data: any[]) {
+  todosDataSourceRows.value = data
+  if (todosDataSourceRef.value) {
+    const totalCount = todosDataSourceRef.value.total()
+    if (totalCount > 0) {
+      todosDataSourceTotal.value = totalCount
+    }
+  }
+}
+
+function handleTodosDataSourceError(error: any) {
+  console.error('Todos DataSource error:', error)
+  todosDataSourceLoading.value = false
+}
+
+const todosDataSourceCode = `<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, PantanalDataSource, type ColumnDef, type SortDescriptor, type FilterDescriptor, type DataSourceInstance, type DataSourceTransport, type DataSourceSchema } from '@pantanal/grid'
+
+const dataSourceRef = ref<DataSourceInstance | null>(null)
+const rows = ref<any[]>([])
+const total = ref(0)
+const loading = ref(false)
+const page = ref(1)
+const pageSize = ref(20)
+const sort = ref<SortDescriptor[]>([])
+const filter = ref<FilterDescriptor[]>([])
+
+const columns: ColumnDef[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true, filterable: true },
+  { field: 'title', title: 'Title', width: 400, sortable: true, filterable: true },
+  { field: 'completed', title: 'Completed', width: 120, filterable: true, template: (row: any) => row.completed ? '✓ Yes' : '✗ No' },
+  { field: 'userId', title: 'User ID', width: 100, sortable: true },
+]
+
+const transport: DataSourceTransport = {
+  read: async (options: any) => {
+    const params = options.data || {}
+    const page = params.page || 1
+    const pageSize = params.pageSize || 20
+    const offset = (page - 1) * pageSize
+    
+    const res = await fetch('https://jsonplaceholder.typicode.com/todos', { signal: options.signal })
+    if (!res.ok) throw new Error(\`HTTP \${res.status}\`)
+    let allTodos = await res.json()
+    
+    // Apply filter if provided
+    if (params.filter) {
+      try {
+        const filterObj = JSON.parse(params.filter)
+        const completedFilter = filterObj.find((f: FilterDescriptor) => f.field === 'completed')
+        if (completedFilter?.value !== undefined) {
+          allTodos = allTodos.filter((todo: any) => todo.completed === completedFilter.value)
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    
+    // Apply offset-based pagination
+    const paginatedTodos = allTodos.slice(offset, offset + pageSize)
+    
+    return {
+      data: paginatedTodos,
+      total: allTodos.length
+    }
+  },
+  parameterMap: (data: any) => {
+    return {
+      page: page.value,
+      pageSize: pageSize.value,
+      sort: sort.value.length > 0 ? JSON.stringify(sort.value) : undefined,
+      filter: filter.value.length > 0 ? JSON.stringify(filter.value) : undefined,
+      ...data,
+    }
+  },
+}
+
+const schema: DataSourceSchema = {
+  data: (response: any) => response.data || [],
+  total: (response: any) => response.total || 0,
+}
+
+function handleChange(data: any[]) {
+  rows.value = data
+  if (dataSourceRef.value) {
+    const totalCount = dataSourceRef.value.total()
+    if (totalCount > 0) {
+      total.value = totalCount
+    }
+  }
+}
+
+function handleError(error: any) {
+  console.error('DataSource error:', error)
+  loading.value = false
+}
+<\/script>
+
+<template>
+  <PantanalDataSource
+    ref="dataSourceRef"
+    type="remote"
+    :transport="transport"
+    :schema="schema"
+    :server-paging="true"
+    :server-sorting="true"
+    :server-filtering="true"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    v-model:sort="sort"
+    v-model:filter="filter"
+    @change="handleChange"
+    @error="handleError"
+    @requestStart="loading = true"
+    @requestEnd="loading = false"
+  />
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :total="total"
+    key-field="id"
+    server-side
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    v-model:sort="sort"
+    v-model:filter="filter"
+    :loading="loading"
+    :clean-strings="true"
+  />
+<\/template>`
 </script>
 
 <template>
@@ -1308,6 +2069,184 @@ function handleError(error: any) {
         class="rounded-xl border border-slate-200/70 bg-white/95 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/70"
       />
       <ExampleCode :source="graphqlDataSourceCode" />
+    </div>
+
+    <!-- REST API Users Example (Auto-loaded) -->
+    <div>
+      <h3 class="text-lg font-semibold mb-2">REST API: Users List (Auto-loaded on Mount)</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Example using <code>PantanalDataSource</code> with REST API for users. Data is automatically loaded when component mounts. 
+        Uses <code>https://dummyjson.com/users</code> API with pagination, sorting, and filtering.
+      </p>
+      <PantanalDataSource
+        ref="usersDataSourceRef"
+        type="remote"
+        :transport="usersDataSourceTransport"
+        :schema="usersDataSourceSchema"
+        :server-paging="true"
+        :server-sorting="true"
+        :server-filtering="true"
+        v-model:page="usersDataSourcePage"
+        v-model:pageSize="usersDataSourcePageSize"
+        v-model:sort="usersDataSourceSort"
+        v-model:filter="usersDataSourceFilter"
+        @change="handleUsersDataSourceChange"
+        @error="handleUsersDataSourceError"
+        @requestStart="usersDataSourceLoading = true"
+        @requestEnd="usersDataSourceLoading = false"
+      />
+      <PantanalGrid
+        :rows="usersDataSourceRows"
+        :columns="usersDataSourceColumns"
+        :total="usersDataSourceTotal"
+        key-field="id"
+        server-side
+        v-model:page="usersDataSourcePage"
+        v-model:pageSize="usersDataSourcePageSize"
+        v-model:sort="usersDataSourceSort"
+        v-model:filter="usersDataSourceFilter"
+        :loading="usersDataSourceLoading"
+        locale="en"
+        :clean-strings="true"
+        class="rounded-xl border border-slate-200/70 bg-white/95 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/70"
+      />
+      <ExampleCode :source="usersDataSourceCode" />
+    </div>
+
+    <!-- REST API Posts Example (Auto-loaded) -->
+    <div>
+      <h3 class="text-lg font-semibold mb-2">REST API: Posts List (Auto-loaded on Mount)</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Example using <code>PantanalDataSource</code> with JSONPlaceholder API for posts. Data is automatically loaded when component mounts. 
+        Uses <code>https://jsonplaceholder.typicode.com/posts</code> with server-side pagination and sorting.
+      </p>
+      <PantanalDataSource
+        ref="postsDataSourceRef"
+        type="remote"
+        :transport="postsDataSourceTransport"
+        :schema="postsDataSourceSchema"
+        :server-paging="true"
+        :server-sorting="true"
+        v-model:page="postsDataSourcePage"
+        v-model:pageSize="postsDataSourcePageSize"
+        v-model:sort="postsDataSourceSort"
+        @change="handlePostsDataSourceChange"
+        @error="handlePostsDataSourceError"
+        @requestStart="postsDataSourceLoading = true"
+        @requestEnd="postsDataSourceLoading = false"
+      />
+      <PantanalGrid
+        :rows="postsDataSourceRows"
+        :columns="postsDataSourceColumns"
+        :total="postsDataSourceTotal"
+        key-field="id"
+        server-side
+        v-model:page="postsDataSourcePage"
+        v-model:pageSize="postsDataSourcePageSize"
+        v-model:sort="postsDataSourceSort"
+        :loading="postsDataSourceLoading"
+        locale="en"
+        :clean-strings="true"
+        class="rounded-xl border border-slate-200/70 bg-white/95 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/70"
+      />
+      <ExampleCode :source="postsDataSourceCode" />
+    </div>
+
+    <!-- REST API Quotes Example (Lazy Load - Not Auto-loaded) -->
+    <div>
+      <h3 class="text-lg font-semibold mb-2">REST API: Quotes List (Lazy Load - Manual Load)</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Example using <code>PantanalDataSource</code> with REST API for quotes. Data is <strong>NOT</strong> automatically loaded. 
+        Use the "Load Data" button to fetch data when needed. Uses <code>https://dummyjson.com/quotes</code> API.
+      </p>
+      <div class="mb-4">
+        <button
+          @click="loadQuotesData"
+          :disabled="quotesDataSourceLoading"
+          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ quotesDataSourceLoading ? 'Loading...' : 'Load Data' }}
+        </button>
+        <button
+          v-if="quotesDataSourceRows.length > 0"
+          @click="refreshQuotesData"
+          :disabled="quotesDataSourceLoading"
+          class="ml-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed">
+          Refresh
+        </button>
+      </div>
+      <PantanalDataSource
+        ref="quotesDataSourceRef"
+        type="remote"
+        :transport="quotesDataSourceTransport"
+        :schema="quotesDataSourceSchema"
+        :server-paging="true"
+        :server-sorting="true"
+        :auto-sync="false"
+        v-model:page="quotesDataSourcePage"
+        v-model:pageSize="quotesDataSourcePageSize"
+        v-model:sort="quotesDataSourceSort"
+        @change="handleQuotesDataSourceChange"
+        @error="handleQuotesDataSourceError"
+        @requestStart="quotesDataSourceLoading = true"
+        @requestEnd="quotesDataSourceLoading = false"
+      />
+      <PantanalGrid
+        :rows="quotesDataSourceRows"
+        :columns="quotesDataSourceColumns"
+        :total="quotesDataSourceTotal"
+        key-field="id"
+        server-side
+        v-model:page="quotesDataSourcePage"
+        v-model:pageSize="quotesDataSourcePageSize"
+        v-model:sort="quotesDataSourceSort"
+        :loading="quotesDataSourceLoading"
+        locale="en"
+        :clean-strings="true"
+        class="rounded-xl border border-slate-200/70 bg-white/95 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/70"
+      />
+      <ExampleCode :source="quotesDataSourceCode" />
+    </div>
+
+    <!-- REST API Todos Example (Offset-based Pagination) -->
+    <div>
+      <h3 class="text-lg font-semibold mb-2">REST API: Todos List (Offset-based Pagination)</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Example using <code>PantanalDataSource</code> with JSONPlaceholder API for todos. This example demonstrates offset-based pagination 
+        instead of page-based. Uses <code>https://jsonplaceholder.typicode.com/todos</code> API with automatic loading.
+      </p>
+      <PantanalDataSource
+        ref="todosDataSourceRef"
+        type="remote"
+        :transport="todosDataSourceTransport"
+        :schema="todosDataSourceSchema"
+        :server-paging="true"
+        :server-sorting="true"
+        :server-filtering="true"
+        v-model:page="todosDataSourcePage"
+        v-model:pageSize="todosDataSourcePageSize"
+        v-model:sort="todosDataSourceSort"
+        v-model:filter="todosDataSourceFilter"
+        @change="handleTodosDataSourceChange"
+        @error="handleTodosDataSourceError"
+        @requestStart="todosDataSourceLoading = true"
+        @requestEnd="todosDataSourceLoading = false"
+      />
+      <PantanalGrid
+        :rows="todosDataSourceRows"
+        :columns="todosDataSourceColumns"
+        :total="todosDataSourceTotal"
+        key-field="id"
+        server-side
+        v-model:page="todosDataSourcePage"
+        v-model:pageSize="todosDataSourcePageSize"
+        v-model:sort="todosDataSourceSort"
+        v-model:filter="todosDataSourceFilter"
+        :loading="todosDataSourceLoading"
+        locale="en"
+        :clean-strings="true"
+        class="rounded-xl border border-slate-200/70 bg-white/95 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/70"
+      />
+      <ExampleCode :source="todosDataSourceCode" />
     </div>
 
     <!-- WebSocket -->

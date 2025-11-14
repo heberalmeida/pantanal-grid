@@ -41,3 +41,7 @@ temp/
 
 **/package1/
 Arquivo.zip
+
+# VitePress
+docs/.vitepress/cache/
+docs/.vitepress/dist/
