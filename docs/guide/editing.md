@@ -1,10 +1,10 @@
 # Editing
 
-Pantanal Grid supports inline editing, allowing users to edit cell values directly in the grid. You can enable editing for specific columns and handle save/cancel operations.
+Pantanal Grid ships with batch, inline, and popup editors. Each mode shares the same column-level configuration (`editable`, `validation`, `values`, `editor`) so you can switch between experiences without changing column definitions.
 
-## Basic Editing
+## Configuring editable columns
 
-Enable editing by setting `editable="true"`:
+Only columns flagged with `editable` participate in the editing workflow. You can use booleans or row-based predicates.
 
 ```vue
 <script setup lang="ts">
@@ -12,15 +12,20 @@ import { ref } from 'vue'
 import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
 
 const rows = ref([
-  { id: 1, name: 'Product A', price: 29.99, category: 'Electronics' },
-  { id: 2, name: 'Product B', price: 49.99, category: 'Clothing' }
+  { id: 1, name: 'AirPods', price: 199, stock: 12, status: 'active' },
+  { id: 2, name: 'Noise Cancelling Headphones', price: 349, stock: 4, status: 'archived' }
 ])
 
 const columns: ColumnDef[] = [
   { field: 'id', title: 'ID', width: 80 },
   { field: 'name', title: 'Name', editable: true },
-  { field: 'price', title: 'Price', editable: true },
-  { field: 'category', title: 'Category', editable: true }
+  { field: 'price', title: 'Price', editable: true, type: 'number' },
+  {
+    field: 'stock',
+    title: 'Stock',
+    editable: row => row.status === 'active',
+    type: 'number'
+  }
 ]
 </script>
 
@@ -35,280 +40,168 @@ const columns: ColumnDef[] = [
 </template>
 ```
 
-## Column-Level Editing
+## Batch editing (`editable=true`)
 
-Control editing per column:
+Batch mode keeps cells readonly until you click them. Every edit is tracked locally until Save (toolbar) commits all pending changes.
 
 ```vue
-<script setup lang="ts">
-const columns: ColumnDef[] = [
-  { field: 'id', title: 'ID', width: 80, editable: false },  // Not editable
-  { field: 'name', title: 'Name', editable: true },          // Editable
-  { field: 'price', title: 'Price', editable: true },        // Editable
-  { field: 'category', title: 'Category', editable: false }   // Not editable
-]
-</script>
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="id"
+    :editable="true"
+    :toolbar="['create', 'save', 'cancel']"
+    @save="persistChanges"
+    @cancel="resetDraft"
+  />
+</template>
 ```
 
-## Conditional Editing
+Use the emitted payload to sync with your store or API:
 
-Make columns conditionally editable based on row data:
+```ts
+function persistChanges(payload: { changes: Array<{ type: 'create' | 'update' | 'destroy'; row: any }> }) {
+  payload.changes.forEach(change => {
+    if (change.type === 'update') {
+      const index = rows.value.findIndex(item => item.id === change.row.id)
+      if (index !== -1) rows.value[index] = { ...rows.value[index], ...change.row }
+    }
+  })
+}
 
-```vue
-<script setup lang="ts">
-const columns: ColumnDef[] = [
-  {
-    field: 'price',
-    title: 'Price',
-    editable: (row) => row.status === 'active'  // Only editable if status is active
-  }
-]
-</script>
+function resetDraft() {
+  // fetch original data or simply ignore to keep local state intact
+}
 ```
 
-## Editing Modes
+## Inline editing (`editable="inline"`)
 
-### Inline Editing
-
-Edit cells directly in the grid:
+Inline mode swaps the row into edit state when the user clicks the Edit command. Row-level Save/Cancel buttons are injected automatically when you include `'edit'` inside a command column.
 
 ```vue
+const columns: ColumnDef[] = [
+  { field: 'name', title: 'Name', editable: true },
+  { field: 'price', title: 'Price', editable: true, type: 'number' },
+  { field: 'command', title: '', width: 180, command: ['edit', 'destroy'] }
+]
+
 <PantanalGrid
   :rows="rows"
   :columns="columns"
   key-field="id"
   editable="inline"
+  :toolbar="['create']"
+  @editSave="handleInlineSave"
+  @editCancel="handleInlineCancel"
 />
 ```
 
-### Batch Editing
+When inline Save fires the grid has already merged the input values into the row object, so you can push the updated entity to your backend or state store in `handleInlineSave`.
 
-Edit multiple cells and save all changes at once:
+## Popup editing (`editable="popup"`)
+
+Popup mode reuses the same column metadata but renders a dialog with stacked editors. The dialog buttons reuse `handleEditSave` and `handleEditCancel`, so you can share the same event handlers between inline and popup flows.
 
 ```vue
 <PantanalGrid
   :rows="rows"
   :columns="columns"
   key-field="id"
-  :editable="true"
-  :toolbar="['save', 'cancel']"
+  editable="popup"
+  :toolbar="['create']"
+  @editSave="handleInlineSave"
+  @editCancel="handleInlineCancel"
 />
 ```
 
-## Toolbar Buttons
+## Validation
 
-Add toolbar buttons for editing operations:
-
-```vue
-<PantanalGrid
-  :rows="rows"
-  :columns="columns"
-  key-field="id"
-  :editable="true"
-  :toolbar="['create', 'save', 'cancel']"
-/>
-```
-
-## Editing Events
-
-Handle editing events:
+Set per-column validation rules to stop invalid submissions. Rules run on blur (batch) or right before inline/popup saves. Failed rules emit `validationError`.
 
 ```vue
-<template>
-  <PantanalGrid
-    :rows="rows"
-    :columns="columns"
-    key-field="id"
-    :editable="true"
-    @edit="handleEdit"
-    @editCommit="handleEditCommit"
-    @save="handleSave"
-    @cancel="handleCancel"
-  />
-</template>
-
-<script setup lang="ts">
-function handleEdit(row: any, field: string) {
-  console.log('Editing:', row, field)
-}
-
-function handleEditCommit(row: any, field: string, value: any) {
-  console.log('Committed:', row, field, value)
-  // Update row data
-  const index = rows.value.findIndex(r => r.id === row.id)
-  if (index !== -1) {
-    rows.value[index] = { ...rows.value[index], [field]: value }
+const columns: ColumnDef[] = [
+  {
+    field: 'name',
+    title: 'Name',
+    editable: true,
+    validation: {
+      required: true,
+      minLength: 3
+    }
+  },
+  {
+    field: 'price',
+    title: 'Price',
+    editable: true,
+    type: 'number',
+    validation: {
+      required: true,
+      min: 1,
+      max: 9999
+    }
   }
-}
-
-function handleSave() {
-  console.log('Saving all changes')
-  // Save to server, etc.
-}
-
-function handleCancel() {
-  console.log('Canceling changes')
-  // Revert changes, etc.
-}
-</script>
+]
 ```
 
-## Custom Editors
+## Custom editors
 
-Provide custom editors for specific columns:
+Use `values` for select lists or `editor` for full control. The `editor` callback receives the container plus field metadata. Attach your own input and listen for `change`/`input` to update the grid.
 
-```vue
-<script setup lang="ts">
+```ts
 const columns: ColumnDef[] = [
   {
     field: 'category',
     title: 'Category',
     editable: true,
+    values: [
+      { value: 'audio', text: 'Audio' },
+      { value: 'mobile', text: 'Mobile' }
+    ]
+  },
+  {
+    field: 'supplierId',
+    title: 'Supplier',
+    editable: true,
     editor: (container, options) => {
       const select = document.createElement('select')
-      select.innerHTML = `
-        <option value="Electronics">Electronics</option>
-        <option value="Clothing">Clothing</option>
-        <option value="Accessories">Accessories</option>
-      `
-      select.value = options.value || ''
+      suppliers.forEach((supplier, index) => {
+        const option = document.createElement('option')
+        option.value = String(supplier.id)
+        option.textContent = supplier.name
+        if (supplier.id === options.value) option.selected = true
+        select.appendChild(option)
+      })
       container.appendChild(select)
       return select
     }
   }
 ]
-</script>
 ```
 
-## Validation
+## Events cheat sheet
 
-Add validation rules for editable columns:
-
-```vue
-<script setup lang="ts">
-const columns: ColumnDef[] = [
-  {
-    field: 'price',
-    title: 'Price',
-    editable: true,
-    validation: {
-      required: true,
-      min: 0,
-      max: 10000,
-      validator: (value) => {
-        if (value < 0) return 'Price cannot be negative'
-        if (value > 10000) return 'Price cannot exceed 10000'
-        return true
-      }
-    }
-  }
-]
-</script>
-```
-
-## Command Columns
-
-Add edit/delete buttons in a command column:
-
-```vue
-<script setup lang="ts">
-const columns: ColumnDef[] = [
-  { field: 'name', title: 'Name' },
-  { field: 'price', title: 'Price' },
-  {
-    field: 'command',
-    title: 'Actions',
-    width: 150,
-    command: ['edit', 'destroy']
-  }
-]
-</script>
-
-<template>
-  <PantanalGrid
-    :rows="rows"
-    :columns="columns"
-    key-field="id"
-    :editable="true"
-    @edit="handleEdit"
-    @destroy="handleDestroy"
-  />
-</template>
-```
-
-## Complete Example
-
-```vue
-<script setup lang="ts">
-import { ref } from 'vue'
-import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
-
-const rows = ref([
-  { id: 1, name: 'Product A', price: 29.99, category: 'Electronics', stock: 150 },
-  { id: 2, name: 'Product B', price: 49.99, category: 'Clothing', stock: 75 }
-])
-
-const columns: ColumnDef[] = [
-  { field: 'id', title: 'ID', width: 80 },
-  { field: 'name', title: 'Name', editable: true },
-  { 
-    field: 'price', 
-    title: 'Price', 
-    editable: true,
-    validation: {
-      required: true,
-      min: 0
-    }
-  },
-  { field: 'category', title: 'Category', editable: true },
-  { field: 'stock', title: 'Stock', editable: true },
-  {
-    field: 'command',
-    title: 'Actions',
-    width: 150,
-    command: ['edit', 'destroy']
-  }
-]
-
-function handleEdit(row: any) {
-  console.log('Edit row:', row)
-}
-
-function handleDestroy(row: any) {
-  const index = rows.value.findIndex(r => r.id === row.id)
-  if (index !== -1) {
-    rows.value.splice(index, 1)
-  }
-}
-
-function handleSave() {
-  console.log('Saving changes:', rows.value)
-  // Save to server
-}
-</script>
-
-<template>
-  <PantanalGrid
-    :rows="rows"
-    :columns="columns"
-    key-field="id"
-    :editable="true"
-    :toolbar="['save', 'cancel']"
-    @edit="handleEdit"
-    @destroy="handleDestroy"
-    @save="handleSave"
-    locale="en"
-  />
-</template>
-```
+| Event        | When it fires                           | Payload                                                     |
+|--------------|-----------------------------------------|-------------------------------------------------------------|
+| `edit`       | A cell or row entered edit mode         | `{ row, field? }`                                           |
+| `editCommit` | A single cell committed in batch mode   | `{ row, field, value }`                                     |
+| `editSave`   | Inline/popup row saved                  | `{ row }`                                                   |
+| `editCancel` | Inline/popup row cancelled              | `{ row }`                                                   |
+| `save`       | Toolbar Save pressed in batch mode      | `{ changes: Array<{ type, row }> }`                         |
+| `cancel`     | Toolbar Cancel pressed in batch mode    | `void`                                                      |
+| `create`     | Toolbar Create pressed                  | `{ row }` (the draft row injected into the grid)            |
+| `destroy`    | Destroy command clicked                 | `{ row }`                                                   |
+| `validationError` | A validation rule failed           | `{ row, field, error }`                                     |
 
 ## Tips
 
-- Use `editable: false` on columns that shouldn't be edited (like IDs)
-- Provide validation rules for data integrity
-- Handle save/cancel events to persist or revert changes
-- Use custom editors for complex input types
-- Consider using command columns for row-level actions
+- Prefer `editable="inline"` when you want row-level save points, or `editable="popup"` when space is limited.
+- Always set `key-field` so pending edits map to deterministic rows.
+- Pair toolbar actions with toast/notification feedback because batch saves can touch multiple records at once.
+- Use `values` for simple dropdowns and `editor` for anything that needs bespoke markup or widgets.
+- Keep destructive actions (`destroy`) behind a confirmation dialog by enabling `editableConfirmation`.
+
+Next steps: explore the [complete editing example](/examples/editing), hook up `save` events to your backend, and combine editing with other capabilities such as filtering or persisted state.
 
 
 

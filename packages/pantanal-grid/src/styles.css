@@ -84,6 +84,31 @@
   align-items: center;
   overflow: hidden;
 }
+.v3grid__cell--editing {
+  background: rgba(24, 160, 88, 0.08);
+}
+.v3grid__editor-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.v3grid__editor-input {
+  width: 100%;
+  border: 1px solid var(--grid-border, #d1d5db);
+  border-radius: 0.375rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.875rem;
+  background: #fff;
+  color: var(--grid-text, #0f172a);
+}
+.v3grid__editor-custom {
+  width: 100%;
+}
+.v3grid__validation {
+  color: #dc2626;
+  font-size: 0.75rem;
+}
 .v3grid__cell:last-child { border-right: none; }
 
 /* Remove all borders between cells in group rows - create seamless appearance */
@@ -1333,4 +1358,73 @@
 [data-theme="dark"] .v3grid__btn--dialog-cancel:hover,
 [data-theme="midnight"] .v3grid__btn--dialog-cancel:hover {
   background-color: #334155 !important;
+}
+
+.v3grid__popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 3000;
+}
+
+.v3grid__popup-panel {
+  width: min(520px, 90vw);
+  max-height: 90vh;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.v3grid__popup-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--grid-border, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--grid-text, #0f172a);
+}
+
+.v3grid__popup-close {
+  border: none;
+  background: transparent;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #94a3b8;
+}
+
+.v3grid__popup-body {
+  padding: 1rem 1.25rem;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.v3grid__popup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.v3grid__popup-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.v3grid__popup-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--grid-border, #e5e7eb);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
 }

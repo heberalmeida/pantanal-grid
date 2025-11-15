@@ -25,37 +25,60 @@ export function useEditing() {
   }
 
   function startEditingRow(rowKey: string | number) {
-    editingRows.value.add(rowKey)
+    const next = new Set(editingRows.value)
+    next.add(rowKey)
+    editingRows.value = next
   }
 
   function stopEditingRow(rowKey: string | number) {
-    editingRows.value.delete(rowKey)
+    if (!editingRows.value.has(rowKey)) return
+    const next = new Set(editingRows.value)
+    next.delete(rowKey)
     // Clear cell editing state for this row
-    const keysToDelete: string[] = []
-    editingCells.value.forEach((value, key) => {
+    const nextCells = new Map(editingCells.value)
+    nextCells.forEach((value, key) => {
       if (value.rowKey === rowKey) {
-        keysToDelete.push(key)
+        nextCells.delete(key)
       }
     })
-    keysToDelete.forEach(key => editingCells.value.delete(key))
+    editingRows.value = next
+    editingCells.value = nextCells
   }
 
   function startEditingCell(rowKey: string | number, field: string) {
     const key = `${rowKey}:${field}`
-    editingCells.value.set(key, { rowKey, field })
+    const next = new Map(editingCells.value)
+    next.set(key, { rowKey, field })
+    editingCells.value = next
   }
 
   function stopEditingCell(rowKey: string | number, field: string) {
     const key = `${rowKey}:${field}`
-    editingCells.value.delete(key)
+    if (!editingCells.value.has(key)) return
+    const next = new Map(editingCells.value)
+    next.delete(key)
+    editingCells.value = next
   }
 
   function setPendingChange(rowKey: string | number, field: string, value: any) {
-    if (!pendingChanges.value.has(rowKey)) {
-      pendingChanges.value.set(rowKey, {})
+    const next = new Map(pendingChanges.value)
+    const existing = next.get(rowKey) ?? {}
+    next.set(rowKey, { ...existing, [field]: value })
+    pendingChanges.value = next
+  }
+
+  function removePendingField(rowKey: string | number, field: string) {
+    const changes = pendingChanges.value.get(rowKey)
+    if (!changes) return
+    const nextChanges = { ...changes }
+    delete nextChanges[field]
+    const next = new Map(pendingChanges.value)
+    if (Object.keys(nextChanges).length === 0) {
+      next.delete(rowKey)
+    } else {
+      next.set(rowKey, nextChanges)
     }
-    const changes = pendingChanges.value.get(rowKey)!
-    changes[field] = value
+    pendingChanges.value = next
   }
 
   function getPendingChange(rowKey: string | number, field: string): any {
@@ -64,33 +87,43 @@ export function useEditing() {
 
   function clearPendingChanges(rowKey?: string | number) {
     if (rowKey !== undefined) {
-      pendingChanges.value.delete(rowKey)
-    } else {
-      pendingChanges.value.clear()
+      if (!pendingChanges.value.has(rowKey)) return
+      const next = new Map(pendingChanges.value)
+      next.delete(rowKey)
+      pendingChanges.value = next
+      return
     }
+    pendingChanges.value = new Map()
   }
 
   function markAsDeleted(rowKey: string | number) {
-    deletedRows.value.add(rowKey)
+    const next = new Set(deletedRows.value)
+    next.add(rowKey)
+    deletedRows.value = next
   }
 
   function unmarkAsDeleted(rowKey: string | number) {
-    deletedRows.value.delete(rowKey)
+    if (!deletedRows.value.has(rowKey)) return
+    const next = new Set(deletedRows.value)
+    next.delete(rowKey)
+    deletedRows.value = next
   }
 
   function addNewRow(row: Record<string, any>) {
-    newRows.value.push(row)
+    newRows.value = [...newRows.value, row]
   }
 
   function removeNewRow(index: number) {
-    newRows.value.splice(index, 1)
+    const next = [...newRows.value]
+    next.splice(index, 1)
+    newRows.value = next
   }
 
   function clearAll() {
-    editingRows.value.clear()
-    editingCells.value.clear()
-    pendingChanges.value.clear()
-    deletedRows.value.clear()
+    editingRows.value = new Set()
+    editingCells.value = new Map()
+    pendingChanges.value = new Map()
+    deletedRows.value = new Set()
     newRows.value = []
   }
 
@@ -111,6 +144,7 @@ export function useEditing() {
     startEditingCell,
     stopEditingCell,
     setPendingChange,
+    removePendingField,
     getPendingChange,
     clearPendingChanges,
     markAsDeleted,
