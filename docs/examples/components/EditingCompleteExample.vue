@@ -2,8 +2,15 @@
 import { ref } from 'vue'
 import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
 
-// Inline Editing
-const inlineRows = ref([
+interface ProductRow {
+  id: number
+  name: string
+  price: number
+  category: string
+  stock: number
+}
+
+const inlineRows = ref<ProductRow[]>([
   { id: 1, name: 'Product A', price: 29.99, category: 'Electronics', stock: 150 },
   { id: 2, name: 'Product B', price: 49.99, category: 'Clothing', stock: 75 },
   { id: 3, name: 'Product C', price: 19.99, category: 'Accessories', stock: 200 },
@@ -39,8 +46,7 @@ function handleDestroy(row: any) {
   }
 }
 
-// Batch Editing
-const batchRows = ref([
+const batchRows = ref<ProductRow[]>([
   { id: 1, name: 'Product A', price: 29.99, category: 'Electronics', stock: 150 },
   { id: 2, name: 'Product B', price: 49.99, category: 'Clothing', stock: 75 },
   { id: 3, name: 'Product C', price: 19.99, category: 'Accessories', stock: 200 },
@@ -56,16 +62,13 @@ const batchColumns: ColumnDef[] = [
 
 function handleSave() {
   console.log('Saving changes:', batchRows.value)
-  // Save to server or update state
 }
 
 function handleCancel() {
   console.log('Canceling changes')
-  // Revert changes
 }
 
-// With Validation
-const validationRows = ref([
+const validationRows = ref<Array<ProductRow & { email: string }>>([
   { id: 1, name: 'Product A', price: 29.99, email: 'product@example.com', stock: 150 },
   { id: 2, name: 'Product B', price: 49.99, email: 'product2@example.com', stock: 75 },
 ])
@@ -115,7 +118,7 @@ const validationColumns: ColumnDef[] = [
         Use the Delete button to remove rows. Price must be positive (validation).
       </p>
       <PantanalGrid
-        :rows="inlineRows"
+        :rows="inlineRows.value"
         :columns="inlineColumns"
         key-field="id"
         :editable="true"
@@ -135,7 +138,7 @@ const validationColumns: ColumnDef[] = [
         Use Cancel to discard all changes.
       </p>
       <PantanalGrid
-        :rows="batchRows"
+        :rows="batchRows.value"
         :columns="batchColumns"
         key-field="id"
         :editable="true"
@@ -156,7 +159,7 @@ const validationColumns: ColumnDef[] = [
         and email must be a valid email address.
       </p>
       <PantanalGrid
-        :rows="validationRows"
+        :rows="validationRows.value"
         :columns="validationColumns"
         key-field="id"
         :editable="true"

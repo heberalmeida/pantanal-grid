@@ -74,6 +74,7 @@ export interface Messages {
   filterableMessagesValue?: string
   filterableMessagesCheckAll?: string
   noRecords?: string
+  invalidValue?: string
   // Pageable messages
   pageableDisplay?: string
   pageableEmpty?: string

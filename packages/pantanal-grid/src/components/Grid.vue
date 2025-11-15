@@ -313,49 +313,30 @@
       </div>
 
       <!-- BODY (VIRTUAL) -->
-      <div v-if="isVirtualEnabled" :style="{ height: props.height + 'px', overflowY: 'auto', overflowX: 'hidden' }"
+      <div v-if="isVirtualEnabled" :key="`virtual-${editingEpoch}`" :style="{ height: props.height + 'px', overflowY: 'auto', overflowX: 'hidden' }"
         @scroll="onScrollHandler" 
         @keydown="handleBodyKeydown" 
         @focus="props.navigatable && handleBodyFocus"
         :tabindex="props.navigatable || props.allowCopy ? 0 : undefined">
         <div :style="{ height: topPad + 'px' }"></div>
-        <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
+        <div v-for="(row, r) in visibleRows" :key="`${(row as any)[keyFieldStr] ?? r}-${editingEpoch}`" class="v3grid__row"
+          :data-editing-epoch="editingEpoch"
 :class="props.striped && ((start ?? 0) + r) % 2 === 1 ? 'v3grid__row--alt' : ''"
           :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? bodyCols : columns) }">
           <div v-if="props.selectable" class="v3grid__cell" @click.stop>
             <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
           </div>
           <div v-if="isGrouped" class="v3grid__cell"></div>
-          <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
+          <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[{ 'v3grid__cell--editing': isCellEditing(row, c) }, pinClass(c._idx)]"
             :style="[pinStyle(c._idx)]" 
             :tabindex="props.navigatable ? (isFocusedRow(r) && focusCol === c._idx ? 0 : -1) : undefined"
             :data-focus="props.navigatable && isFocusedRow(r) && focusCol === c._idx"
             @click="handleCellClick(row, c, r, i)"
             @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
             @focus="props.navigatable && handleCellFocus(r, c._idx)">
-            <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
-              :name="columnSlotPrimary(c)"
-              :column="c"
-              :row="row"
-              :value="columnValue(row, c, (start ?? 0) + r)"
-              :rowIndex="(start ?? 0) + r"
-              :columnIndex="i"
-            />
-            <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
-              :name="columnSlotSecondary(c)"
-              :column="c"
-              :row="row"
-              :value="columnValue(row, c, (start ?? 0) + r)"
-              :rowIndex="(start ?? 0) + r"
-              :columnIndex="i"
-            />
-            <TemplateRenderer v-else-if="c.template"
-              :template="c.template!"
-              :payload="{ column: c, row, value: columnValue(row, c, (start ?? 0) + r), rowIndex: (start ?? 0) + r, columnIndex: i }"
-            />
-            <template v-else-if="hasCommands(c.command)">
+            <template v-if="hasCommands(c.command)">
               <div class="v3grid__command-cell">
-                <template v-for="(cmd, cmdIdx) in getCommandArray(c.command)" :key="cmdIdx">
+                <template v-for="(cmd, cmdIdx) in getCommandsForRow(c, row)" :key="cmdIdx">
                   <button
                     v-if="shouldShowCommand(cmd, row, c)"
                     @click.stop="handleCommand(cmd, row, c)"
@@ -370,27 +351,130 @@
                 </template>
               </div>
             </template>
-            <slot v-else name="cell"
-              :column="c"
-              :row="row"
-              :value="columnValue(row, c, (start ?? 0) + r)"
-              :rowIndex="(start ?? 0) + r"
-              :columnIndex="i">
-              <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, (start ?? 0) + r), c, row as any)"></span>
-              <span v-else>{{ formatColumnValue(columnValue(row, c, (start ?? 0) + r), c, row as any) }}</span>
-            </slot>
+            <template v-else>
+              <div v-if="isCellEditing(row, c)" class="v3grid__editor-wrapper">
+                <div
+                  v-if="getEditorKind(c) === 'custom'"
+                  class="v3grid__editor-custom"
+                  :ref="el => mountCustomEditor(resolveHTMLElement(el), row, c)"
+                ></div>
+                <select
+                  v-else-if="getEditorKind(c) === 'select'"
+                  class="v3grid__editor-input"
+                  :value="getSelectModelValue(row, c)"
+                  @change="handleSelectChange(row, c, $event)"
+                  @keydown.enter.prevent="handleEditorEnter(row, c)"
+                  @keydown.esc.prevent="handleEditorEscape(row, c)"
+                  @blur="handleEditorBlur(row, c)"
+                >
+                  <option
+                    v-if="allowsEmptySelection(c)"
+                    value=""
+                  >
+                    {{ msgs.filterAll || 'Select' }}
+                  </option>
+                  <option
+                    v-for="(opt, optIdx) in c.values"
+                    :key="optIdx"
+                    :value="String(optIdx)"
+                  >
+                    {{ opt.text ?? opt.value }}
+                  </option>
+                </select>
+                <select
+                  v-else-if="getEditorKind(c) === 'boolean'"
+                  class="v3grid__editor-input"
+                  :value="getBooleanModelValue(row, c)"
+                  @change="handleBooleanChange(row, c, $event)"
+                  @keydown.enter.prevent="handleEditorEnter(row, c)"
+                  @keydown.esc.prevent="handleEditorEscape(row, c)"
+                  @blur="handleEditorBlur(row, c)"
+                >
+                  <option value="true">{{ msgs.filterTrue || 'True' }}</option>
+                  <option value="false">{{ msgs.filterFalse || 'False' }}</option>
+                </select>
+                <input
+                  v-else-if="getEditorKind(c) === 'number'"
+                  class="v3grid__editor-input"
+                  type="number"
+                  :value="getInputValue(row, c)"
+                  @input="handleEditorInput(row, c, getEventValue($event))"
+                  @keydown.enter.prevent="handleEditorEnter(row, c)"
+                  @keydown.esc.prevent="handleEditorEscape(row, c)"
+                  @blur="handleEditorBlur(row, c)"
+                />
+                <input
+                  v-else-if="getEditorKind(c) === 'date'"
+                  class="v3grid__editor-input"
+                  type="date"
+                  :value="getDateInputValue(row, c)"
+                  @input="handleEditorInput(row, c, getEventValue($event))"
+                  @keydown.enter.prevent="handleEditorEnter(row, c)"
+                  @keydown.esc.prevent="handleEditorEscape(row, c)"
+                  @blur="handleEditorBlur(row, c)"
+                />
+                <input
+                  v-else
+                  class="v3grid__editor-input"
+                  type="text"
+                  :value="getInputValue(row, c)"
+                  @input="handleEditorInput(row, c, getEventValue($event))"
+                  @keydown.enter.prevent="handleEditorEnter(row, c)"
+                  @keydown.esc.prevent="handleEditorEscape(row, c)"
+                  @blur="handleEditorBlur(row, c)"
+                />
+                <div
+                  v-if="getValidationMessage(row, c)"
+                  class="v3grid__validation"
+                >
+                  {{ getValidationMessage(row, c) }}
+                </div>
+              </div>
+              <template v-else>
+                <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+                  :name="columnSlotPrimary(c)"
+                  :column="c"
+                  :row="row"
+                  :value="columnValue(row, c, (start ?? 0) + r)"
+                  :rowIndex="(start ?? 0) + r"
+                  :columnIndex="i"
+                />
+                <slot v-else-if="columnSlotSecondary(c) && $slots[columnSlotSecondary(c)]"
+                  :name="columnSlotSecondary(c)"
+                  :column="c"
+                  :row="row"
+                  :value="columnValue(row, c, (start ?? 0) + r)"
+                  :rowIndex="(start ?? 0) + r"
+                  :columnIndex="i"
+                />
+                <TemplateRenderer v-else-if="c.template"
+                  :template="c.template!"
+                  :payload="{ column: c, row, value: columnValue(row, c, (start ?? 0) + r), rowIndex: (start ?? 0) + r, columnIndex: i }"
+                />
+                <slot v-else name="cell"
+                  :column="c"
+                  :row="row"
+                  :value="columnValue(row, c, (start ?? 0) + r)"
+                  :rowIndex="(start ?? 0) + r"
+                  :columnIndex="i">
+                  <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, (start ?? 0) + r), c, row as any)"></span>
+                  <span v-else>{{ formatColumnValue(columnValue(row, c, (start ?? 0) + r), c, row as any) }}</span>
+                </slot>
+              </template>
+            </template>
           </div>
         </div>
         <div :style="{ height: bottomPad + 'px' }"></div>
       </div>
 
       <!-- BODY (ENDLESS) -->
-      <div v-else-if="isEndlessEnabled" :style="{ height: props.height + 'px', overflowY: 'auto', overflowX: 'hidden' }"
+      <div v-else-if="isEndlessEnabled" :key="`endless-${editingEpoch}`" :style="{ height: props.height + 'px', overflowY: 'auto', overflowX: 'hidden' }"
         @scroll="onScrollHandler" 
         @keydown="handleBodyKeydown" 
         @focus="props.navigatable && handleBodyFocus"
         :tabindex="props.navigatable || props.allowCopy ? 0 : undefined">
-        <div v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r" class="v3grid__row"
+        <div v-for="(row, r) in visibleRows" :key="`${(row as any)[keyFieldStr] ?? r}-${editingEpoch}`" class="v3grid__row"
+          :data-editing-epoch="editingEpoch"
           :class="props.striped && r % 2 === 1 ? 'v3grid__row--alt' : ''"
           :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? bodyCols : columns) }">
           <div v-if="props.selectable" class="v3grid__cell" @click.stop>
@@ -426,7 +510,7 @@
             />
             <template v-else-if="hasCommands(c.command)">
               <div class="v3grid__command-cell">
-                <template v-for="(cmd, cmdIdx) in getCommandArray(c.command)" :key="cmdIdx">
+                <template v-for="(cmd, cmdIdx) in getCommandsForRow(c, row)" :key="cmdIdx">
                   <button
                     v-if="shouldShowCommand(cmd, row, c)"
                     @click.stop="handleCommand(cmd, row, c)"
@@ -570,7 +654,7 @@
                         />
                         <template v-else-if="hasCommands(c.command)">
                           <div class="v3grid__command-cell">
-                            <template v-for="(cmd, cmdIdx) in getCommandArray(c.command)" :key="cmdIdx">
+                            <template v-for="(cmd, cmdIdx) in getCommandsForRow(c, n.row)" :key="cmdIdx">
                               <button
                                 v-if="shouldShowCommand(cmd, n.row, c)"
                                 @click.stop="handleCommand(cmd, n.row, c, $event)"
@@ -646,7 +730,7 @@
                       />
                       <template v-else-if="hasCommands(c.command)">
                         <div class="v3grid__command-cell">
-                          <template v-for="(cmd, cmdIdx) in getCommandArray(c.command)" :key="cmdIdx">
+                          <template v-for="(cmd, cmdIdx) in getCommandsForRow(c, row)" :key="cmdIdx">
                             <button
                               v-if="shouldShowCommand(cmd, row, c)"
                               @click.stop="handleCommand(cmd, row, c, $event)"
@@ -858,7 +942,7 @@
                     />
                     <template v-else-if="hasCommands(c.command)">
                       <div class="v3grid__command-cell">
-                        <template v-for="(cmd, cmdIdx) in getCommandArray(c.command)" :key="cmdIdx">
+                        <template v-for="(cmd, cmdIdx) in getCommandsForRow(c, row)" :key="cmdIdx">
                           <button
                             v-if="shouldShowCommand(cmd, row, c)"
                             @click.stop="handleCommand(cmd, row, c, $event)"
@@ -1309,12 +1393,109 @@
         </div>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="isPopupMode && popupState.open && popupState.row"
+        class="v3grid__popup-overlay"
+        @click.self="handleEditCancel(popupState.row)">
+        <div class="v3grid__popup-panel">
+          <div class="v3grid__popup-header">
+            <h3>{{ msgs.edit }}</h3>
+            <button type="button" class="v3grid__popup-close" @click="handleEditCancel(popupState.row)">
+              ×
+            </button>
+          </div>
+          <div class="v3grid__popup-body">
+            <div
+              v-for="(popupColumn, popupIndex) in popupEditableColumns(popupState.row)"
+              :key="String(popupColumn.field ?? popupIndex)"
+              class="v3grid__popup-field">
+                <label class="v3grid__popup-label">{{ popupColumn.title ?? String(popupColumn.field ?? popupIndex) }}</label>
+                <div class="v3grid__editor-wrapper">
+                  <div
+                    v-if="getEditorKind(popupColumn) === 'custom'"
+                    class="v3grid__editor-custom"
+                    :ref="el => mountCustomEditor(resolveHTMLElement(el), popupState.row, popupColumn)"
+                  ></div>
+                  <select
+                    v-else-if="getEditorKind(popupColumn) === 'select'"
+                    class="v3grid__editor-input"
+                    :value="getSelectModelValue(popupState.row, popupColumn)"
+                    @change="handleSelectChange(popupState.row, popupColumn, $event)"
+                    @keydown.enter.prevent="handleEditorEnter(popupState.row, popupColumn)"
+                    @keydown.esc.prevent="handleEditorEscape(popupState.row, popupColumn)">
+                    <option
+                      v-if="allowsEmptySelection(popupColumn)"
+                      value="">
+                      {{ msgs.filterAll || 'Select' }}
+                    </option>
+                    <option
+                      v-for="(opt, optIdx) in popupColumn.values"
+                      :key="optIdx"
+                      :value="String(optIdx)">
+                      {{ opt.text ?? opt.value }}
+                    </option>
+                  </select>
+                  <select
+                    v-else-if="getEditorKind(popupColumn) === 'boolean'"
+                    class="v3grid__editor-input"
+                    :value="getBooleanModelValue(popupState.row, popupColumn)"
+                    @change="handleBooleanChange(popupState.row, popupColumn, $event)"
+                    @keydown.enter.prevent="handleEditorEnter(popupState.row, popupColumn)"
+                    @keydown.esc.prevent="handleEditorEscape(popupState.row, popupColumn)">
+                    <option value="true">{{ msgs.filterTrue || 'True' }}</option>
+                    <option value="false">{{ msgs.filterFalse || 'False' }}</option>
+                  </select>
+                  <input
+                    v-else-if="getEditorKind(popupColumn) === 'number'"
+                    class="v3grid__editor-input"
+                    type="number"
+                    :value="getInputValue(popupState.row, popupColumn)"
+                    @input="handleEditorInput(popupState.row, popupColumn, getEventValue($event))"
+                    @keydown.enter.prevent="handleEditorEnter(popupState.row, popupColumn)"
+                    @keydown.esc.prevent="handleEditorEscape(popupState.row, popupColumn)" />
+                  <input
+                    v-else-if="getEditorKind(popupColumn) === 'date'"
+                    class="v3grid__editor-input"
+                    type="date"
+                    :value="getDateInputValue(popupState.row, popupColumn)"
+                    @input="handleEditorInput(popupState.row, popupColumn, getEventValue($event))"
+                    @keydown.enter.prevent="handleEditorEnter(popupState.row, popupColumn)"
+                    @keydown.esc.prevent="handleEditorEscape(popupState.row, popupColumn)" />
+                  <input
+                    v-else
+                    class="v3grid__editor-input"
+                    type="text"
+                    :value="getInputValue(popupState.row, popupColumn)"
+                    @input="handleEditorInput(popupState.row, popupColumn, getEventValue($event))"
+                    @keydown.enter.prevent="handleEditorEnter(popupState.row, popupColumn)"
+                    @keydown.esc.prevent="handleEditorEscape(popupState.row, popupColumn)" />
+                  <div
+                    v-if="getValidationMessage(popupState.row, popupColumn)"
+                    class="v3grid__validation">
+                    {{ getValidationMessage(popupState.row, popupColumn) }}
+                  </div>
+                </div>
+            </div>
+          </div>
+          <div class="v3grid__popup-footer">
+            <button type="button" class="v3grid__btn--toolbar" @click="handleEditCancel(popupState.row)">
+              {{ msgs.cancel }}
+            </button>
+            <button type="button" class="v3grid__btn--toolbar v3grid__btn--primary" @click="handleEditSave(popupState.row)">
+              {{ msgs.save }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Fragment, computed, defineComponent, h, isVNode, nextTick, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
-import type { CSSProperties, PropType, VNode, VNodeArrayChildren } from 'vue'
+import type { CSSProperties, ComponentPublicInstance, PropType, VNode, VNodeArrayChildren } from 'vue'
 import type { ColumnDef, ColumnTemplateContext, ColumnTemplateFn, FilterDescriptor, GridEmits, GridProps, SortDescriptor } from '../types'
 import { applyFilter, applySort, paginate } from '../composables/data'
 import { useColumnResize } from '../composables/resize'
@@ -1335,6 +1516,8 @@ const iconArrowRight = new URL('../assets/arrow-right.svg', import.meta.url).hre
 const iconArrowDown = new URL('../assets/arrow-down.svg', import.meta.url).href
 const iconOrderUp = new URL('../assets/order-up.svg', import.meta.url).href
 const iconOrderDown = new URL('../assets/order-down.svg', import.meta.url).href
+
+const isDevMode = typeof import.meta !== 'undefined' && !!(import.meta as any).env?.DEV
 
 const rootEl = ref<HTMLElement | null>(null)
 const hostWidth = ref(0)
@@ -1531,6 +1714,63 @@ const editMode = computed(() => {
   if (props.editable === true) return 'batch'
   return props.editable
 })
+const isBatchMode = computed(() => editMode.value === 'batch')
+const isInlineMode = computed(() => editMode.value === 'inline')
+const isPopupMode = computed(() => editMode.value === 'popup')
+const isEditingEnabled = computed(() => editMode.value !== 'none')
+const validationErrors = ref<Map<string, string>>(new Map())
+const popupState = ref<{ open: boolean; row: any | null }>({ open: false, row: null })
+const customEditorCleanup = new Map<string, () => void>()
+const editingEpoch = ref(0)
+const inlineEditingKeys = ref<Set<string | number>>(new Set())
+watch(() => editingState.editingRows.value, () => {
+  editingEpoch.value++
+  if (isDevMode) {
+    console.log('editingEpoch bump', editingEpoch.value)
+  }
+})
+
+function startInlineEditingKey(rowKey: string | number | undefined) {
+  if (rowKey === undefined) return
+  const next = new Set(inlineEditingKeys.value)
+  next.add(rowKey)
+  inlineEditingKeys.value = next
+  if (isDevMode) {
+    console.log('startInlineEditingKey', rowKey, Array.from(inlineEditingKeys.value))
+  }
+}
+
+function stopInlineEditingKey(rowKey: string | number | undefined) {
+  if (rowKey === undefined) return
+  if (!inlineEditingKeys.value.has(rowKey)) return
+  const next = new Set(inlineEditingKeys.value)
+  next.delete(rowKey)
+  inlineEditingKeys.value = next
+  if (isDevMode) {
+    console.log('stopInlineEditingKey', rowKey, Array.from(inlineEditingKeys.value))
+  }
+}
+
+function resetInlineEditingKeys() {
+  inlineEditingKeys.value = new Set()
+}
+type PossibleElement = Element | ComponentPublicInstance | null
+
+function resolveHTMLElement(el: PossibleElement): HTMLElement | null {
+  if (el instanceof HTMLElement) return el
+  if (el && '$el' in el) {
+    const candidate = (el as ComponentPublicInstance).$el
+    if (candidate instanceof HTMLElement) return candidate
+  }
+  return null
+}
+
+function normalizeValidationMessage(value: string | boolean): string {
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value
+  }
+  return msgs.value.invalidValue ?? 'Invalid value'
+}
 
 /** SELECTION */
 const selectedKeys = ref<Set<unknown>>(new Set())
@@ -1558,6 +1798,61 @@ function toggleAllVisible(current: Array<Record<string, unknown>>) {
   })
   selectedKeys.value = s
   emit('selectionChange', Array.from(selectedKeys.value))
+}
+
+function getRowKeyValue(row: any): string | number | undefined {
+  if (!row) return undefined
+  return (row as any)[keyFieldStr.value]
+}
+
+function getFieldName(column: ColumnDef): string | null {
+  if (!column || column.field == null) return null
+  return String(column.field)
+}
+
+function columnIsEditable(column: ColumnDef, row: any): boolean {
+  if (!isEditingEnabled.value) return false
+  if (!column || column.command) return false
+  const field = getFieldName(column)
+  if (!field) return false
+  if (typeof column.editable === 'function') {
+    const result = !!column.editable(row)
+    if (isDevMode) {
+      console.log('columnIsEditable fn result', { field, result })
+    }
+    return result
+  }
+  if (typeof column.editable === 'boolean') {
+    if (isDevMode) {
+      console.log('columnIsEditable bool result', { field, value: column.editable })
+    }
+    return column.editable
+  }
+  return false
+}
+
+function popupEditableColumns(row: any) {
+  return columns.value.filter(column => columnIsEditable(column, row))
+}
+
+function isCellEditing(row: any, column: ColumnDef): boolean {
+  // Ensure dependency on editing rows set for reactivity
+  editingState.editingRows.value
+  const rowKey = getRowKeyValue(row)
+  if (isInlineMode.value && rowKey !== undefined && inlineEditingKeys.value.has(rowKey)) {
+    return true
+  }
+  if (!columnIsEditable(column, row)) return false
+  if (isBatchMode.value) {
+    const key = getRowKeyValue(row)
+    const field = getFieldName(column)
+    if (key === undefined || !field) return false
+    return editingState.isCellEditing(key, field)
+  }
+  if (isInlineMode.value) {
+    return false
+  }
+  return false
 }
 
 /** COLUMNS (reorder/resize) */
@@ -1950,6 +2245,8 @@ function unlockColumn() {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
+  customEditorCleanup.forEach(fn => fn())
+  customEditorCleanup.clear()
 })
 
 // Sortable columns for card mode
@@ -2207,7 +2504,17 @@ function columnValue(row: unknown, column: ColumnDef, rowIndex = -1): any {
   // If no field, return undefined (for group columns)
   if (field == null) return undefined
   
-  const raw = (record as any)[field as any]
+  const rowKeyName = keyFieldStr.value
+  let raw = (record as any)[field as any]
+  if (field !== '__isNew__' && row && rowKeyName) {
+    const rowKey = (record as any)[rowKeyName]
+    if (rowKey !== undefined) {
+      const pending = editingState.pendingChanges.value.get(rowKey)
+      if (pending && Object.prototype.hasOwnProperty.call(pending, field as string)) {
+        raw = pending[field as string]
+      }
+    }
+  }
   
   // Apply values transform (enum/transform)
   let transformed = applyValuesTransform(raw, column.values)
@@ -2493,14 +2800,31 @@ const abortCtl = ref<AbortController | null>(null)
 
 const effectiveRows = computed<any[]>(() => {
   const hasDataProvider = props.dataProvider !== undefined && typeof props.dataProvider === 'function'
-  const rawRows = hasDataProvider ? remoteRows.value : (props.rows ?? [])
+  let baseRows = hasDataProvider ? remoteRows.value : (props.rows ?? [])
   
-  // Clean strings if enabled (for local data, clean on-the-fly)
-  if (props.cleanStrings && !hasDataProvider && rawRows.length > 0) {
-    return deepCleanStrings(rawRows)
+  if (props.cleanStrings && !hasDataProvider && baseRows.length > 0) {
+    baseRows = deepCleanStrings(baseRows)
   }
-  
-  return rawRows
+
+  const deletedKeys = editingState.deletedRows.value
+  const keyName = keyFieldStr.value
+  const filteredRows = Array.isArray(baseRows)
+    ? baseRows.filter(row => {
+        if (!row || typeof row !== 'object') return true
+        const rowKey = (row as any)[keyName]
+        return !deletedKeys.has(rowKey)
+      })
+    : baseRows
+
+  const newRowsList = editingState.newRows.value
+  if (newRowsList.length === 0) {
+    return filteredRows
+  }
+
+  if (props.editableCreateAt === 'bottom') {
+    return [...filteredRows, ...newRowsList]
+  }
+  return [...newRowsList, ...filteredRows]
 })
 
 const isServerLike = computed(() => (props.dataProvider !== undefined && typeof props.dataProvider === 'function') || !!props.serverSide)
@@ -2591,6 +2915,8 @@ const onScrollHandler = (e: Event) => {
 }
 
 const visibleRows = computed(() => {
+  editingState.editingRows.value
+  inlineEditingKeys.value
   if (isVirtualEnabled.value) return slice.value
   if (isEndlessEnabled.value) return endlessRows.value
   if (isGrouped.value) return paginate(flatNodes.value as any[], page.value, pageSize.value)
@@ -4115,6 +4441,16 @@ function handleCellClick(row: any, column: any, rowIndex: number, colIndex: numb
       })
     }
   }
+
+  if (isBatchMode.value && column && columnIsEditable(column, row)) {
+    startBatchCellEdit(row, column)
+  }
+  if (isInlineMode.value && column && columnIsEditable(column, row)) {
+    const rowKey = getRowKeyValue(row)
+    if (rowKey !== undefined && !editingState.isRowEditing(rowKey)) {
+      handleEdit(row, getFieldName(column) ?? undefined)
+    }
+  }
 }
 
 function handleBodyFocus(_e: FocusEvent) {
@@ -4135,6 +4471,375 @@ function handleBodyFocus(_e: FocusEvent) {
       }
     }
   })
+}
+
+function startBatchCellEdit(row: any, column: ColumnDef) {
+  if (!isBatchMode.value) return
+  const rowKey = getRowKeyValue(row)
+  const field = getFieldName(column)
+  if (rowKey === undefined || !field) return
+  if (editingState.isCellEditing(rowKey, field)) return
+  editingState.startEditingCell(rowKey, field)
+  emit('edit', { row, field })
+}
+
+function getEditorKind(column: ColumnDef): 'custom' | 'select' | 'boolean' | 'number' | 'date' | 'text' {
+  if (column.editor) return 'custom'
+  if (column.values && column.values.length > 0) return 'select'
+  if (column.type === 'boolean') return 'boolean'
+  if (column.type === 'number') return 'number'
+  if (column.type === 'date') return 'date'
+  return 'text'
+}
+
+function getEditableValue(row: any, column: ColumnDef) {
+  if (!column || column.field == null) return undefined
+  const field = String(column.field)
+  const rowKey = getRowKeyValue(row)
+  if (rowKey !== undefined) {
+    const pending = editingState.pendingChanges.value.get(rowKey)
+    if (pending && Object.prototype.hasOwnProperty.call(pending, field)) {
+      return pending[field]
+    }
+  }
+  return (row as any)[field]
+}
+
+function getInputValue(row: any, column: ColumnDef) {
+  const value = getEditableValue(row, column)
+  if (value == null) return ''
+  if (value instanceof Date) return value.toISOString()
+  return String(value)
+}
+
+function getDateInputValue(row: any, column: ColumnDef) {
+  const value = getEditableValue(row, column)
+  if (!value) return ''
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function getSelectModelValue(row: any, column: ColumnDef) {
+  if (!column.values || column.values.length === 0) return ''
+  const current = getEditableValue(row, column)
+  const idx = column.values.findIndex(opt => isEqualValue(opt.value, current))
+  return idx >= 0 ? String(idx) : ''
+}
+
+function allowsEmptySelection(column: ColumnDef) {
+  if (!column.values || column.values.length === 0) return true
+  const rules = column.validation
+  if (rules && rules.required) return false
+  return true
+}
+
+function getBooleanModelValue(row: any, column: ColumnDef) {
+  const value = getEditableValue(row, column)
+  if (value === true) return 'true'
+  if (value === false) return 'false'
+  return ''
+}
+
+function getEventValue(event: Event) {
+  const target = event.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null
+  return target ? target.value : ''
+}
+
+function handleEditorInput(row: any, column: ColumnDef, rawValue: any) {
+  const value = normalizeEditorValue(column, rawValue)
+  updatePendingValue(row, column, value)
+  clearValidationOnInput(row, column)
+}
+
+function handleSelectChange(row: any, column: ColumnDef, event: Event) {
+  if (!column.values) return
+  const target = event.target as HTMLSelectElement | null
+  if (!target) return
+  if (target.value === '') {
+    updatePendingValue(row, column, undefined)
+  } else {
+    const idx = Number(target.value)
+    const option = column.values[idx]
+    const value = option ? option.value : undefined
+    updatePendingValue(row, column, value)
+  }
+  clearValidationOnInput(row, column)
+}
+
+function handleBooleanChange(row: any, column: ColumnDef, event: Event) {
+  const target = event.target as HTMLSelectElement | null
+  if (!target) return
+  const value = target.value === 'true'
+  updatePendingValue(row, column, value)
+  clearValidationOnInput(row, column)
+}
+
+function handleEditorEnter(row: any, column: ColumnDef) {
+  if (isBatchMode.value) {
+    commitCellEdit(row, column)
+  }
+}
+
+function handleEditorEscape(row: any, column: ColumnDef) {
+  if (isBatchMode.value) {
+    cancelCellEdit(row, column)
+  }
+}
+
+function handleEditorBlur(row: any, column: ColumnDef) {
+  if (isBatchMode.value) {
+    commitCellEdit(row, column)
+  }
+}
+
+function commitCellEdit(row: any, column: ColumnDef) {
+  if (!isBatchMode.value) return
+  const rowKey = getRowKeyValue(row)
+  const field = getFieldName(column)
+  if (rowKey === undefined || !field) return
+  const value = getEditableValue(row, column)
+  const validation = validateField(column, value, row)
+  if (validation !== true) {
+    const validationMessage = normalizeValidationMessage(validation)
+    setValidationError(rowKey, field, validationMessage)
+    emit('validationError', { row, field, error: validationMessage })
+    return
+  }
+  clearValidationError(rowKey, field)
+  stopCellEditing(rowKey, field)
+  emit('editCommit', { row, field, value })
+}
+
+function cancelCellEdit(row: any, column: ColumnDef) {
+  if (!isBatchMode.value) return
+  const rowKey = getRowKeyValue(row)
+  const field = getFieldName(column)
+  if (rowKey === undefined || !field) return
+  editingState.removePendingField(rowKey, field)
+  clearValidationError(rowKey, field)
+  stopCellEditing(rowKey, field)
+}
+
+function clearValidationOnInput(row: any, column: ColumnDef) {
+  const rowKey = getRowKeyValue(row)
+  const field = getFieldName(column)
+  if (rowKey === undefined || !field) return
+  clearValidationError(rowKey, field)
+}
+
+function stopCellEditing(rowKey: string | number, field: string) {
+  editingState.stopEditingCell(rowKey, field)
+  cleanupCustomEditor(rowKey, field)
+}
+
+function normalizeEditorValue(column: ColumnDef, rawValue: any) {
+  if (rawValue === '' || rawValue === undefined) {
+    if (column.type === 'number') return null
+    if (column.type === 'date') return null
+  }
+  if (column.type === 'number') {
+    const parsed = Number(rawValue)
+    return Number.isNaN(parsed) ? null : parsed
+  }
+  if (column.type === 'boolean') {
+    if (rawValue === '' || rawValue === undefined) return undefined
+    return rawValue === true || rawValue === 'true'
+  }
+  if (column.type === 'date') {
+    if (!rawValue) return null
+    const date = rawValue instanceof Date ? rawValue : new Date(rawValue)
+    return Number.isNaN(date.getTime()) ? null : date
+  }
+  return rawValue
+}
+
+function updatePendingValue(row: any, column: ColumnDef, value: any) {
+  if (!column || column.field == null) return
+  const rowKey = getRowKeyValue(row)
+  if (rowKey === undefined) return
+  const field = String(column.field)
+  const currentRow = findRowByKey(rowKey) || row
+  const original = currentRow ? (currentRow as any)[field] : undefined
+  if (isEqualValue(value, original) || (value === '' && (original == null || original === ''))) {
+    editingState.removePendingField(rowKey, field)
+  } else {
+    editingState.setPendingChange(rowKey, field, value)
+  }
+}
+
+function isEqualValue(a: any, b: any) {
+  if (a === b) return true
+  if (a instanceof Date && b instanceof Date) {
+    return a.getTime() === b.getTime()
+  }
+  if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
+    try {
+      return JSON.stringify(a) === JSON.stringify(b)
+    } catch {
+      return false
+    }
+  }
+  return false
+}
+
+function setValidationError(rowKey: string | number, field: string, message: string) {
+  const key = `${rowKey}:${field}`
+  validationErrors.value.set(key, message)
+}
+
+function clearValidationError(rowKey: string | number, field: string) {
+  const key = `${rowKey}:${field}`
+  if (validationErrors.value.has(key)) {
+    validationErrors.value.delete(key)
+  }
+}
+
+function clearRowValidation(rowKey: string | number) {
+  const keysToDelete: string[] = []
+  validationErrors.value.forEach((_value, key) => {
+    if (key.startsWith(`${rowKey}:`)) {
+      keysToDelete.push(key)
+    }
+  })
+  keysToDelete.forEach(k => validationErrors.value.delete(k))
+}
+
+function getValidationMessage(row: any, column: ColumnDef) {
+  const rowKey = getRowKeyValue(row)
+  const field = getFieldName(column)
+  if (rowKey === undefined || !field) return ''
+  return validationErrors.value.get(`${rowKey}:${field}`) ?? ''
+}
+
+function mountCustomEditor(el: HTMLElement | null, row: any, column: ColumnDef) {
+  if (!el || !column || !column.editor) return
+  const rowKey = getRowKeyValue(row)
+  const field = getFieldName(column)
+  if (rowKey === undefined || !field) return
+  cleanupCustomEditor(rowKey, field)
+  el.innerHTML = ''
+  const result = column.editor(el, { field, value: getEditableValue(row, column), row })
+  const handler = (event: Event) => {
+    const value = getEventValue(event)
+    handleEditorInput(row, column, value)
+  }
+  el.addEventListener('input', handler)
+  el.addEventListener('change', handler)
+  const cleanup = () => {
+    el.removeEventListener('input', handler)
+    el.removeEventListener('change', handler)
+  }
+  customEditorCleanup.set(`${rowKey}:${field}`, cleanup)
+  if (result instanceof HTMLElement && result !== el && !el.contains(result)) {
+    el.appendChild(result)
+  }
+}
+
+function cleanupCustomEditor(rowKey: string | number, field: string) {
+  const key = `${rowKey}:${field}`
+  const cleanup = customEditorCleanup.get(key)
+  if (cleanup) {
+    cleanup()
+    customEditorCleanup.delete(key)
+  }
+}
+
+function cleanupRowEditors(rowKey: string | number) {
+  const keysToDelete: string[] = []
+  customEditorCleanup.forEach((_value, key) => {
+    if (key.startsWith(`${rowKey}:`)) {
+      keysToDelete.push(key)
+    }
+  })
+  keysToDelete.forEach(key => {
+    const cleanup = customEditorCleanup.get(key)
+    cleanup?.()
+    customEditorCleanup.delete(key)
+  })
+}
+
+function getCommandsForRow(column: ColumnDef, row: any) {
+  const base = getCommandArray(column.command)
+  if (!(isInlineMode.value || isPopupMode.value)) {
+    return base
+  }
+  const rowKey = getRowKeyValue(row)
+  if (rowKey === undefined || !editingState.isRowEditing(rowKey)) {
+    return base
+  }
+  const hasCancel = base.some(cmd => getCommandName(cmd) === 'cancel')
+  return hasCancel ? base : [...base, 'cancel']
+}
+
+function validatePendingChanges() {
+  let valid = true
+  editingState.pendingChanges.value.forEach((changes, rowKey) => {
+    const row = findRowByKey(rowKey)
+    if (!row) return
+    columns.value.forEach(column => {
+      if (!columnIsEditable(column, row)) return
+      const field = getFieldName(column)
+      if (!field || field === '__isNew__') return
+      if (!Object.prototype.hasOwnProperty.call(changes, field)) return
+      const value = changes[field]
+      const result = validateField(column, value, row)
+      if (result !== true) {
+        const validationMessage = normalizeValidationMessage(result)
+        setValidationError(rowKey, field, validationMessage)
+        emit('validationError', { row, field, error: validationMessage })
+        valid = false
+      } else {
+        clearValidationError(rowKey, field)
+      }
+    })
+  })
+  return valid
+}
+
+function validateRowFields(row: any) {
+  const rowKey = getRowKeyValue(row)
+  let valid = true
+  columns.value.forEach(column => {
+    if (!columnIsEditable(column, row)) return
+    const field = getFieldName(column)
+    if (!field || field === '__isNew__') return
+    const value = getEditableValue(row, column)
+    const result = validateField(column, value, row)
+    if (result !== true) {
+      const validationMessage = normalizeValidationMessage(result)
+      if (rowKey !== undefined) {
+        setValidationError(rowKey, field, validationMessage)
+      }
+      emit('validationError', { row, field, error: validationMessage })
+      valid = false
+    } else if (rowKey !== undefined) {
+      clearValidationError(rowKey, field)
+    }
+  })
+  return valid
+}
+
+function removeNewRow(rowKey: string | number) {
+  const idx = editingState.newRows.value.findIndex(row => {
+    const key = getRowKeyValue(row)
+    return key === rowKey
+  })
+  if (idx >= 0) {
+    editingState.newRows.value.splice(idx, 1)
+  }
+}
+
+function resetEditingState() {
+  editingState.clearAll()
+  validationErrors.value.clear()
+  popupState.value = { open: false, row: null }
+  customEditorCleanup.forEach(fn => fn())
+  customEditorCleanup.clear()
+  resetInlineEditingKeys()
 }
 
 function handleBodyKeydown(e: KeyboardEvent) {
@@ -4497,10 +5202,15 @@ function handleCommand(cmd: string | { name: string; click?: (e: MouseEvent, row
   
   // Built-in command handlers
   if (cmdName === 'edit') {
-    handleEdit(row)
+    const rowKey = getRowKeyValue(row)
+    if (rowKey !== undefined && (isInlineMode.value || isPopupMode.value) && editingState.isRowEditing(rowKey)) {
+      handleEditSave(row)
+    } else {
+      handleEdit(row)
+    }
   } else if (cmdName === 'destroy') {
     handleDestroy(row)
-  } else if (cmdName === 'save') {
+  } else if (cmdName === 'save' || cmdName === 'update') {
     handleEditSave(row)
   } else if (cmdName === 'cancel') {
     handleEditCancel(row)
@@ -4518,65 +5228,68 @@ function getConfirmationMessage(row: any): string {
 }
 
 function handleCreate() {
-  console.log('handleCreate called')
   const newRow: Record<string, any> = {}
-  
-  // Handle createAt position
-  if (props.editableCreateAt === 'bottom') {
-    // In a full implementation, this would insert at the bottom
-    // For now, we just add to the newRows array normally
-  }
-  
+  const tempKey = `__new__${Date.now()}`
+  newRow[keyFieldStr.value] = tempKey
   editingState.addNewRow(newRow)
+  editingState.setPendingChange(tempKey, '__isNew__', true)
   emit('create', { row: newRow })
   
-  if (editMode.value === 'inline' || editMode.value === 'popup') {
-    const tempKey = `__new__${Date.now()}`
+  if (isInlineMode.value || isPopupMode.value) {
     editingState.startEditingRow(tempKey)
-    newRow[keyFieldStr.value] = tempKey
-    editingState.setPendingChange(tempKey, '__isNew__', true)
+    if (isInlineMode.value) {
+      startInlineEditingKey(tempKey)
+    }
+    clearRowValidation(tempKey)
+    if (isPopupMode.value) {
+      popupState.value = { open: true, row: newRow }
+    }
+  } else if (isBatchMode.value) {
+    const editableColumn = columns.value.find(col => columnIsEditable(col, newRow))
+    if (editableColumn) {
+      startBatchCellEdit(newRow, editableColumn)
+    }
   }
 }
 
 function handleSave() {
-  console.log('handleSave called')
+  const isValid = validatePendingChanges()
+  if (!isValid) return
+
   const changes: Array<{ type: 'create' | 'update' | 'destroy'; row: unknown }> = []
-  
-  // Collect pending changes
+
   editingState.pendingChanges.value.forEach((changesObj, rowKey) => {
     const row = findRowByKey(rowKey)
-    if (row) {
-      // Apply pending changes to row
-      Object.keys(changesObj).forEach(field => {
-        if (field !== '__isNew__') {
-          row[field] = changesObj[field]
-        }
-      })
+    if (!row) return
+    let hasFieldChanges = false
+
+    Object.keys(changesObj).forEach(field => {
+      if (field === '__isNew__') return
+      ;(row as any)[field] = changesObj[field]
+      emit('editCommit', { row, field, value: changesObj[field] })
+      hasFieldChanges = true
+    })
+
+    if (changesObj.__isNew__) {
+      changes.push({ type: 'create', row })
+    } else if (hasFieldChanges) {
       changes.push({ type: 'update', row })
     }
   })
-  
-  // Collect new rows
-  editingState.newRows.value.forEach(row => {
-    changes.push({ type: 'create', row })
-  })
-  
-  // Collect deleted rows
+
   editingState.deletedRows.value.forEach(rowKey => {
     const row = findRowByKey(rowKey)
     if (row) {
       changes.push({ type: 'destroy', row })
     }
   })
-  
-  console.log('Saving changes:', changes)
+
   emit('save', { changes })
-  editingState.clearAll()
+  resetEditingState()
 }
 
 function handleCancel() {
-  console.log('handleCancel called')
-  editingState.clearAll()
+  resetEditingState()
   emit('cancel')
 }
 
@@ -4584,8 +5297,14 @@ function findRowByKey(key: string | number): any {
   // Search in all rows, not just visible ones
   const hasDataProvider = props.dataProvider !== undefined && typeof props.dataProvider === 'function'
   const allRows = hasDataProvider ? remoteRows.value : (props.rows ?? [])
-  return allRows.find((row: any) => {
+  const match = allRows.find((row: any) => {
     const rowKey = row[keyFieldStr.value]
+    return (typeof rowKey === 'number' && typeof key === 'number' && rowKey === key) ||
+           (String(rowKey) === String(key))
+  })
+  if (match) return match
+  return editingState.newRows.value.find((row: any) => {
+    const rowKey = (row as any)[keyFieldStr.value]
     return (typeof rowKey === 'number' && typeof key === 'number' && rowKey === key) ||
            (String(rowKey) === String(key))
   })
@@ -4593,38 +5312,83 @@ function findRowByKey(key: string | number): any {
 
 // Editing functions (currently not used but reserved for future editing features)
 function handleEdit(row: any, field?: string) {
-  if (!props.editable) return
-  const rowKey = row[keyFieldStr.value]
+  if (!isEditingEnabled.value) return
+  const rowKey = getRowKeyValue(row)
+  if (isDevMode) {
+    console.log('handleEdit invoked', { rowKey, mode: editMode.value })
+  }
+  if (rowKey === undefined) return
   
-  if (editMode.value === 'inline' || editMode.value === 'popup') {
+  if (isInlineMode.value || isPopupMode.value) {
     editingState.startEditingRow(rowKey)
+    if (isInlineMode.value) {
+      startInlineEditingKey(rowKey)
+    }
+    if (isDevMode) {
+      console.log('editing rows after start', Array.from(editingState.editingRows.value))
+    }
+    clearRowValidation(rowKey)
+    if (isPopupMode.value) {
+      popupState.value = { open: true, row }
+    }
   }
   
   emit('edit', { row, field })
 }
 
 function handleEditSave(row: any) {
-  const rowKey = row[keyFieldStr.value]
-  editingState.stopEditingRow(rowKey)
+  const rowKey = getRowKeyValue(row)
+  if (rowKey === undefined) return
   
-  // Apply pending changes
-  const changes = editingState.pendingChanges.value.get(rowKey)
-  if (changes) {
-    Object.keys(changes).forEach(field => {
-      if (field !== '__isNew__') {
-        row[field] = changes[field]
-      }
+  if ((isInlineMode.value || isPopupMode.value) && !validateRowFields(row)) {
+    return
+  }
+  
+  const pending = editingState.pendingChanges.value.get(rowKey)
+  if (pending) {
+    Object.keys(pending).forEach(field => {
+      if (field === '__isNew__') return
+      ;(row as any)[field] = pending[field]
+      emit('editCommit', { row, field, value: pending[field] })
     })
   }
   
-  emit('editSave', { row })
+  editingState.stopEditingRow(rowKey)
+  if (isInlineMode.value) {
+    stopInlineEditingKey(rowKey)
+  }
+  cleanupRowEditors(rowKey)
   editingState.clearPendingChanges(rowKey)
+  clearRowValidation(rowKey)
+  
+  emit('editSave', { row })
+  
+  if (isPopupMode.value) {
+    popupState.value = { open: false, row: null }
+  }
 }
 
 function handleEditCancel(row: any) {
-  const rowKey = row[keyFieldStr.value]
+  const rowKey = getRowKeyValue(row)
+  if (rowKey === undefined) return
+  const isNew = editingState.getPendingChange(rowKey, '__isNew__')
+  
   editingState.stopEditingRow(rowKey)
+  if (isInlineMode.value) {
+    stopInlineEditingKey(rowKey)
+  }
+  cleanupRowEditors(rowKey)
   editingState.clearPendingChanges(rowKey)
+  clearRowValidation(rowKey)
+  
+  if (isNew) {
+    removeNewRow(rowKey)
+  }
+  
+  if (isPopupMode.value) {
+    popupState.value = { open: false, row: null }
+  }
+  
   emit('editCancel', { row })
 }
 
@@ -4642,9 +5406,21 @@ function handleDestroy(row: any) {
 }
 
 function performDestroy(row: any) {
-  const rowKey = row[keyFieldStr.value]
-  editingState.markAsDeleted(rowKey)
-  emit('destroy', { row })
+  const rowKey = getRowKeyValue(row)
+  if (rowKey === undefined) return
+  const isNew = editingState.getPendingChange(rowKey, '__isNew__') || editingState.newRows.value.some(r => getRowKeyValue(r) === rowKey)
+
+  if (isNew) {
+    removeNewRow(rowKey)
+    editingState.clearPendingChanges(rowKey)
+    cleanupRowEditors(rowKey)
+    clearRowValidation(rowKey)
+    stopInlineEditingKey(rowKey)
+  } else {
+    editingState.markAsDeleted(rowKey)
+    emit('destroy', { row })
+    stopInlineEditingKey(rowKey)
+  }
 }
 
 function confirmDelete() {
@@ -5481,9 +6257,48 @@ function handleCellEdit(_row: any, _field: string, _value: any) {
   // Reserved for future editing implementation
 }
 
-// @ts-ignore - Reserved for future validation implementation
-function validateField(_column: ColumnDef, _value: any, _row: any): boolean | string {
-  // Reserved for future validation implementation
+function validateField(column: ColumnDef, value: any, row: any): boolean | string {
+  const rules = column.validation
+  if (!rules) return true
+  const label = column.title ?? String(column.field ?? '')
+  const isEmpty = value === null || value === undefined || (typeof value === 'string' && value.trim() === '')
+
+  if (rules.required && isEmpty) {
+    return `${label} is required`
+  }
+
+  if (!isEmpty && rules.min != null && typeof value === 'number' && value < rules.min) {
+    return `${label} must be greater than or equal to ${rules.min}`
+  }
+
+  if (!isEmpty && rules.max != null && typeof value === 'number' && value > rules.max) {
+    return `${label} must be less than or equal to ${rules.max}`
+  }
+
+  const minLength = (rules as any).minLength
+  if (!isEmpty && minLength != null && typeof value === 'string' && value.length < minLength) {
+    return `${label} must be at least ${minLength} characters`
+  }
+
+  const maxLength = (rules as any).maxLength
+  if (!isEmpty && maxLength != null && typeof value === 'string' && value.length > maxLength) {
+    return `${label} must be at most ${maxLength} characters`
+  }
+
+  if (!isEmpty && rules.pattern) {
+    const pattern = typeof rules.pattern === 'string' ? new RegExp(rules.pattern) : rules.pattern
+    if (!pattern.test(String(value))) {
+      return `${label} has an invalid format`
+    }
+  }
+
+  if (typeof rules.validator === 'function') {
+    const result = rules.validator(value, row)
+    if (result !== true) {
+      return typeof result === 'string' ? result : `${label} is invalid`
+    }
+  }
+
   return true
 }
 
@@ -5659,12 +6474,20 @@ function setOptions(options: GridOptions): void {
   // To change grouping, update the group prop in the parent component
 }
 
+function exposedIsRowEditing(row: any): boolean {
+  const key = getRowKeyValue(row)
+  if (key === undefined) return false
+  if (isInlineMode.value && inlineEditingKeys.value.has(key)) return true
+  return editingState.isRowEditing(key)
+}
+
 // Expose methods for parent component access
 defineExpose({
   getOptions,
   setOptions,
   exportToPdf,
   saveAsPdf: exportToPdf, // Alias for Kendo UI compatibility
+  isRowEditing: exposedIsRowEditing,
 })
 
 onBeforeUnmount(() => {

@@ -8,13 +8,6 @@
       </p>
     </header>
 
-    <!-- Note -->
-    <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-      <p class="text-sm text-yellow-800 dark:text-yellow-200">
-        <strong>Note:</strong> Editing functionality is currently being implemented. This page will be updated as features are added.
-      </p>
-    </div>
-
     <!-- Batch Editing Example -->
     <article class="space-y-4">
       <h2 class="text-2xl font-semibold">Batch Editing</h2>
@@ -31,7 +24,7 @@
         :navigatable="true"
         @edit="onEdit"
         @editCommit="onEditCommit"
-        @save="onSave"
+        @save="onBatchSave"
         @cancel="onCancel"
         @create="onCreate"
         @destroy="onDestroy"
@@ -53,7 +46,7 @@
         editable="inline"
         :toolbar="['create']"
         @edit="onEdit"
-        @editSave="onEditSave"
+        @editSave="handleInlineEditSave"
         @editCancel="onEditCancel"
         @create="onCreate"
         @destroy="onDestroy"
@@ -75,7 +68,7 @@
         editable="popup"
         :toolbar="['create']"
         @edit="onEdit"
-        @editSave="onEditSave"
+        @editSave="handlePopupEditSave"
         @editCancel="onEditCancel"
         @create="onCreate"
         @destroy="onDestroy"
@@ -97,6 +90,8 @@
         editable="inline"
         :toolbar="['create']"
         @edit="onEdit"
+        @editSave="handleValidationEditSave"
+        @editCancel="onEditCancel"
         @validationError="onValidationError"
       />
       <ExampleCode :source="validationCode" />
@@ -116,6 +111,10 @@
         editable="inline"
         :toolbar="['create']"
         @edit="onEdit"
+        @editSave="handleCustomEditSave"
+        @editCancel="onEditCancel"
+        @create="onCreate"
+        @destroy="onDestroy"
       />
       <ExampleCode :source="customEditorCode" />
     </article>
@@ -123,12 +122,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
 
-// Batch editing data
-const batchRows = ref([
+type ProductRecord = {
+  productID: number
+  productName: string
+  unitPrice: number
+  unitsInStock: number
+  discontinued: boolean
+  categoryID?: number
+  categoryName?: string
+  email?: string
+}
+
+const formatCurrency = (value?: number) => {
+  const numeric = typeof value === 'number' && !Number.isNaN(value) ? value : 0
+  return `$ ${numeric.toFixed(2)}`
+}
+
+const categories = [
+  { categoryID: 1, categoryName: 'Beverages' },
+  { categoryID: 2, categoryName: 'Condiments' },
+  { categoryID: 3, categoryName: 'Confections' },
+]
+
+const batchRows = ref<ProductRecord[]>([
   { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39, discontinued: false },
   { productID: 2, productName: 'Chang', unitPrice: 17, unitsInStock: 40, discontinued: false },
   { productID: 3, productName: 'Aniseed Syrup', unitPrice: 10, unitsInStock: 13, discontinued: false },
@@ -137,14 +157,13 @@ const batchRows = ref([
 const batchColumns: ColumnDef[] = [
   { field: 'productID', title: 'ID', width: 80, editable: false },
   { field: 'productName', title: 'Product Name', width: 200, editable: true },
-  { field: 'unitPrice', title: 'Unit Price', width: 120, editable: true, type: 'number', format: (v: number) => `$ ${v.toFixed(2)}` },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, editable: true, type: 'number', format: (v?: number) => formatCurrency(v) },
   { field: 'unitsInStock', title: 'Units In Stock', width: 140, editable: true, type: 'number' },
   { field: 'discontinued', title: 'Discontinued', width: 120, editable: true, type: 'boolean' },
   { field: 'command', title: ' ', width: 100, command: ['destroy'] },
 ]
 
-// Inline editing data
-const inlineRows = ref([
+const inlineRows = ref<ProductRecord[]>([
   { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39, discontinued: false },
   { productID: 2, productName: 'Chang', unitPrice: 17, unitsInStock: 40, discontinued: false },
 ])
@@ -152,31 +171,29 @@ const inlineRows = ref([
 const inlineColumns: ColumnDef[] = [
   { field: 'productID', title: 'ID', width: 80, editable: false },
   { field: 'productName', title: 'Product Name', width: 200, editable: true },
-  { field: 'unitPrice', title: 'Unit Price', width: 120, editable: true, type: 'number', format: (v: number) => `$ ${v.toFixed(2)}` },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, editable: true, type: 'number', format: (v?: number) => formatCurrency(v) },
   { field: 'unitsInStock', title: 'Units In Stock', width: 140, editable: true, type: 'number' },
   { field: 'discontinued', title: 'Discontinued', width: 120, editable: true, type: 'boolean' },
   { field: 'command', title: ' ', width: 180, command: ['edit', 'destroy'] },
 ]
 
-// Popup editing data
-const popupRows = ref([
+const popupRows = ref<ProductRecord[]>([
   { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39, discontinued: false },
   { productID: 2, productName: 'Chang', unitPrice: 17, unitsInStock: 40, discontinued: false },
 ])
 
 const popupColumns: ColumnDef[] = [
   { field: 'productID', title: 'ID', width: 80, editable: false },
-  { field: 'productName', title: 'Product Name', width: 200 },
-  { field: 'unitPrice', title: 'Unit Price', width: 120, format: (v: number) => `$ ${v.toFixed(2)}` },
-  { field: 'unitsInStock', title: 'Units In Stock', width: 140 },
-  { field: 'discontinued', title: 'Discontinued', width: 120 },
+  { field: 'productName', title: 'Product Name', width: 200, editable: true },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, editable: true, type: 'number', format: (v?: number) => formatCurrency(v) },
+  { field: 'unitsInStock', title: 'Units In Stock', width: 140, editable: true, type: 'number' },
+  { field: 'discontinued', title: 'Discontinued', width: 120, editable: true, type: 'boolean' },
   { field: 'command', title: ' ', width: 180, command: ['edit', 'destroy'] },
 ]
 
-// Validation data
-const validationRows = ref([
-  { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39, discontinued: false },
-  { productID: 2, productName: 'Chang', unitPrice: 17, unitsInStock: 40, discontinued: false },
+const validationRows = ref<ProductRecord[]>([
+  { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39, discontinued: false, email: 'product@example.com' },
+  { productID: 2, productName: 'Chang', unitPrice: 17, unitsInStock: 40, discontinued: false, email: 'product2@example.com' },
 ])
 
 const validationColumns: ColumnDef[] = [
@@ -199,14 +216,14 @@ const validationColumns: ColumnDef[] = [
       },
     },
   },
-  {
+  { 
     field: 'unitPrice',
     title: 'Unit Price',
     width: 120,
     editable: true,
     type: 'number',
     validation: { required: true, min: 1 },
-    format: (v: number) => `$ ${v.toFixed(2)}`,
+    format: (v?: number) => formatCurrency(v),
   },
   {
     field: 'unitsInStock',
@@ -219,17 +236,10 @@ const validationColumns: ColumnDef[] = [
   { field: 'command', title: ' ', width: 180, command: ['edit', 'destroy'] },
 ]
 
-// Custom editors data
-const customEditorRows = ref([
-  { productID: 1, productName: 'Chai', categoryID: 1, categoryName: 'Beverages', unitPrice: 18, discontinued: false },
-  { productID: 2, productName: 'Chang', categoryID: 1, categoryName: 'Beverages', unitPrice: 17, discontinued: false },
+const customEditorRows = ref<ProductRecord[]>([
+  { productID: 1, productName: 'Chai', categoryID: 1, categoryName: 'Beverages', unitPrice: 18, unitsInStock: 39, discontinued: false },
+  { productID: 2, productName: 'Chang', categoryID: 1, categoryName: 'Beverages', unitPrice: 17, unitsInStock: 40, discontinued: false },
 ])
-
-const categories = [
-  { categoryID: 1, categoryName: 'Beverages' },
-  { categoryID: 2, categoryName: 'Condiments' },
-  { categoryID: 3, categoryName: 'Confections' },
-]
 
 const customEditorColumns: ColumnDef[] = [
   { field: 'productID', title: 'ID', width: 80, editable: false },
@@ -256,94 +266,114 @@ const customEditorColumns: ColumnDef[] = [
       return select
     },
   },
-  { field: 'unitPrice', title: 'Unit Price', width: 120, editable: true, type: 'number', format: (v: number) => `$ ${v.toFixed(2)}` },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, editable: true, type: 'number', format: (v?: number) => formatCurrency(v) },
   { field: 'discontinued', title: 'Discontinued', width: 120, editable: true, type: 'boolean' },
   { field: 'command', title: ' ', width: 180, command: ['edit', 'destroy'] },
 ]
 
-// Event handlers
+const dataStores: Ref<ProductRecord[]>[] = [
+  batchRows,
+  inlineRows,
+  popupRows,
+  validationRows,
+  customEditorRows,
+]
+
+const fallbackCategory = categories[0] ?? { categoryID: 1, categoryName: 'Beverages' }
+
+function getNextProductId() {
+  const ids = dataStores.flatMap(store => store.value.map(row => row.productID ?? 0))
+  return (ids.length ? Math.max(...ids) : 0) + 1
+}
+
+function normalizeProductRow(row: Partial<ProductRecord> = {}): ProductRecord {
+  const nextCategory = categories.find(cat => cat.categoryID === row.categoryID) ?? fallbackCategory
+  return {
+    productID: typeof row.productID === 'number' ? row.productID : getNextProductId(),
+    productName: row.productName ?? 'New Product',
+    unitPrice: typeof row.unitPrice === 'number' && !Number.isNaN(row.unitPrice) ? row.unitPrice : 0,
+    unitsInStock: typeof row.unitsInStock === 'number' && !Number.isNaN(row.unitsInStock) ? row.unitsInStock : 0,
+    discontinued: !!row.discontinued,
+    categoryID: nextCategory?.categoryID,
+    categoryName: nextCategory?.categoryName,
+  }
+}
+
+function upsertRow(store: Ref<ProductRecord[]>, row: ProductRecord) {
+  const index = store.value.findIndex(item => item.productID === row.productID)
+  if (index === -1) {
+    store.value = [...store.value, row]
+    return
+  }
+  store.value = store.value.map(item => (item.productID === row.productID ? { ...item, ...row } : item))
+}
+
+function removeRow(store: Ref<ProductRecord[]>, productID?: number) {
+  if (typeof productID !== 'number') return
+  store.value = store.value.filter(item => item.productID !== productID)
+}
+
+function handleEditSave(target: Ref<ProductRecord[]>, data: { row: unknown }) {
+  console.log('Edit save:', data)
+  const normalized = normalizeProductRow(data.row as ProductRecord)
+  upsertRow(target, normalized)
+}
+
+const handleInlineEditSave = (data: { row: unknown }) => handleEditSave(inlineRows, data as { row: unknown })
+const handlePopupEditSave = (data: { row: unknown }) => handleEditSave(popupRows, data as { row: unknown })
+const handleValidationEditSave = (data: { row: unknown }) => handleEditSave(validationRows, data as { row: unknown })
+const handleCustomEditSave = (data: { row: unknown }) => handleEditSave(customEditorRows, data as { row: unknown })
+
 function onEdit(data: { row: unknown; field?: string }) {
   console.log('Edit:', data)
 }
 
 function onEditCommit(data: { row: unknown; field: string; value: unknown }) {
   console.log('Edit commit:', data)
-  // Update the row data
   const row = data.row as any
   if (row && data.field) {
     row[data.field] = data.value
   }
 }
 
-function onEditSave(data: { row: unknown }) {
-  console.log('Edit save:', data)
-}
-
 function onEditCancel(data: { row: unknown }) {
   console.log('Edit cancel:', data)
 }
 
-function onSave(data: { changes: Array<{ type: 'create' | 'update' | 'destroy'; row: unknown }> }) {
+function onBatchSave(data: { changes: Array<{ type: 'create' | 'update' | 'destroy'; row: unknown }> }) {
   console.log('Save:', data)
-  
   if (data.changes.length === 0) {
     alert('No changes to save')
     return
   }
-  
   alert(`Saving ${data.changes.length} change(s)`)
-  
-  // Apply changes to the data
   data.changes.forEach(change => {
-    if (change.type === 'create') {
-      const row = change.row as any
-      batchRows.value.push(row)
-      inlineRows.value.push(row)
-      popupRows.value.push(row)
-    } else if (change.type === 'update') {
-      const row = change.row as any
-      const index = batchRows.value.findIndex((r: any) => r.productID === row.productID)
-      if (index !== -1) {
-        batchRows.value[index] = { ...batchRows.value[index], ...row }
-      }
+    const normalized = normalizeProductRow(change.row as ProductRecord)
+    if (change.type === 'create' || change.type === 'update') {
+      upsertRow(batchRows, normalized)
     } else if (change.type === 'destroy') {
-      const row = change.row as any
-      batchRows.value = batchRows.value.filter((r: any) => r.productID !== row.productID)
-      inlineRows.value = inlineRows.value.filter((r: any) => r.productID !== row.productID)
-      popupRows.value = popupRows.value.filter((r: any) => r.productID !== row.productID)
+      removeRow(batchRows, normalized.productID)
     }
   })
 }
 
 function onCancel() {
   console.log('Cancel')
-  // Cancel should already clear the editing state
 }
 
 function onCreate(data: { row: unknown }) {
   console.log('Create:', data)
-  const newRow = data.row as any
-  if (newRow) {
-    const maxId = Math.max(...batchRows.value.map(r => (r as any).productID), 0)
-    newRow.productID = maxId + 1
-    newRow.productName = newRow.productName || 'New Product'
-    newRow.unitPrice = newRow.unitPrice || 0
-    newRow.unitsInStock = newRow.unitsInStock || 0
-    newRow.discontinued = newRow.discontinued || false
-    batchRows.value.push(newRow as any)
-  }
+  const newRow = data.row as ProductRecord
+  if (!newRow) return
+  const normalized = normalizeProductRow(newRow)
+  Object.assign(newRow, normalized)
 }
 
 function onDestroy(data: { row: unknown }) {
   console.log('Destroy:', data)
-  const row = data.row as any
-  if (row) {
-    batchRows.value = batchRows.value.filter(r => (r as any).productID !== row.productID)
-    inlineRows.value = inlineRows.value.filter(r => (r as any).productID !== row.productID)
-    popupRows.value = popupRows.value.filter(r => (r as any).productID !== row.productID)
-    validationRows.value = validationRows.value.filter(r => (r as any).productID !== row.productID)
-    customEditorRows.value = customEditorRows.value.filter(r => (r as any).productID !== row.productID)
-  }
+  const row = data.row as ProductRecord
+  if (!row) return
+  dataStores.forEach(store => removeRow(store, row.productID))
 }
 
 function onValidationError(data: { row: unknown; field: string; error: string }) {
@@ -351,7 +381,6 @@ function onValidationError(data: { row: unknown; field: string; error: string })
   alert(`Validation error in ${data.field}: ${data.error}`)
 }
 
-// Code snippets
 const batchCode = `<template>
   <PantanalGrid
     :rows="rows"
