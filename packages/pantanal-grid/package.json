@@ -1,6 +1,6 @@
 {
   "name": "@pantanal/grid",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "type": "module",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.es.js",
