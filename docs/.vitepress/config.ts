@@ -42,6 +42,7 @@ export default defineConfig({
             { text: 'Editing', link: '/guide/editing' },
             { text: 'Column Management', link: '/guide/column-management' },
             { text: 'Internationalization', link: '/guide/i18n' },
+            { text: 'IntlService', link: '/guide/intl-service' },
             { text: 'Export', link: '/guide/export' },
             { text: 'Templates', link: '/guide/templates' }
           ]
@@ -97,6 +98,7 @@ export default defineConfig({
           items: [
             { text: 'Export (Excel/PDF)', link: '/examples/export' },
             { text: 'Internationalization', link: '/examples/i18n' },
+            { text: 'IntlService', link: '/examples/intl-service' },
             { text: 'Keyboard Navigation', link: '/examples/keyboard-navigation' },
             { text: 'Persisted State', link: '/examples/persisted-state' },
             { text: 'Multi-Column Headers', link: '/examples/multi-column-headers' }
