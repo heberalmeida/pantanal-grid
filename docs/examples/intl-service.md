@@ -239,3 +239,133 @@ const amounts = {
 </template>
 ```
 
+## Portuguese (pt-BR) with Real (BRL)
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, IntlService, type ColumnDef } from '@pantanal/grid'
+
+const intl = new IntlService('pt-BR')
+
+interface Product {
+  id: number
+  name: string
+  price: number
+  date: Date
+  discount: number
+}
+
+const rows = ref<Product[]>([
+  { id: 1, name: 'Produto A', price: 1234.56, date: new Date(2024, 0, 15), discount: 0.15 },
+  { id: 2, name: 'Produto B', price: 567.89, date: new Date(2024, 1, 20), discount: 0.25 },
+  { id: 3, name: 'Produto C', price: 890.12, date: new Date(2024, 2, 25), discount: 0.10 },
+])
+
+const columns: ColumnDef<Product>[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true },
+  { field: 'name', title: 'Nome', width: 200, sortable: true, filterable: true },
+  { 
+    field: 'price', 
+    title: 'Preço',
+    width: 140,
+    sortable: true,
+    format: (v: number) => intl.formatNumber(v, { style: 'currency', currency: 'BRL' })
+  },
+  { 
+    field: 'date', 
+    title: 'Data',
+    width: 150,
+    sortable: true,
+    format: (v: Date) => intl.formatDate(v, { date: 'short' })
+  },
+  { 
+    field: 'discount', 
+    title: 'Desconto',
+    width: 120,
+    sortable: true,
+    format: (v: number) => intl.formatNumber(v, { style: 'percent', minimumFractionDigits: 0 })
+  }
+]
+</script>
+
+<template>
+  <PantanalGrid 
+    :rows="rows" 
+    :columns="columns" 
+    key-field="id"
+    :height="400"
+    locale="pt"
+    responsive="table"
+    :sortable="true"
+    :filterable="true"
+    :pageable="true"
+  />
+</template>
+```
+
+## Spanish (es) with Euro (EUR)
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, IntlService, type ColumnDef } from '@pantanal/grid'
+
+const intl = new IntlService('es')
+
+interface Product {
+  id: number
+  name: string
+  price: number
+  date: Date
+  discount: number
+}
+
+const rows = ref<Product[]>([
+  { id: 1, name: 'Producto A', price: 1234.56, date: new Date(2024, 0, 15), discount: 0.15 },
+  { id: 2, name: 'Producto B', price: 567.89, date: new Date(2024, 1, 20), discount: 0.25 },
+  { id: 3, name: 'Producto C', price: 890.12, date: new Date(2024, 2, 25), discount: 0.10 },
+])
+
+const columns: ColumnDef<Product>[] = [
+  { field: 'id', title: 'ID', width: 80, sortable: true },
+  { field: 'name', title: 'Nombre', width: 200, sortable: true, filterable: true },
+  { 
+    field: 'price', 
+    title: 'Precio',
+    width: 140,
+    sortable: true,
+    format: (v: number) => intl.formatNumber(v, { style: 'currency', currency: 'EUR' })
+  },
+  { 
+    field: 'date', 
+    title: 'Fecha',
+    width: 150,
+    sortable: true,
+    format: (v: Date) => intl.formatDate(v, { date: 'short' })
+  },
+  { 
+    field: 'discount', 
+    title: 'Descuento',
+    width: 120,
+    sortable: true,
+    format: (v: number) => intl.formatNumber(v, { style: 'percent', minimumFractionDigits: 0 })
+  }
+]
+</script>
+
+<template>
+  <PantanalGrid 
+    :rows="rows" 
+    :columns="columns" 
+    key-field="id"
+    :height="400"
+    locale="es"
+    responsive="table"
+    :sortable="true"
+    :filterable="true"
+    :pageable="true"
+  />
+</template>
+```
+
