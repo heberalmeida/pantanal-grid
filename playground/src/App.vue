@@ -170,6 +170,7 @@ const navSections = [
       { to: '/i18n/en', label: 'English (en)', icon: 'language' },
       { to: '/i18n/es', label: 'Spanish (es)', icon: 'flag-checkered' },
       { to: '/i18n/custom', label: 'Custom labels', icon: 'language' },
+      { to: '/intl-service', label: 'IntlService', icon: 'globe' },
       { to: '/messages-props', label: 'Messages Props', icon: 'comment' },
       { to: '/no-records-props', label: 'No Records Props', icon: 'file-circle-xmark' },
       { to: '/pageable-props', label: 'Pageable Props', icon: 'ellipsis' },
