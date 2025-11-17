@@ -1,10 +1,12 @@
 import { defineConfig } from 'vitepress'
 import { resolve } from 'path'
 
+const isDev = process.env.NODE_ENV === 'development'
+
 export default defineConfig({
   title: 'Pantanal Grid',
   description: 'A feature-rich data grid component for Vue 3 applications',
-  base: '/pantanal-grid/docs/',
+  base: isDev ? '/' : '/pantanal-grid/docs/',
   
   themeConfig: {
     nav: [
