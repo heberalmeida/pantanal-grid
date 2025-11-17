@@ -331,6 +331,8 @@
             :style="[pinStyle(c._idx)]" 
             :tabindex="props.navigatable ? (isFocusedRow(r) && focusCol === c._idx ? 0 : -1) : undefined"
             :data-focus="props.navigatable && isFocusedRow(r) && focusCol === c._idx"
+            :data-row-index="props.navigatable ? getDataRowIndexFromActual(r) : undefined"
+            :data-col-index="props.navigatable ? c._idx : undefined"
             @click="handleCellClick(row, c, r, i)"
             @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
             @focus="props.navigatable && handleCellFocus(r, c._idx)">
@@ -820,8 +822,10 @@
               <!-- células de dados para linhas normais -->
               <template v-else-if="n.type === 'row'">
                 <div v-for="(c, i) in unlockedCols" :key="`row-${r}-${c._idx}`" class="v3grid__cell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]"
-                  :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
-                  :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
+                  :tabindex="props.navigatable ? (isFocusedRow(r) && focusCol === c._idx ? 0 : -1) : undefined"
+                  :data-focus="props.navigatable && isFocusedRow(r) && focusCol === c._idx"
+                  :data-row-index="props.navigatable ? getDataRowIndexFromActual(r) : undefined"
+                  :data-col-index="props.navigatable ? c._idx : undefined"
                   @click="handleCellClick(n.row, c, r, i)"
                   @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
                   @focus="props.navigatable && handleCellFocus(r, c._idx)">
@@ -909,8 +913,10 @@
                     </div>
                     <div v-else class="v3grid__cell" :class="[pinClass(c._idx)]"
                       :style="[pinStyle(c._idx)]" 
-                      :tabindex="props.navigatable ? (focusRow === r && focusCol === c._idx ? 0 : -1) : undefined"
-                      :data-focus="props.navigatable && focusRow === r && focusCol === c._idx"
+                      :tabindex="props.navigatable ? (isFocusedRow(r) && focusCol === c._idx ? 0 : -1) : undefined"
+                      :data-focus="props.navigatable && isFocusedRow(r) && focusCol === c._idx"
+                      :data-row-index="props.navigatable ? getDataRowIndexFromActual(r) : undefined"
+                      :data-col-index="props.navigatable ? c._idx : undefined"
                       @click="handleCellClick(row, c, r, i)"
                       @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
                       @focus="props.navigatable && handleCellFocus(r, c._idx)">
@@ -4301,9 +4307,8 @@ function handleColumnResize(col: ColumnDef, width: number) {
   }
 }
 
-const { focusRow, focusCol, onKeydown: handleKeydown } = keyboardNav
+const { focusRow, focusCol, onKeydown: keyboardOnKeydown } = keyboardNav
 
-// Helper to get data row index from actual visibleRows index
 function getDataRowIndexFromActual(actualIndex: number): number {
   const dataRows = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
   const actualRow = visibleRows.value[actualIndex]
@@ -4311,13 +4316,25 @@ function getDataRowIndexFromActual(actualIndex: number): number {
   return dataRows.indexOf(actualRow)
 }
 
-// Keyboard navigation handlers
 function handleCellFocus(rowIndex: number, colIndex: number) {
   if (!props.navigatable) return
-  // Convert actual rowIndex to data row index for keyboard nav
   const dataRowIndex = getDataRowIndexFromActual(rowIndex)
   if (dataRowIndex >= 0) {
     keyboardNav.setFocus(dataRowIndex, colIndex)
+  }
+}
+
+function handleKeydown(event: KeyboardEvent, rowIndex?: number, colIndex?: number) {
+  if (!props.navigatable) return
+  if (rowIndex !== undefined) {
+    const dataRowIndex = getDataRowIndexFromActual(rowIndex)
+    if (dataRowIndex >= 0) {
+      keyboardOnKeydown(event, dataRowIndex, colIndex)
+    } else {
+      keyboardOnKeydown(event, rowIndex, colIndex)
+    }
+  } else {
+    keyboardOnKeydown(event, undefined, colIndex)
   }
 }
 

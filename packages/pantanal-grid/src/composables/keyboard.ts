@@ -255,6 +255,21 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
       if (cell) {
         cell.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
         cell.focus()
+      } else {
+        const cells = document.querySelectorAll('.v3grid__cell[tabindex="0"]')
+        if (cells.length > 0) {
+          const targetCell = Array.from(cells).find(c => {
+            const cellRow = (c as HTMLElement).getAttribute('data-row-index')
+            const cellCol = (c as HTMLElement).getAttribute('data-col-index')
+            return cellRow === String(rowIndex) && cellCol === String(colIndex)
+          }) as HTMLElement
+          if (targetCell) {
+            targetCell.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+            targetCell.focus()
+          } else if (cells[0]) {
+            (cells[0] as HTMLElement).focus()
+          }
+        }
       }
     })
   }
