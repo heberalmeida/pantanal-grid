@@ -129,28 +129,48 @@ interface Product {
   name: string
   price: number
   date: Date
+  discount: number
+  quantity: number
 }
 
 const rows = ref<Product[]>([
-  { id: 1, name: 'Product A', price: 1234.56, date: new Date(2024, 0, 15) },
-  { id: 2, name: 'Product B', price: 567.89, date: new Date(2024, 1, 20) },
-  { id: 3, name: 'Product C', price: 890.12, date: new Date(2024, 2, 25) },
+  { id: 1, name: 'Product A', price: 1234.56, date: new Date(2024, 0, 15), discount: 0.15, quantity: 100 },
+  { id: 2, name: 'Product B', price: 567.89, date: new Date(2024, 1, 20), discount: 0.25, quantity: 50 },
+  { id: 3, name: 'Product C', price: 890.12, date: new Date(2024, 2, 25), discount: 0.10, quantity: 75 },
+  { id: 4, name: 'Product D', price: 2345.67, date: new Date(2024, 3, 10), discount: 0.30, quantity: 200 },
+  { id: 5, name: 'Product E', price: 456.78, date: new Date(2024, 4, 5), discount: 0.20, quantity: 150 },
 ])
 
 const columns: ColumnDef<Product>[] = [
-  { field: 'id', title: 'ID', width: 80 },
-  { field: 'name', title: 'Name', width: 200 },
+  { field: 'id', title: 'ID', width: 80, sortable: true },
+  { field: 'name', title: 'Name', width: 200, sortable: true, filterable: true },
   { 
     field: 'price', 
     title: 'Price',
-    width: 120,
-    format: (v: number) => intl.formatNumber(v, 'c')
+    width: 140,
+    sortable: true,
+    format: (v: number) => intl.formatNumber(v, { style: 'currency', currency: 'USD' })
   },
   { 
     field: 'date', 
     title: 'Date',
     width: 150,
+    sortable: true,
     format: (v: Date) => intl.formatDate(v, 'short')
+  },
+  { 
+    field: 'discount', 
+    title: 'Discount',
+    width: 120,
+    sortable: true,
+    format: (v: number) => intl.formatNumber(v, { style: 'percent', minimumFractionDigits: 0 })
+  },
+  { 
+    field: 'quantity', 
+    title: 'Quantity',
+    width: 120,
+    sortable: true,
+    format: (v: number) => intl.formatNumber(v, { style: 'decimal', useGrouping: true })
   }
 ]
 </script>
@@ -160,9 +180,12 @@ const columns: ColumnDef<Product>[] = [
     :rows="rows" 
     :columns="columns" 
     key-field="id"
-    :height="300"
+    :height="400"
     locale="en"
     responsive="table"
+    :sortable="true"
+    :filterable="true"
+    :pageable="true"
   />
 </template>
 ```
