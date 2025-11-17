@@ -18,7 +18,6 @@ describe('PantanalGrid filtering', () => {
     const inputs = wrapper.findAll('.v3grid__filters input.v3grid__input[type="text"]')
     expect(inputs.length).toBeGreaterThan(1)
 
-    // filtra por "mm" => deve sobrar apenas "Gamma"
     await inputs.at(1)?.setValue('mm')
     await nextTick()
 
