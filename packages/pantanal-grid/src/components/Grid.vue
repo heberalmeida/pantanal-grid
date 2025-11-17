@@ -4275,6 +4275,63 @@ const keyboardNav = useKeyboardNav({
   onToggleGroup: (key: string) => {
     toggleGroupKey(key)
   },
+  getGroupKey: (rowIndex: number) => {
+    const dataRows = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+    const dataRow = dataRows[rowIndex]
+    if (!dataRow) return null
+    const actualIndex = visibleRows.value.indexOf(dataRow)
+    if (actualIndex === -1) return null
+    const actualRow = visibleRows.value[actualIndex]
+    if (isGroupNode(actualRow)) {
+      return (actualRow as any).key || null
+    }
+    return null
+  },
+  isGroupRow: (rowIndex: number) => {
+    const dataRows = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+    const dataRow = dataRows[rowIndex]
+    if (!dataRow) return false
+    const actualIndex = visibleRows.value.indexOf(dataRow)
+    if (actualIndex === -1) return false
+    const actualRow = visibleRows.value[actualIndex]
+    return isGroupNode(actualRow)
+  },
+  onFocusFirst: () => {
+    const firstCell = rootEl.value?.querySelector('.v3grid__cell[tabindex="0"]') as HTMLElement
+    if (firstCell) {
+      firstCell.focus()
+    }
+  },
+  onFocusLast: () => {
+    const cells = rootEl.value?.querySelectorAll('.v3grid__cell[tabindex="0"]')
+    if (cells && cells.length > 0) {
+      (cells[cells.length - 1] as HTMLElement).focus()
+    }
+  },
+  onFocusFirstInRow: () => {
+    const focusedCell = rootEl.value?.querySelector('.v3grid__cell[data-focus="true"]') as HTMLElement
+    if (focusedCell) {
+      const row = focusedCell.closest('.v3grid__row')
+      if (row) {
+        const firstCell = row.querySelector('.v3grid__cell[tabindex="0"]') as HTMLElement
+        if (firstCell) {
+          firstCell.focus()
+        }
+      }
+    }
+  },
+  onFocusLastInRow: () => {
+    const focusedCell = rootEl.value?.querySelector('.v3grid__cell[data-focus="true"]') as HTMLElement
+    if (focusedCell) {
+      const row = focusedCell.closest('.v3grid__row')
+      if (row) {
+        const cells = row.querySelectorAll('.v3grid__cell[tabindex="0"]')
+        if (cells && cells.length > 0) {
+          (cells[cells.length - 1] as HTMLElement).focus()
+        }
+      }
+    }
+  },
   onColumnReorder: (fromIndex: number, toIndex: number) => {
     if (!props.enableColumnReorder) return
     const ordered = mapColumns(columnsForReorder.value)
@@ -4326,6 +4383,7 @@ function handleCellFocus(rowIndex: number, colIndex: number) {
 
 function handleKeydown(event: KeyboardEvent, rowIndex?: number, colIndex?: number) {
   if (!props.navigatable) return
+  event.stopPropagation()
   if (rowIndex !== undefined) {
     const dataRowIndex = getDataRowIndexFromActual(rowIndex)
     if (dataRowIndex >= 0) {
