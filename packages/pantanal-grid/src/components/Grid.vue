@@ -1551,8 +1551,6 @@ const props = withDefaults(defineProps<GridProps>(), {
   enableColumnResize: true,
   enableColumnReorder: true,
   serverSide: false,
-
-  // ===== NOVOS DEFAULTS
   responsive: 'auto',
   cardBreakpoint: 768,
   showFiltersInCards: false,
@@ -1681,10 +1679,7 @@ function collectSlotColumns(children: VNodeArrayChildren | VNode | undefined, ac
   }
 }
 
-/** i18n */
 const msgs = computed(() => getMessages(String(props.locale ?? 'en'), props.messages))
-
-/** RESPONSIVO / CARD MODE */
 const isCardMode = computed<boolean>(() => {
   if (props.responsive === 'cards') return true
   if (props.responsive === 'table') return false
@@ -1692,22 +1687,16 @@ const isCardMode = computed<boolean>(() => {
   return (hostWidth.value || 0) < bp
 })
 
-/** STATE */
 const sortState = ref<SortDescriptor[]>(props.sort ?? [])
 const page = ref(props.page!)
 const pageSize = ref(props.pageSize!)
 const filters = ref<FilterDescriptor[]>(props.filter ?? [])
-
-// Card sorting controls
 const cardSortField = ref<string>('')
 const cardSortDir = ref<'asc' | 'desc'>('asc')
-
-/** GROUPING */
 const groupState = ref<GroupDescriptor[]>(props.group ?? [])
 const expanded = ref<Set<string>>(new Set())
 watch(() => props.group, v => { if (v) groupState.value = v })
 
-/** EDITING */
 const editingState = useEditing()
 const editMode = computed(() => {
   if (props.editable === false || props.editable === undefined) return 'none'
@@ -1772,7 +1761,6 @@ function normalizeValidationMessage(value: string | boolean): string {
   return msgs.value.invalidValue ?? 'Invalid value'
 }
 
-/** SELECTION */
 const selectedKeys = ref<Set<unknown>>(new Set())
 const keyFieldStr = computed(() => String(props.keyField))
 function isSelected(row: any) { return selectedKeys.value.has(row[keyFieldStr.value]) }
@@ -1836,7 +1824,6 @@ function popupEditableColumns(row: any) {
 }
 
 function isCellEditing(row: any, column: ColumnDef): boolean {
-  // Ensure dependency on editing rows set for reactivity
   editingState.editingRows.value
   const rowKey = getRowKeyValue(row)
   if (isInlineMode.value && rowKey !== undefined && inlineEditingKeys.value.has(rowKey)) {
@@ -1855,7 +1842,6 @@ function isCellEditing(row: any, column: ColumnDef): boolean {
   return false
 }
 
-/** COLUMNS (reorder/resize) */
 const slotColumnDefs = computed<ColumnDef[]>(() => {
   const acc: ColumnDef[] = []
   const defaultSlot = slots.default as unknown as (() => VNodeArrayChildren | undefined) | undefined
@@ -1863,16 +1849,13 @@ const slotColumnDefs = computed<ColumnDef[]>(() => {
   collectSlotColumns(children as any, acc)
   return acc
 })
-// Normalize command: convert single object to array for consistency
+
 function normalizeCommand(command: ColumnDef['command']): ColumnDef['command'] {
   if (!command) return undefined
   if (Array.isArray(command)) return command
-  // Single object: convert to array and ensure it has a name property
   const cmdObj = command as any
   if (typeof cmdObj === 'object' && cmdObj !== null) {
-    // Create a copy to avoid modifying the original object
     const normalizedCmd = { ...cmdObj }
-    // If no name is provided, use a default name
     if (!normalizedCmd.name) {
       normalizedCmd.name = 'custom'
     }
@@ -1881,27 +1864,21 @@ function normalizeCommand(command: ColumnDef['command']): ColumnDef['command'] {
   return undefined
 }
 
-// Enhanced columns computed that applies internal state (locked, visibility)
 const columns = computed<ColumnDef[]>(() => {
   const cols = (slotColumnDefs.value.length > 0 ? slotColumnDefs.value : (props.columns ?? [])) as ColumnDef[]
-  // Normalize command property and apply internal state
   return cols.map((col, idx) => {
     let fieldStr = col.field ? String(col.field) : null
     const enhancedCol = { ...col } as ColumnDef
     
-    // If column has command but no field, assign a temporary field for internal processing
-    // This allows columns with commands to be included in the column list
     if (!fieldStr && col.command) {
       fieldStr = `__command_${idx}`
       enhancedCol.field = fieldStr
     }
     
-    // Apply normalized command
     if (col.command) {
       enhancedCol.command = normalizeCommand(col.command)
     }
     
-    // Apply locked state from internal state if available, otherwise use prop
     if (fieldStr && columnLockedState.value.has(fieldStr)) {
       const lockedValue = columnLockedState.value.get(fieldStr)
       enhancedCol.locked = lockedValue === false ? undefined : lockedValue
@@ -1911,73 +1888,54 @@ const columns = computed<ColumnDef[]>(() => {
   })
 })
 
-// Helper function to check if a column has commands
 function hasCommands(command: ColumnDef['command']): boolean {
   if (!command) return false
   if (Array.isArray(command)) return command.length > 0
-  // Single object is considered as having commands (will be normalized)
   return typeof command === 'object' && command !== null
 }
 
-// Helper function to get commands as an array
-// Since columns are already normalized in the computed, this should always return an array when hasCommands returns true
 function getCommandArray(command: ColumnDef['command']): Array<string | { name: string; [key: string]: any }> {
   if (!command) return []
   if (Array.isArray(command)) return command as Array<string | { name: string; [key: string]: any }>
-  // Single object: normalize it (though this shouldn't happen after normalization in computed)
   const normalized = normalizeCommand(command)
   return Array.isArray(normalized) ? (normalized as Array<string | { name: string; [key: string]: any }>) : []
 }
 
-/** COLUMN MENU */
 const columnMenuOpen = ref(false)
 const columnMenuColumn = ref<ColumnDef | null>(null)
 const columnMenuEl = ref<HTMLElement | null>(null)
 const columnMenuPosition = ref<{ top: number; left: number }>({ top: 0, left: 0 })
 const visibleColumns = ref<Set<string>>(new Set())
-// Internal state for column locked status (overrides props when user changes via menu)
 const columnLockedState = ref<Map<string, boolean | 'left' | 'right'>>(new Map())
-// Track if user has interacted with column visibility (to preserve their choices)
 const userHasChangedVisibility = ref(false)
 
-// Initialize visible columns and locked state
 watch(() => columns.value, (cols) => {
   const newVisibleColumns = new Set<string>()
   const newLockedState = new Map<string, boolean | 'left' | 'right'>(columnLockedState.value)
   
-  // Flatten nested columns to get all leaf columns (columns with field)
   const flatCols = flattenNestedColumns(cols)
   
   flatCols.forEach(col => {
     if (col.field) {
       const fieldStr = String(col.field)
-      // Initialize visible columns - always add if not explicitly hidden
       if (col.hidden !== true) {
         newVisibleColumns.add(fieldStr)
       }
-      // Initialize locked state from column definition if not already set by user
       if (!newLockedState.has(fieldStr)) {
         if (col.locked !== undefined) {
           newLockedState.set(fieldStr, col.locked)
         } else {
-          // If column doesn't have locked prop, set to false (unlocked)
           newLockedState.set(fieldStr, false)
         }
       }
     }
   })
   
-  // Update visible columns
-  // If user hasn't changed visibility yet, initialize with all columns
-  // If user has changed visibility, preserve their choices but add new columns
   if (!userHasChangedVisibility.value || visibleColumns.value.size === 0) {
-    // Initial state or first load: initialize with all columns as visible
     visibleColumns.value = new Set(newVisibleColumns)
   } else {
-    // User has interacted: preserve their choices, but add any new columns
     const updated = new Set(visibleColumns.value)
     newVisibleColumns.forEach(f => {
-      // Add new columns that weren't in the previous definition
       if (!updated.has(f)) {
         updated.add(f)
       }
@@ -1985,7 +1943,6 @@ watch(() => columns.value, (cols) => {
     visibleColumns.value = updated
   }
   
-  // Update locked state if changed (only add new columns, don't remove user changes)
   const lockedChanged = Array.from(newLockedState.entries()).some(([k, v]) => 
     !columnLockedState.value.has(k) || columnLockedState.value.get(k) !== v
   )
@@ -1995,7 +1952,6 @@ watch(() => columns.value, (cols) => {
 }, { immediate: true })
 
 const allColumns = computed(() => {
-  // Return leaf columns (columns with field) for column menu and visibility controls
   return flattenNestedColumns(columns.value)
 })
 const columnMenuStyle = computed(() => ({
@@ -2008,10 +1964,7 @@ const columnMenuStyle = computed(() => ({
 function isColumnVisible(col: ColumnDef): boolean {
   if (!col.field) return true
   const fieldStr = String(col.field)
-  // If visibleColumns is empty or doesn't have this column, consider it visible by default
-  // (columns are visible by default unless explicitly hidden)
   if (visibleColumns.value.size === 0 || !visibleColumns.value.has(fieldStr)) {
-    // Only consider hidden if explicitly marked as hidden in column definition
     return col.hidden !== true
   }
   return visibleColumns.value.has(fieldStr)
@@ -2020,14 +1973,10 @@ function isColumnVisible(col: ColumnDef): boolean {
 function toggleColumnVisibility(col: ColumnDef, visible: boolean) {
   if (!col.field) return
   const fieldStr = String(col.field)
-  // Mark that user has changed visibility
   userHasChangedVisibility.value = true
   
-  // Create a new Set to trigger reactivity
-  // If visibleColumns is empty, initialize it with all columns first
   let newVisibleColumns = new Set(visibleColumns.value)
   if (visibleColumns.value.size === 0) {
-    // Initialize with all leaf columns
     const flatCols = flattenNestedColumns(columns.value)
     flatCols.forEach(c => {
       if (c.field && c.hidden !== true) {
@@ -2047,18 +1996,14 @@ function toggleColumnVisibility(col: ColumnDef, visible: boolean) {
 
 function openColumnMenu(col: ColumnDef, event: MouseEvent) {
   event.stopPropagation()
-  // Create a copy of the column with current state applied
   const fieldStr = col.field ? String(col.field) : null
   const currentCol = { ...col } as ColumnDef
-  // Apply current locked state if available
   if (fieldStr && columnLockedState.value.has(fieldStr)) {
     const lockedValue = columnLockedState.value.get(fieldStr)
     currentCol.locked = lockedValue === false ? undefined : lockedValue
   } else if (fieldStr && col.locked !== undefined) {
-    // If column has locked prop but not in state, use the prop value
     currentCol.locked = col.locked
   }
-  // Ensure lockable is set (default to true if not explicitly false)
   if (currentCol.lockable === undefined) {
     currentCol.lockable = true
   }
@@ -2066,12 +2011,10 @@ function openColumnMenu(col: ColumnDef, event: MouseEvent) {
   columnMenuOpen.value = true
   const button = event.currentTarget as HTMLElement
   
-  // Emit columnmenuopen event
   if (col.field) {
     emit('columnmenuopen', { column: col, field: String(col.field) })
   }
   
-  // Find menu container for columnmenuinit event
   nextTick(() => {
     const menuContainer = rootEl.value?.querySelector('.v3grid__column-menu')
     if (menuContainer && col.field) {
@@ -2103,7 +2046,6 @@ function handleClickOutside(event: MouseEvent) {
 }
 
 function handleHeaderCellClick(col: ColumnDef, event: MouseEvent) {
-  // Don't toggle sort if clicking on menu button (handled by @click.stop)
   const target = event.target as HTMLElement
   if (target.closest('.v3grid__column-menu-btn')) {
     return
@@ -2118,26 +2060,21 @@ function sortColumnAscending() {
   const field = String(columnMenuColumn.value.field)
   const currentSort = sortState.value.find(s => s.field === field)
   if (currentSort?.dir === 'asc') {
-    // Already ascending, just close menu
     closeColumnMenu()
     return
   }
   
   const isMultiple = props.sortableMode === 'multiple'
   if (isMultiple) {
-    // In multiple mode, add or update the sort
     const currentIdx = sortState.value.findIndex(s => s.field === field)
     if (currentIdx === -1) {
-      // Add new sort
       sortState.value = [...sortState.value, { field, dir: 'asc' }]
     } else {
-      // Update existing sort
       sortState.value = sortState.value.map((s, i) =>
         i === currentIdx ? { ...s, dir: 'asc' } : s
       )
     }
   } else {
-    // In single mode, replace all sorts
     sortState.value = [{ field, dir: 'asc' }]
   }
   emit('update:sort', [...sortState.value])
@@ -2149,26 +2086,21 @@ function sortColumnDescending() {
   const field = String(columnMenuColumn.value.field)
   const currentSort = sortState.value.find(s => s.field === field)
   if (currentSort?.dir === 'desc') {
-    // Already descending, just close menu
     closeColumnMenu()
     return
   }
   
   const isMultiple = props.sortableMode === 'multiple'
   if (isMultiple) {
-    // In multiple mode, add or update the sort
     const currentIdx = sortState.value.findIndex(s => s.field === field)
     if (currentIdx === -1) {
-      // Add new sort
       sortState.value = [...sortState.value, { field, dir: 'desc' }]
     } else {
-      // Update existing sort
       sortState.value = sortState.value.map((s, i) =>
         i === currentIdx ? { ...s, dir: 'desc' } : s
       )
     }
   } else {
-    // In single mode, replace all sorts
     sortState.value = [{ field, dir: 'desc' }]
   }
   emit('update:sort', [...sortState.value])
@@ -2185,8 +2117,6 @@ function unsortColumn() {
 }
 
 function openColumnFilter() {
-  // For now, just enable filter row if not already enabled
-  // In a full implementation, this would open a filter dialog
   closeColumnMenu()
 }
 
@@ -2195,18 +2125,13 @@ function lockColumn() {
   const col = columnMenuColumn.value
   const fieldStr = String(col.field)
   
-  // Check if column is lockable
   if (col.lockable === false) return
   
-  // Determine lock side: if pinned, use the same side, otherwise default to 'left'
   const lockSide = col.pinned === 'right' ? 'right' : (col.pinned === 'left' ? 'left' : 'left')
   
-  // Update internal locked state
   const newLockedState = new Map(columnLockedState.value)
   newLockedState.set(fieldStr, lockSide)
   columnLockedState.value = newLockedState
-  
-  // Update columnMenuColumn to reflect the change immediately
   columnMenuColumn.value = { ...col, locked: lockSide } as ColumnDef
   
   // Emit event
@@ -2223,21 +2148,16 @@ function unlockColumn() {
   const col = columnMenuColumn.value
   const fieldStr = String(col.field)
   
-  // Check if column is lockable
   if (col.lockable === false) return
   
-  // Update internal locked state (set to false to indicate unlocked)
   const newLockedState = new Map(columnLockedState.value)
   newLockedState.set(fieldStr, false)
   columnLockedState.value = newLockedState
   
-  // Update columnMenuColumn to reflect the change immediately
   columnMenuColumn.value = { ...col, locked: undefined, pinned: undefined } as ColumnDef
   
-  // Emit event
   emit('columnunlock', { column: col, field: fieldStr })
   
-  // Close menu after a brief delay to allow UI to update
   nextTick(() => {
     closeColumnMenu()
   })
@@ -2249,23 +2169,20 @@ onBeforeUnmount(() => {
   customEditorCleanup.clear()
 })
 
-// Sortable columns for card mode
 const sortableColumns = computed(() => {
   return columns.value.filter(c => {
     const isColumnSortable = c.sortable !== false && (props.sortable || c.sortable === true)
     return isColumnSortable
   })
 })
-// Flatten nested columns to a flat list of leaf columns (columns with field property)
+
 function flattenColumns(cols: ColumnDef[], level = 0): ColumnDef[] {
   const result: ColumnDef[] = []
   for (const col of cols) {
     if (col.columns && col.columns.length > 0) {
-      // This is a group column, recursively flatten its children
       const children = flattenColumns(col.columns, level + 1)
       result.push(...children)
     } else if (col.field || col.command) {
-      // This is a leaf column (has a field) OR has commands (can be rendered without field)
       result.push(col)
     }
   }
@@ -2277,7 +2194,6 @@ function hasNestedColumns(cols: ColumnDef[]): boolean {
   return cols.some(col => col.columns && col.columns.length > 0)
 }
 
-// Flatten nested columns - if no nested columns, return as-is; otherwise flatten
 function flattenNestedColumns(cols: ColumnDef[]): ColumnDef[] {
   if (!hasNestedColumns(cols)) {
     return cols
@@ -2285,7 +2201,6 @@ function flattenNestedColumns(cols: ColumnDef[]): ColumnDef[] {
   return flattenColumns(cols)
 }
 
-// Use flattened columns for reorder (only leaf columns can be reordered)
 const columnsForReorder = computed(() => flattenNestedColumns(columns.value))
 const { order, onDragStart, onDragOver, onDrop, mapColumns, ensureOrder } = useColumnReorder(() => columnsForReorder.value)
 const { widths, onMouseDown: onResizeDown, ensureWidths } = useColumnResize(() => columnsForReorder.value)
@@ -2296,7 +2211,6 @@ function handleHeaderDrop(idx: number) {
   if (result) emit('columnReorder', result)
 }
 
-// Helper functions for type-safe access to _orderIndex in templates
 function getColumnOrderIndex(col: ColumnDef): number | undefined {
   const colWithIndex = col as ColumnDef & { _orderIndex?: number }
   return colWithIndex._orderIndex
@@ -2793,7 +2707,6 @@ function toggleDetailRow(row: any) {
   }
 }
 
-/** DATA PIPELINE  DataProvider */
 const remoteRows = ref<any[]>([])
 const remoteTotal = ref<number | null>(null)
 const abortCtl = ref<AbortController | null>(null)
@@ -2841,7 +2754,6 @@ const groupedTree = computed(() =>
 const flatNodes = computed(() =>
   !isGrouped.value ? [] : flattenTree(groupedTree.value as any[], expanded.value, props.showGroupFooters ?? true)
 )
-// Calculate aggregates for all rows when not grouped
 const allAggregates = computed(() => {
   if (isGrouped.value || !props.aggregates || Object.keys(props.aggregates).length === 0) {
     return {}
@@ -2849,7 +2761,6 @@ const allAggregates = computed(() => {
   return computeAggregates(sorted.value as any[], props.aggregates)
 })
 
-// Helper functions for group node types
 function isGroupNode(row: any): row is GroupNode {
   return row && typeof row === 'object' && 'type' in row && row.type === 'group'
 }
@@ -2879,10 +2790,7 @@ function formatPageableDisplay(template: string): string {
     .replace('{2}', String(total.value))
 }
 
-/** VIRTUAL vs padrão */
 const allRowsRef = () => sorted.value
-
-// Determine if virtual scrolling should be enabled
 const isVirtualEnabled = computed(() => {
   if (props.virtual) return true
   if (props.scrollableVirtual) return true
@@ -3000,9 +2908,8 @@ function aggTextForCell(field: string, aggs: Record<string, number>): string {
   return `${getAggLabel(a)}: ${v}`
 }
 
-/** chaves e texto para footer em cards */
 function aggKeys(aggs: Record<string, number>): string[] {
-  return Object.keys(aggs) // ex.: ['price:sum','qty:max','count']
+  return Object.keys(aggs)
 }
 function aggTextForKey(key: string, aggs: Record<string, number>): string {
   if (key === 'count') return `${getAggLabel('count')}: ${aggs['count'] ?? 0}`
@@ -3013,7 +2920,6 @@ function aggTextForKey(key: string, aggs: Record<string, number>): string {
   return `${label}: ${v}`
 }
 
-/** ---- seleção visível (checkbox do header) ---- */
 const selectableRowsOnPage = computed<DataRow[]>(() => {
   return (visibleRows.value as unknown[]).map((it) => {
     if (it && typeof it === 'object' && 'type' in (it as any)) {
@@ -3034,7 +2940,6 @@ const someVisibleSelected = computed<boolean>(() => {
   return anySel && !allVisibleSelected.value
 })
 
-/** two-way */
 watch(() => props.sort, v => { if (v) sortState.value = v })
 watch(sortState, v => emit('update:sort', v))
 watch(() => props.page, v => { if (v) page.value = v })
@@ -3049,9 +2954,6 @@ watch(() => groupState.value, (v) => {
   }
 }, { deep: true })
 
-/** UI helpers */
-
-// Calculate header levels for multi-column headers
 interface HeaderCell {
   column: ColumnDef
   colspan: number
