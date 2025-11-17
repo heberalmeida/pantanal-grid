@@ -123,9 +123,13 @@
         :rows="gridRows"
         :columns="gridColumns as any"
         key-field="id"
-        :height="300"
+        :height="400"
         locale="en"
         responsive="table"
+        :sortable="true"
+        :filterable="true"
+        :pageable="true"
+        :page-size="10"
       />
 
       <ExampleCode :source="gridCode" />
@@ -244,28 +248,36 @@ const gridRows = ref<Product[]>([
   { id: 3, name: 'Product C', price: 890.12, date: new Date(2024, 2, 25), discount: 0.10 },
   { id: 4, name: 'Product D', price: 2345.67, date: new Date(2024, 3, 10), discount: 0.30 },
   { id: 5, name: 'Product E', price: 456.78, date: new Date(2024, 4, 5), discount: 0.20 },
+  { id: 6, name: 'Product F', price: 1234.99, date: new Date(2024, 5, 12), discount: 0.18 },
+  { id: 7, name: 'Product G', price: 789.45, date: new Date(2024, 6, 8), discount: 0.22 },
+  { id: 8, name: 'Product H', price: 2345.00, date: new Date(2024, 7, 22), discount: 0.12 },
+  { id: 9, name: 'Product I', price: 999.99, date: new Date(2024, 8, 30), discount: 0.28 },
+  { id: 10, name: 'Product J', price: 3456.78, date: new Date(2024, 9, 15), discount: 0.35 },
 ])
 
 const gridColumns: ColumnDef<Product>[] = [
-  { field: 'id', title: 'ID', width: 80 },
-  { field: 'name', title: 'Name', width: 200 },
+  { field: 'id', title: 'ID', width: 80, sortable: true },
+  { field: 'name', title: 'Name', width: 200, sortable: true, filterable: true },
   { 
     field: 'price', 
     title: 'Price',
-    width: 120,
-    format: (v: number) => intl.formatNumber(v, 'c')
+    width: 140,
+    sortable: true,
+    format: (v: number) => intl.formatNumber(v, { style: 'currency', currency: 'USD' })
   },
   { 
     field: 'date', 
     title: 'Date',
     width: 150,
+    sortable: true,
     format: (v: Date) => intl.formatDate(v, 'short')
   },
   { 
     field: 'discount', 
     title: 'Discount',
     width: 120,
-    format: (v: number) => intl.formatNumber(v, 'p')
+    sortable: true,
+    format: (v: number) => intl.formatNumber(v, { style: 'percent', minimumFractionDigits: 0 })
   }
 ]
 
