@@ -39,17 +39,13 @@ export interface DateFormatPart {
 
 export class IntlService {
   private locale: string
-  private formatter: Intl.DateTimeFormat
-  private numberFormatter: Intl.NumberFormat
 
   constructor(locale: string) {
     this.locale = locale
-    this.formatter = new Intl.DateTimeFormat(locale)
-    this.numberFormatter = new Intl.NumberFormat(locale)
   }
 
   dateFieldName(options: DateFieldNameOptions): string {
-    const { type = 'day', nameType = 'long', standalone = false } = options
+    const { type = 'day', nameType = 'long' } = options
     const date = new Date(2024, 0, 1)
     
     const formatOptions: Intl.DateTimeFormatOptions = {}
@@ -74,7 +70,7 @@ export class IntlService {
   }
 
   dateFormatNames(options: DateFormatNameOptions): any {
-    const { type = 'days', nameType = 'long', standalone = false } = options
+    const { type = 'days', nameType = 'long' } = options
     const result: any = {}
     
     if (type === 'days') {
@@ -98,14 +94,7 @@ export class IntlService {
         result[i] = monthPart?.value || ''
       }
     } else if (type === 'quarters') {
-      const formatter = new Intl.DateTimeFormat(this.locale, {
-        month: 'long'
-      })
       for (let i = 0; i < 4; i++) {
-        const quarterMonth = i * 3
-        const date = new Date(2024, quarterMonth, 1)
-        const formatted = formatter.formatToParts(date)
-        const monthPart = formatted.find(p => p.type === 'month')
         result[i] = `Q${i + 1}`
       }
     }
@@ -118,25 +107,6 @@ export class IntlService {
       const localeData = (Intl as any).LocaleData?.(this.locale)
       if (localeData && localeData.firstDayOfWeek !== undefined) {
         return localeData.firstDayOfWeek
-      }
-      
-      const formatter = new Intl.DateTimeFormat(this.locale, { weekday: 'long' })
-      const sunday = new Date(2024, 0, 7)
-      const monday = new Date(2024, 0, 8)
-      
-      const sundayParts = formatter.formatToParts(sunday)
-      const mondayParts = formatter.formatToParts(monday)
-      const sundayName = sundayParts.find(p => p.type === 'weekday')?.value || ''
-      const mondayName = mondayParts.find(p => p.type === 'weekday')?.value || ''
-      
-      const dayMap: Record<string, number> = {
-        'Sunday': 0, 'Domingo': 0, 'domingo': 0,
-        'Monday': 1, 'Lunes': 1, 'Segunda-feira': 1, 'Segunda': 1,
-        'Tuesday': 2, 'Martes': 2, 'Terça-feira': 2, 'Terça': 2,
-        'Wednesday': 3, 'Miércoles': 3, 'Quarta-feira': 3, 'Quarta': 3,
-        'Thursday': 4, 'Jueves': 4, 'Quinta-feira': 4, 'Quinta': 4,
-        'Friday': 5, 'Viernes': 5, 'Sexta-feira': 5, 'Sexta': 5,
-        'Saturday': 6, 'Sábado': 6, 'sábado': 6
       }
       
       if (this.locale.startsWith('pt') || this.locale.startsWith('es')) {
@@ -152,7 +122,6 @@ export class IntlService {
   format(format: string, values: any[]): string {
     let result = format
     values.forEach((value, index) => {
-      const placeholder = `{${index}}`
       const regex = new RegExp(`\\{${index}(:[^}]+)?\\}`, 'g')
       result = result.replace(regex, (match) => {
         if (match.includes(':')) {
@@ -214,8 +183,6 @@ export class IntlService {
   }
 
   private formatDateWithPattern(date: Date, pattern: string): string {
-    const parts = this.splitDateFormat(pattern)
-    let result = ''
     const formatOptions: Intl.DateTimeFormatOptions = {}
     
     if (pattern.includes('yyyy') || pattern.includes('YYYY')) {
@@ -329,7 +296,6 @@ export class IntlService {
 
   private parseDateWithFormat(value: string, format: string | DateFormatOptions): Date {
     if (typeof format === 'string') {
-      const parts = value.split(/[\/\-\s]/)
       const date = new Date(value)
       if (!isNaN(date.getTime())) {
         return date
@@ -339,7 +305,7 @@ export class IntlService {
     return new Date(value)
   }
 
-  parseNumber(value: string, format?: string | NumberFormatOptions): number {
+  parseNumber(value: string): number {
     if (!value || typeof value !== 'string') {
       return 0
     }
