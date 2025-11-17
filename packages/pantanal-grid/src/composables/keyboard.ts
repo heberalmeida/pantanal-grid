@@ -45,7 +45,6 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
   function onKeydown(e: KeyboardEvent, rowIndex?: number, colIndex?: number) {
     if (!options.navigatable) return
 
-    // Resolve rowsCount and colsCount (handle Ref, ComputedRef, or number)
     const rowsCountValue = typeof options.rowsCount === 'number' 
       ? options.rowsCount 
       : (options.rowsCount as Ref<number> | ComputedRef<number>).value
@@ -84,51 +83,41 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
     const isShift = e.shiftKey
     const isAlt = e.altKey
 
-    // Header shortcuts
     if (e.target && (e.target as HTMLElement).closest('.v3grid__headercell')) {
       const headerCell = (e.target as HTMLElement).closest('.v3grid__headercell') as HTMLElement
       const columnIndex = Array.from(headerCell.parentElement?.children || []).indexOf(headerCell)
       const column = (headerCell as any).__column as { field: string; sortable?: boolean } | undefined
 
-      // Enter - Sort by column
       if (e.key === 'Enter' && sortable && column?.sortable && onSort) {
         e.preventDefault()
         onSort(String(column.field))
         return
       }
 
-      // Alt+Down - Open filter menu (if filterable)
       if (e.key === 'ArrowDown' && isAlt && filterable) {
         e.preventDefault()
-        // TODO: Implement filter menu opening
         return
       }
 
-      // Ctrl+Left Arrow - Reorder column with previous
       if (e.key === 'ArrowLeft' && isCtrl && reorderable && columnIndex > 0 && onColumnReorder) {
         e.preventDefault()
         onColumnReorder(columnIndex, columnIndex - 1)
         return
       }
 
-      // Ctrl+Right Arrow - Reorder column with next
       if (e.key === 'ArrowRight' && isCtrl && reorderable && columnIndex < colsCountValue - 1 && onColumnReorder) {
         e.preventDefault()
         onColumnReorder(columnIndex, columnIndex + 1)
         return
       }
 
-      // Tab navigation in filter menu is handled by browser default
       return
     }
 
-    // Body shortcuts
-    // Arrow Keys - Navigate over cells
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       if (currentRow < rowsCountValue - 1) {
         focusRow.value = currentRow + 1
-        // Scroll into view if needed
         scrollCellIntoView(focusRow.value, currentCol)
       }
       isShiftSelecting.value = false
@@ -165,7 +154,6 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
       return
     }
 
-    // Enter - Toggle expand/collapse on group row
     if (e.key === 'Enter' && isGroupRow && onToggleGroup && getGroupKey) {
       const groupKey = getGroupKey(currentRow)
       if (groupKey) {
@@ -175,37 +163,32 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
       }
     }
 
-    // Page Up - Previous page
     if (e.key === 'PageUp' && pageable && currentPage && totalPages && onPageChange) {
       e.preventDefault()
       const newPage = Math.max(1, currentPage.value - 1)
       if (newPage !== currentPage.value) {
         onPageChange(newPage)
-        focusRow.value = 0 // Reset to first row
+        focusRow.value = 0
       }
       return
     }
 
-    // Page Down - Next page
     if (e.key === 'PageDown' && pageable && currentPage && totalPages && onPageChange) {
       e.preventDefault()
       const newPage = Math.min(totalPages(), currentPage.value + 1)
       if (newPage !== currentPage.value) {
         onPageChange(newPage)
-        focusRow.value = 0 // Reset to first row
+        focusRow.value = 0
       }
       return
     }
 
-    // Space - Select row
     if (e.key === ' ' && selectable && onSelectRow) {
       e.preventDefault()
       if (isCtrl && selectable === 'multiple') {
-        // Ctrl+Space - Toggle selection (multiple mode)
         onSelectRow(currentRow, true)
         lastSelectedRow.value = currentRow
       } else if (isShift && selectable === 'multiple' && lastSelectedRow.value !== null) {
-        // Shift+Space - Range selection
         const startRow = Math.min(lastSelectedRow.value, currentRow)
         const endRow = Math.max(lastSelectedRow.value, currentRow)
         if (onSelectRange) {
@@ -213,14 +196,12 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
         }
         lastSelectedRow.value = currentRow
       } else {
-        // Space - Select row
         onSelectRow(currentRow, false)
         lastSelectedRow.value = currentRow
       }
       return
     }
 
-    // Shift+Arrow Keys - Add row to selection (multiple mode)
     if (isShift && selectable === 'multiple' && onSelectRow) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault()
@@ -230,7 +211,6 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
       }
     }
 
-    // Ctrl+Home - Focus first focusable element
     if (e.key === 'Home' && isCtrl && onFocusFirst) {
       e.preventDefault()
       focusRow.value = 0
@@ -239,7 +219,6 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
       return
     }
 
-    // Ctrl+End - Focus last focusable cell in last row
     if (e.key === 'End' && isCtrl && onFocusLast) {
       e.preventDefault()
       focusRow.value = rowsCountValue - 1
@@ -248,7 +227,6 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
       return
     }
 
-    // Home - Focus first cell in row
     if (e.key === 'Home' && !isCtrl && onFocusFirstInRow) {
       e.preventDefault()
       focusCol.value = 0
@@ -256,7 +234,6 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
       return
     }
 
-    // End - Focus last cell in row
     if (e.key === 'End' && !isCtrl && onFocusLastInRow) {
       e.preventDefault()
       focusCol.value = colsCountValue - 1
@@ -264,24 +241,35 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
       return
     }
 
-    // Esc - Close filter menu (handled by browser default in most cases)
     if (e.key === 'Escape') {
-      // Reset shift selecting state
       isShiftSelecting.value = false
     }
   }
 
   function scrollCellIntoView(rowIndex: number, colIndex: number) {
-    // Update focus state first
     focusRow.value = rowIndex
     focusCol.value = colIndex
     
-    // Scroll into view after DOM update
     nextTick(() => {
       const cell = document.querySelector(`[data-focus="true"]`) as HTMLElement
       if (cell) {
         cell.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
         cell.focus()
+      } else {
+        const cells = document.querySelectorAll('.v3grid__cell[tabindex="0"]')
+        if (cells.length > 0) {
+          const targetCell = Array.from(cells).find(c => {
+            const cellRow = (c as HTMLElement).getAttribute('data-row-index')
+            const cellCol = (c as HTMLElement).getAttribute('data-col-index')
+            return cellRow === String(rowIndex) && cellCol === String(colIndex)
+          }) as HTMLElement
+          if (targetCell) {
+            targetCell.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+            targetCell.focus()
+          } else if (cells[0]) {
+            (cells[0] as HTMLElement).focus()
+          }
+        }
       }
     })
   }
