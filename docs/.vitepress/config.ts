@@ -152,10 +152,16 @@ export default defineConfig({
       }
     },
     optimizeDeps: {
-      include: ['vue', '@pantanal/grid']
+      include: ['vue', '@pantanal/grid'],
+      force: true
     },
     ssr: {
       noExternal: ['@pantanal/grid']
+    },
+    server: {
+      fs: {
+        allow: ['..']
+      }
     }
   }
 })
