@@ -305,7 +305,7 @@ export class IntlService {
     return new Date(value)
   }
 
-  parseNumber(value: string, format?: string | NumberFormatOptions): number {
+  parseNumber(value: string, _format?: string | NumberFormatOptions): number {
     if (!value || typeof value !== 'string') {
       return 0
     }
