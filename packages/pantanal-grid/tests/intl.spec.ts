@@ -93,7 +93,7 @@ describe('IntlService', () => {
 
     it('should parse number with grouping', () => {
       const intl = new IntlService('en')
-      const result = intl.parseNumber('1,234.56')
+      const result = intl.parseNumber('1,234.56', { style: 'decimal' })
       expect(result).toBe(1234.56)
     })
   })
