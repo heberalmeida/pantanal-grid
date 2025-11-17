@@ -4,7 +4,7 @@ import { resolve } from 'path'
 export default defineConfig({
   title: 'Pantanal Grid',
   description: 'A feature-rich data grid component for Vue 3 applications',
-  base: '/pantanal-grid/docs/',
+  base: process.env.VITEPRESS_BASE || '/',
   
   themeConfig: {
     nav: [
@@ -42,6 +42,7 @@ export default defineConfig({
             { text: 'Editing', link: '/guide/editing' },
             { text: 'Column Management', link: '/guide/column-management' },
             { text: 'Internationalization', link: '/guide/i18n' },
+            { text: 'IntlService', link: '/guide/intl-service' },
             { text: 'Export', link: '/guide/export' },
             { text: 'Templates', link: '/guide/templates' }
           ]
@@ -97,6 +98,7 @@ export default defineConfig({
           items: [
             { text: 'Export (Excel/PDF)', link: '/examples/export' },
             { text: 'Internationalization', link: '/examples/i18n' },
+            { text: 'IntlService', link: '/examples/intl-service' },
             { text: 'Keyboard Navigation', link: '/examples/keyboard-navigation' },
             { text: 'Persisted State', link: '/examples/persisted-state' },
             { text: 'Multi-Column Headers', link: '/examples/multi-column-headers' }
@@ -150,10 +152,20 @@ export default defineConfig({
       }
     },
     optimizeDeps: {
-      include: ['vue', '@pantanal/grid']
+      include: ['vue', '@pantanal/grid'],
+      force: true
     },
     ssr: {
       noExternal: ['@pantanal/grid']
+    },
+    server: {
+      fs: {
+        allow: ['..']
+      },
+      hmr: {
+        protocol: 'ws',
+        host: 'localhost'
+      }
     }
   }
 })

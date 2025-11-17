@@ -15,4 +15,6 @@ export { default as Pagination } from './components/Pagination.vue'
 
 export * from './types'
 export { registerLocale, getMessages } from './i18n/messages'
+export { IntlService } from './i18n/intl'
+export type { DateFieldNameOptions, DateFormatNameOptions, DateFormatOptions, NumberFormatOptions, DateFormatPart } from './i18n/intl'
 export * from './utils/string'

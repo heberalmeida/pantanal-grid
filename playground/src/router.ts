@@ -9,6 +9,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/i18n/en', component: () => import('./pages/I18nEnPage.vue') },
   { path: '/i18n/es', component: () => import('./pages/I18nEsPage.vue') },
   { path: '/i18n/custom', component: () => import('./pages/I18nCustomPage.vue') },
+  { path: '/intl-service', component: () => import('./pages/IntlServicePage.vue') },
   { path: '/cards', component: () => import('./pages/ResponsiveCardsPage.vue') },
   { path: '/setup', component: () => import('./pages/SetupGuidePage.vue') },
   { path: '/virtual', component: () => import('./pages/VirtualPage.vue') },
