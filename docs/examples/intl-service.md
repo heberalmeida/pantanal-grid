@@ -1,3 +1,7 @@
+---
+title: IntlService Examples
+---
+
 # IntlService Examples
 
 Complete examples demonstrating the IntlService internationalization capabilities.
