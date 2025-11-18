@@ -1,5 +1,5 @@
-import { ref, watch, type Ref } from 'vue'
-import type { FilterDescriptor, SortDescriptor } from '../types'
+import { watch, type Ref } from 'vue'
+import type { FilterDescriptor } from '../types'
 
 export type StorageType = 'localStorage' | 'sessionStorage'
 
