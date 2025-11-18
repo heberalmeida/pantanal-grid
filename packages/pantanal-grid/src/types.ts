@@ -121,6 +121,7 @@ export interface ImageColumnOptions {
   errorPlaceholder?: string  // Image to show on error
   endpoint?: string | ((row: Row) => string)  // API endpoint prefix or function to get full URL
   alt?: string | ((row: Row) => string)  // Alt text for image
+  rowHeight?: number | string  // Optional row height when this image column is present (in pixels or CSS value)
 }
 
 export interface ColumnDef<T = Row> {
@@ -291,6 +292,48 @@ export interface LoadingOptions {
   position?: 'top' | 'center' | 'bottom'  // Loading position
 }
 
+export interface CellStyleConfig<T = Row> {
+  field?: string  // Column field to target
+  condition?: (row: T, value: any, rowIndex: number) => boolean  // Condition function
+  backgroundColor?: string  // Background color (e.g., '#fee2e2' or 'red')
+  color?: string  // Text color (e.g., '#991b1b' or 'white')
+  fontWeight?: string | number  // Font weight (e.g., 'bold', 600)
+  rowIndex?: number  // Specific row index (0-based)
+  columnIndex?: number  // Specific column index (0-based)
+}
+
+export interface RowStyleConfig<T = Row> {
+  condition?: (row: T, rowIndex: number) => boolean  // Condition function
+  backgroundColor?: string  // Background color for entire row
+  color?: string  // Text color for entire row
+  fontWeight?: string | number  // Font weight
+  rowIndex?: number  // Specific row index (0-based)
+  rowIndices?: number[]  // Multiple row indices
+}
+
+export interface ColumnStyleConfig {
+  field?: string  // Column field to target
+  columnIndex?: number  // Column index (0-based)
+  backgroundColor?: string  // Background color for entire column
+  color?: string  // Text color for entire column
+  fontWeight?: string | number  // Font weight
+  headerBackgroundColor?: string  // Background color for column header
+  headerColor?: string  // Text color for column header
+}
+
+export interface GridStyleConfig {
+  noBorders?: boolean  // Remove all borders from grid
+  borderColor?: string  // Custom border color
+  borderWidth?: string  // Custom border width
+  cellPadding?: string  // Custom cell padding
+  headerBackground?: string  // Custom header background color
+  headerColor?: string  // Custom header text color
+  rowBackground?: string  // Default row background color
+  rowHoverBackground?: string  // Row hover background color
+  cellHoverBackground?: string  // Cell hover background color
+  stripedBackground?: string  // Striped row background color
+}
+
 export interface GridProps<T = Row> {
   rows?: T[]
   columns?: ColumnDef<T>[]
@@ -330,6 +373,14 @@ export interface GridProps<T = Row> {
   persistFiltersKey?: string  // Storage key for filters (default: 'pantanal-grid-filters')
   persistPagination?: boolean | 'localStorage' | 'sessionStorage'  // Persist pagination to storage
   persistPaginationKey?: string  // Storage key for pagination (default: 'pantanal-grid-pagination')
+
+  // Cell, Row, and Column Styling
+  cellStyles?: CellStyleConfig<T>[]  // Array of cell style configurations
+  rowStyles?: RowStyleConfig<T>[]  // Array of row style configurations
+  columnStyles?: ColumnStyleConfig[]  // Array of column style configurations
+  cellHoverStyles?: CellStyleConfig<T>[]  // Array of cell hover style configurations
+  rowHoverStyles?: RowStyleConfig<T>[]  // Array of row hover style configurations
+  gridStyles?: GridStyleConfig  // Grid-wide style configuration (borders, colors, etc.)
 
   // Scrollable configuration
   scrollable?: boolean | {

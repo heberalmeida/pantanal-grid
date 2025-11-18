@@ -1,10 +1,7 @@
 <template>
   <div
     class="pg pg-row"
-    :class="[
-      tailwind ? 'flex flex-wrap items-center justify-center gap-1 sm:gap-2' : '',
-      isMobile ? 'pg-row--mobile' : ''
-    ]"
+    :class="tailwind ? 'flex flex-wrap items-center justify-center gap-1 sm:gap-2' : ''"
     :dir="rtl ? 'rtl' : undefined"
     style="flex-wrap: wrap; justify-content: center;"
   >
@@ -379,11 +376,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, useSlots, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import type { Locale, Messages, PaginationTemplateContext } from '../types'
 import { getMessages } from '../i18n/messages'
-
-const slots = useSlots()
 
 // Import SVG assets - Vite will process these correctly with base paths
 import iconPrevSrc from '../assets/arrow-left.svg?url'
@@ -462,12 +457,17 @@ const totalPages = computed(() =>
   Math.max(1, Math.ceil((props.total || 0) / Math.max(1, props.pageSize)))
 )
 
-// Mobile detection
+// Mobile detection - only activate if mobileVariant is explicitly set
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1920)
-const isMobile = computed(() => windowWidth.value < (props.mobileBreakpoint ?? 768))
+const isMobile = computed(() => {
+  // Only consider mobile if mobileVariant is set AND window is below breakpoint
+  if (!props.mobileVariant) return false
+  return windowWidth.value < (props.mobileBreakpoint ?? 768)
+})
 
 // Active variant (mobile or desktop)
 const activeVariant = computed(() => {
+  // Only use mobile variant if explicitly set and window is mobile size
   if (isMobile.value && props.mobileVariant) {
     return props.mobileVariant
   }

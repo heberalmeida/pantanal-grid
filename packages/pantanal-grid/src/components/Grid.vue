@@ -1,7 +1,16 @@
 <template>
-  <div class="v3grid" :class="{ 'v3grid--cards': isCardMode, 'v3grid--striped': !!props.striped }"
+  <div class="v3grid" :class="{ 
+      'v3grid--cards': isCardMode, 
+      'v3grid--striped': !!props.striped,
+      'v3grid--no-borders': props.gridStyles?.noBorders
+    }"
     :dir="props.rtl ? 'rtl' : undefined" ref="rootEl"
-    :style="{ '--row-h': props.rowHeight + 'px', '--filter-h': props.rowHeight + 'px', '--footer-h': footerH + 'px' }">
+    :style="{ 
+      '--row-h': props.rowHeight + 'px', 
+      '--filter-h': props.rowHeight + 'px', 
+      '--footer-h': footerH + 'px',
+      ...getGridContainerStyle()
+    }">
     <!-- TOOLBAR -->
     <div v-if="props.toolbar" class="v3grid__toolbar">
       <!-- Custom toolbar template -->
@@ -166,7 +175,8 @@
                 :class="[headerCell.column.field && headerCell.column._idx != null && headerCell.column._idx >= 0 ? pinClass(headerCell.column._idx) : {}]" 
                 :style="[
                   headerCell.column.field && headerCell.column._idx != null && headerCell.column._idx >= 0 ? pinStyle(headerCell.column._idx) : undefined,
-                  { padding: '0.5rem 0.75rem', borderRight: '1px solid var(--grid-border, #e5e7eb)', borderBottom: '1px solid var(--grid-border, #e5e7eb)', background: 'var(--grid-header-bg, #f9fafb)' }
+                  { padding: '0.5rem 0.75rem', borderRight: '1px solid var(--grid-border, #e5e7eb)', borderBottom: '1px solid var(--grid-border, #e5e7eb)', background: 'var(--grid-header-bg, #f9fafb)' },
+                  headerCell.column.field && headerCell.column._idx != null && headerCell.column._idx >= 0 ? getColumnHeaderStyle(headerCell.column, headerCell.column._idx) : {}
                 ]"
                 :colspan="headerCell.colspan > 1 ? headerCell.colspan : undefined"
                 :rowspan="headerCell.rowspan > 1 ? headerCell.rowspan : undefined"
@@ -230,7 +240,7 @@
             <input class="v3grid__checkbox" type="checkbox" :checked="allVisibleSelected"
               :indeterminate="someVisibleSelected" @change="toggleAllVisible(selectableRowsOnPage)" />
           </div>
-          <div v-if="!c.selectable" class="v3grid__cell v3grid__headercell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]" 
+          <div v-if="!c.selectable" class="v3grid__cell v3grid__headercell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx), getColumnHeaderStyle(c, c._idx ?? 0)]" 
             :draggable="canDragColumn(c) ? true : undefined"
             :tabindex="props.navigatable ? 0 : undefined"
             :ref="(el: any) => { if (el) el.__column = c }"
@@ -338,13 +348,21 @@
         <div v-for="(row, r) in visibleRows" :key="`${(row as any)[keyFieldStr] ?? r}-${editingEpoch}`" class="v3grid__row"
           :data-editing-epoch="editingEpoch"
 :class="props.striped && ((start ?? 0) + r) % 2 === 1 ? 'v3grid__row--alt' : ''"
-          :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? bodyCols : columns) }">
+          :style="{ 
+            gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? bodyCols : columns),
+            minHeight: getRowHeightFromImageColumns(),
+            ...getRowStyle(row, (start ?? 0) + r),
+            ...getRowHoverStyle(row, (start ?? 0) + r)
+          }"
+          :data-row-index="(start ?? 0) + r">
           <div v-if="props.selectable" class="v3grid__cell" @click.stop>
             <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
           </div>
           <div v-if="isGrouped" class="v3grid__cell"></div>
           <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[{ 'v3grid__cell--editing': isCellEditing(row, c) }, pinClass(c._idx)]"
-            :style="[pinStyle(c._idx)]" 
+            :style="[pinStyle(c._idx), getColumnStyle(c, c._idx ?? i), getCellStyle(row, c, (start ?? 0) + r, c._idx ?? i), getCellHoverStyle(row, c, (start ?? 0) + r, c._idx ?? i)]"
+            :data-cell-row-index="(start ?? 0) + r"
+            :data-cell-col-index="c._idx ?? i" 
             :tabindex="props.navigatable ? (isFocusedRow(r) && focusCol === c._idx ? 0 : -1) : undefined"
             :data-focus="props.navigatable && isFocusedRow(r) && focusCol === c._idx"
             :data-row-index="props.navigatable ? getDataRowIndexFromActual(r) : undefined"
@@ -449,7 +467,21 @@
                 </div>
               </div>
               <template v-else>
-                <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+                <!-- Image column rendering (check FIRST, before slots) -->
+                <div v-if="c.image" class="v3grid__image-cell" :class="getImageCellClass(c)" :style="getImageCellStyle(c)">
+                  <img
+                    :src="getImageSrc(row, c)"
+                    :alt="getImageAlt(row, c)"
+                    :loading="getImageLoading(c)"
+                    @error="handleImageError($event, row, c)"
+                    :style="getImageStyle(c)"
+                    class="v3grid__image"
+                  />
+                  <div v-if="imageLoadingStates.get(getImageKey(row, c))" class="v3grid__image-loading">
+                    <div class="v3grid__image-spinner"></div>
+                  </div>
+                </div>
+                <slot v-else-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
                   :name="columnSlotPrimary(c)"
                   :column="c"
                   :row="row"
@@ -494,19 +526,41 @@
         <div v-for="(row, r) in visibleRows" :key="`${(row as any)[keyFieldStr] ?? r}-${editingEpoch}`" class="v3grid__row"
           :data-editing-epoch="editingEpoch"
           :class="props.striped && r % 2 === 1 ? 'v3grid__row--alt' : ''"
-          :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? bodyCols : columns) }">
+          :style="{ 
+            gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? bodyCols : columns),
+            minHeight: getRowHeightFromImageColumns(),
+            ...getRowStyle(row, r),
+            ...getRowHoverStyle(row, r)
+          }"
+          :data-row-index="r">
           <div v-if="props.selectable" class="v3grid__cell" @click.stop>
             <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
           </div>
           <div v-if="isGrouped" class="v3grid__cell"></div>
           <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[pinClass(c._idx)]"
-            :style="[pinStyle(c._idx)]" 
+            :style="[pinStyle(c._idx), getColumnStyle(c, c._idx ?? i), getCellStyle(row, c, r, c._idx ?? i), getCellHoverStyle(row, c, r, c._idx ?? i)]"
+            :data-cell-row-index="r"
+            :data-cell-col-index="c._idx ?? i" 
             :tabindex="props.navigatable ? (isFocusedRow(r) && focusCol === c._idx ? 0 : -1) : undefined"
             :data-focus="props.navigatable && isFocusedRow(r) && focusCol === c._idx"
             @click="handleCellClick(row, c, r, i)"
             @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
             @focus="props.navigatable && handleCellFocus(r, c._idx)">
-            <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+            <!-- Image column rendering (check FIRST, before slots) -->
+            <div v-if="c.image" class="v3grid__image-cell" :class="getImageCellClass(c)" :style="getImageCellStyle(c)">
+              <img
+                :src="getImageSrc(row, c)"
+                :alt="getImageAlt(row, c)"
+                :loading="getImageLoading(c)"
+                @error="handleImageError($event, row, c)"
+                :style="getImageStyle(c)"
+                class="v3grid__image"
+              />
+              <div v-if="imageLoadingStates.get(getImageKey(row, c))" class="v3grid__image-loading">
+                <div class="v3grid__image-spinner"></div>
+              </div>
+            </div>
+            <slot v-else-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
               :name="columnSlotPrimary(c)"
               :column="c"
               :row="row"
@@ -549,25 +603,9 @@
               :value="columnValue(row, c, r)"
               :rowIndex="r"
               :columnIndex="i">
-              <!-- Image column rendering -->
-              <div v-if="c.image" class="v3grid__image-cell" :class="getImageCellClass(c)">
-                <img
-                  :src="getImageSrc(row, c)"
-                  :alt="getImageAlt(row, c)"
-                  :loading="getImageLoading(c)"
-                  @error="handleImageError($event, row, c)"
-                  :style="getImageStyle(c)"
-                  class="v3grid__image"
-                />
-                <div v-if="imageLoadingStates.get(getImageKey(row, c))" class="v3grid__image-loading">
-                  <div class="v3grid__image-spinner"></div>
-                </div>
-              </div>
               <!-- Regular cell rendering -->
-              <template v-else>
-                <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, r), c, row as any)"></span>
-                <span v-else>{{ formatColumnValue(columnValue(row, c, r), c, row as any) }}</span>
-              </template>
+              <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, r), c, row as any)"></span>
+              <span v-else>{{ formatColumnValue(columnValue(row, c, r), c, row as any) }}</span>
             </slot>
           </div>
         </div>
@@ -667,7 +705,21 @@
                     <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__carditem">
                       <div class="v3grid__cardlabel">{{ c.title ?? String(c.field) }}</div>
                       <div class="v3grid__cardvalue">
-                        <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+                        <!-- Image column rendering (check FIRST, before slots) -->
+                        <div v-if="c.image" class="v3grid__image-cell" :class="getImageCellClass(c)" :style="getImageCellStyle(c)">
+                          <img
+                            :src="getImageSrc(n.row, c)"
+                            :alt="getImageAlt(n.row, c)"
+                            :loading="getImageLoading(c)"
+                            @error="handleImageError($event, n.row, c)"
+                            :style="getImageStyle(c)"
+                            class="v3grid__image"
+                          />
+                          <div v-if="imageLoadingStates.get(getImageKey(n.row, c))" class="v3grid__image-loading">
+                            <div class="v3grid__image-spinner"></div>
+                          </div>
+                        </div>
+                        <slot v-else-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
                           :name="columnSlotPrimary(c)"
                           :column="c"
                           :row="n.row"
@@ -743,7 +795,21 @@
                   <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__carditem">
                     <div class="v3grid__cardlabel">{{ c.title ?? String(c.field) }}</div>
                     <div class="v3grid__cardvalue">
-                      <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+                      <!-- Image column rendering (check FIRST, before slots) -->
+                      <div v-if="c.image" class="v3grid__image-cell" :class="getImageCellClass(c)" :style="getImageCellStyle(c)">
+                        <img
+                          :src="getImageSrc(row, c)"
+                          :alt="getImageAlt(row, c)"
+                          :loading="getImageLoading(c)"
+                          @error="handleImageError($event, row, c)"
+                          :style="getImageStyle(c)"
+                          class="v3grid__image"
+                        />
+                        <div v-if="imageLoadingStates.get(getImageKey(row, c))" class="v3grid__image-loading">
+                          <div class="v3grid__image-spinner"></div>
+                        </div>
+                      </div>
+                      <slot v-else-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
                         :name="columnSlotPrimary(c)"
                         :column="c"
                         :row="row"
@@ -809,7 +875,11 @@
           <template v-else-if="isGrouped">
               <div v-for="(n, r) in visibleRows" :key="n.key ?? r" class="v3grid__row"
               :class="getGroupedRowClass(n, r)"
-              :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? headerLevels.leafColumns : columns) }">
+              :style="{ 
+                gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? headerLevels.leafColumns : columns),
+                minHeight: getRowHeightFromImageColumns(),
+                ...(n.type === 'row' && n.row ? getRowStyle(n.row, r) : {})
+              }">
               <!-- seleção (só para linhas) -->
               <div v-if="props.selectable" class="v3grid__cell" @click.stop>
                 <template v-if="n.type === 'row'">
@@ -854,15 +924,31 @@
 
               <!-- células de dados para linhas normais -->
               <template v-else-if="n.type === 'row'">
-                <div v-for="(c, i) in unlockedCols" :key="`row-${r}-${c._idx}`" class="v3grid__cell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx)]"
+                <div v-for="(c, i) in unlockedCols" :key="`row-${r}-${c._idx}`" class="v3grid__cell" :class="[pinClass(c._idx)]" :style="[pinStyle(c._idx), getColumnStyle(c, c._idx ?? i), getCellStyle(n.row, c, r, c._idx ?? i), getCellHoverStyle(n.row, c, r, c._idx ?? i)]"
                   :tabindex="props.navigatable ? (isFocusedRow(r) && focusCol === c._idx ? 0 : -1) : undefined"
                   :data-focus="props.navigatable && isFocusedRow(r) && focusCol === c._idx"
                   :data-row-index="props.navigatable ? getDataRowIndexFromActual(r) : undefined"
                   :data-col-index="props.navigatable ? c._idx : undefined"
+                  :data-cell-row-index="r"
+                  :data-cell-col-index="c._idx ?? i"
                   @click="handleCellClick(n.row, c, r, i)"
                   @keydown="props.navigatable && handleKeydown($event, r, c._idx)"
                   @focus="props.navigatable && handleCellFocus(r, c._idx)">
-                  <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+                  <!-- Image column rendering (check FIRST, before slots) -->
+                  <div v-if="c.image" class="v3grid__image-cell" :class="getImageCellClass(c)" :style="getImageCellStyle(c)">
+                    <img
+                      :src="getImageSrc(n.row, c)"
+                      :alt="getImageAlt(n.row, c)"
+                      :loading="getImageLoading(c)"
+                      @error="handleImageError($event, n.row, c)"
+                      :style="getImageStyle(c)"
+                      class="v3grid__image"
+                    />
+                    <div v-if="imageLoadingStates.get(getImageKey(n.row, c))" class="v3grid__image-loading">
+                      <div class="v3grid__image-spinner"></div>
+                    </div>
+                  </div>
+                  <slot v-else-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
                     :name="columnSlotPrimary(c)"
                     :column="c"
                     :row="n.row"
@@ -927,7 +1013,13 @@
               <template v-for="(row, r) in visibleRows" :key="(row as any)[keyFieldStr] ?? r">
                 <div class="v3grid__row"
                   :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
-                  :style="{ gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? headerLevels.leafColumns : columns) }">
+                  :style="{ 
+                    gridTemplateColumns: bodyTemplate(headerLevels.hasMultiLevel ? headerLevels.leafColumns : columns),
+                    minHeight: getRowHeightFromImageColumns(),
+                    ...getRowStyle(row, r),
+                    ...getRowHoverStyle(row, r)
+                  }"
+                  :data-row-index="r">
                   <div v-if="props.selectable" class="v3grid__cell" @click.stop>
                     <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
                   </div>
@@ -945,7 +1037,9 @@
                       <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
                     </div>
                     <div v-else class="v3grid__cell" :class="[pinClass(c._idx)]"
-                      :style="[pinStyle(c._idx)]" 
+                      :style="[pinStyle(c._idx), getColumnStyle(c, c._idx ?? i), getCellStyle(row, c, r, c._idx ?? i), getCellHoverStyle(row, c, r, c._idx ?? i)]"
+                      :data-cell-row-index="r"
+                      :data-cell-col-index="c._idx ?? i" 
                       :tabindex="props.navigatable ? (isFocusedRow(r) && focusCol === c._idx ? 0 : -1) : undefined"
                       :data-focus="props.navigatable && isFocusedRow(r) && focusCol === c._idx"
                       :data-row-index="props.navigatable ? getDataRowIndexFromActual(r) : undefined"
@@ -959,7 +1053,21 @@
                         style="cursor: pointer; user-select: none; margin-right: 8px; display: inline-block; width: 16px; text-align: center;">
                         {{ expandedRows.includes((row as any)[keyFieldStr]) ? '▼' : '▶' }}
                       </span>
-                    <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
+                      <!-- Image column rendering (check FIRST, before slots) -->
+                      <div v-if="c.image" class="v3grid__image-cell" :class="getImageCellClass(c)" :style="getImageCellStyle(c)">
+                        <img
+                          :src="getImageSrc(row, c)"
+                          :alt="getImageAlt(row, c)"
+                          :loading="getImageLoading(c)"
+                          @error="handleImageError($event, row, c)"
+                          :style="getImageStyle(c)"
+                          class="v3grid__image"
+                        />
+                        <div v-if="imageLoadingStates.get(getImageKey(row, c))" class="v3grid__image-loading">
+                          <div class="v3grid__image-spinner"></div>
+                        </div>
+                      </div>
+                    <slot v-else-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
                       :name="columnSlotPrimary(c)"
                       :column="c"
                       :row="row"
@@ -1097,8 +1205,16 @@
       <!-- Linhas sincronizadas -->
       <div v-for="(row, r) in visibleRows" :key="'l-left-' + r" class="v3grid__row"
         :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
-        :style="{ gridTemplateColumns: lockedLeftTemplate }">
-        <div v-for="(c, i) in lockedLeftCols" :key="'c-left-' + i" class="v3grid__cell">
+        :style="{ 
+          gridTemplateColumns: lockedLeftTemplate,
+          ...getRowStyle(row, r),
+          ...getRowHoverStyle(row, r)
+        }"
+        :data-row-index="r">
+        <div v-for="(c, i) in lockedLeftCols" :key="'c-left-' + i" class="v3grid__cell"
+          :style="[getColumnStyle(c, c._idx ?? i), getCellStyle(row, c, r, c._idx ?? i), getCellHoverStyle(row, c, r, c._idx ?? i)]"
+          :data-cell-row-index="r"
+          :data-cell-col-index="c._idx ?? i">
           <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
             :name="columnSlotPrimary(c)"
             :column="c"
@@ -1189,8 +1305,16 @@
       <!-- linhas -->
       <div v-for="(row, r) in visibleRows" :key="'l-right-' + r" class="v3grid__row"
         :class="props.striped && (r % 2 === 1) ? 'v3grid__row--alt' : ''"
-        :style="{ gridTemplateColumns: lockedRightTemplate }">
-        <div v-for="(c, i) in lockedRightCols" :key="'c-right-' + i" class="v3grid__cell">
+        :style="{ 
+          gridTemplateColumns: lockedRightTemplate,
+          ...getRowStyle(row, r),
+          ...getRowHoverStyle(row, r)
+        }"
+        :data-row-index="r">
+        <div v-for="(c, i) in lockedRightCols" :key="'c-right-' + i" class="v3grid__cell"
+          :style="[getColumnStyle(c, c._idx ?? i), getCellStyle(row, c, r, c._idx ?? i), getCellHoverStyle(row, c, r, c._idx ?? i)]"
+          :data-cell-row-index="r"
+          :data-cell-col-index="c._idx ?? i">
           <slot v-if="columnSlotPrimary(c) && $slots[columnSlotPrimary(c)]"
             :name="columnSlotPrimary(c)"
             :column="c"
@@ -2689,17 +2813,32 @@ function getImageSrc(row: Row, column: ColumnDef): string {
     return imageErrorStates.value.get(errorKey) || options.errorPlaceholder || options.placeholder || ''
   }
   
+  const valueStr = String(value)
+  
+  // If value is already a full URL (starts with http:// or https://), use it directly
+  if (valueStr.startsWith('http://') || valueStr.startsWith('https://')) {
+    return valueStr
+  }
+  
   // Handle endpoint
   if (options.endpoint) {
     if (typeof options.endpoint === 'function') {
       const endpoint = options.endpoint(row)
-      return endpoint ? `${endpoint}${value}` : value
+      if (endpoint) {
+        // If endpoint is a full URL, append value; otherwise, concatenate
+        if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+          return `${endpoint}${valueStr}`
+        }
+        return `${endpoint}${valueStr}`
+      }
+      return valueStr
     } else {
-      return `${options.endpoint}${value}`
+      // String endpoint - append value
+      return `${options.endpoint}${valueStr}`
     }
   }
   
-  return String(value)
+  return valueStr
 }
 
 function getImageAlt(row: Row, column: ColumnDef): string {
@@ -2751,6 +2890,301 @@ function getImageCellClass(column: ColumnDef): Record<string, boolean> {
     'v3grid__image-cell--square': options.shape === 'square',
     'v3grid__image-cell--rounded': options.shape === 'rounded',
   }
+}
+
+function getImageCellStyle(column: ColumnDef): Record<string, string> {
+  const options = getImageOptions(column)
+  if (!options) return {}
+  
+  const style: Record<string, string> = {}
+  
+  // Size - apply to container for proper round/square sizing
+  if (options.size) {
+    const size = typeof options.size === 'number' ? `${options.size}px` : options.size
+    // For round images, use the size directly (padding is handled by CSS margin)
+    if (options.shape === 'round') {
+      style.width = size
+      style.height = size
+      style.minWidth = size
+      style.minHeight = size
+      style.maxWidth = size
+      style.maxHeight = size
+    } else {
+      style.width = size
+      style.height = size
+      style.minWidth = size
+      style.minHeight = size
+      style.maxWidth = size
+      style.maxHeight = size
+    }
+  } else if (options.shape === 'round') {
+    // Default size for round images if not specified
+    style.minWidth = '50px'
+    style.minHeight = '50px'
+  }
+  
+  return style
+}
+
+function getRowHeightFromImageColumns(): string | undefined {
+  let maxHeight: number | undefined
+
+  for (const col of columns.value) {
+    const options = getImageOptions(col)
+    if (options?.rowHeight) {
+      const height = typeof options.rowHeight === 'number' ? options.rowHeight : parseInt(options.rowHeight)
+      if (!isNaN(height) && (!maxHeight || height > maxHeight)) {
+        maxHeight = height
+      }
+    }
+  }
+
+  return maxHeight ? `${maxHeight}px` : undefined
+}
+
+// Cell styling functions
+function getCellStyle(row: Row, column: ColumnDef, rowIndex: number, columnIndex: number): Record<string, string> {
+  if (!props.cellStyles || props.cellStyles.length === 0) return {}
+
+  const style: Record<string, string> = {}
+  const value = columnValue(row, column, rowIndex)
+
+  for (const cellStyle of props.cellStyles) {
+    let matches = false
+
+    // Check field match
+    if (cellStyle.field && cellStyle.field !== column.field) continue
+
+    // Check row index
+    if (cellStyle.rowIndex !== undefined && cellStyle.rowIndex !== rowIndex) continue
+
+    // Check column index
+    if (cellStyle.columnIndex !== undefined && cellStyle.columnIndex !== columnIndex) continue
+
+    // Check condition function
+    if (cellStyle.condition) {
+      if (!cellStyle.condition(row, value, rowIndex)) continue
+    }
+
+    matches = true
+
+    if (matches) {
+      if (cellStyle.backgroundColor) {
+        style.backgroundColor = cellStyle.backgroundColor
+      }
+      if (cellStyle.color) {
+        style.color = cellStyle.color
+      }
+      if (cellStyle.fontWeight !== undefined) {
+        style.fontWeight = String(cellStyle.fontWeight)
+      }
+    }
+  }
+
+  return style
+}
+
+// Row styling functions
+function getRowStyle(row: Row, rowIndex: number): Record<string, string> {
+  if (!props.rowStyles || props.rowStyles.length === 0) return {}
+
+  const style: Record<string, string> = {}
+
+  for (const rowStyle of props.rowStyles) {
+    let matches = false
+
+    // Check row index
+    if (rowStyle.rowIndex !== undefined && rowStyle.rowIndex !== rowIndex) continue
+
+    // Check row indices array
+    if (rowStyle.rowIndices && !rowStyle.rowIndices.includes(rowIndex)) continue
+
+    // Check condition function
+    if (rowStyle.condition) {
+      if (!rowStyle.condition(row, rowIndex)) continue
+    }
+
+    matches = true
+
+    if (matches) {
+      if (rowStyle.backgroundColor) {
+        style.backgroundColor = rowStyle.backgroundColor
+      }
+      if (rowStyle.color) {
+        style.color = rowStyle.color
+      }
+      if (rowStyle.fontWeight !== undefined) {
+        style.fontWeight = String(rowStyle.fontWeight)
+      }
+    }
+  }
+
+  return style
+}
+
+// Column styling functions
+function getColumnStyle(column: ColumnDef, columnIndex: number): Record<string, string> {
+  if (!props.columnStyles || props.columnStyles.length === 0) return {}
+
+  const style: Record<string, string> = {}
+
+  for (const columnStyle of props.columnStyles) {
+    let matches = false
+
+    // Check field match
+    if (columnStyle.field && columnStyle.field !== column.field) continue
+
+    // Check column index
+    if (columnStyle.columnIndex !== undefined && columnStyle.columnIndex !== columnIndex) continue
+
+    matches = true
+
+    if (matches) {
+      if (columnStyle.backgroundColor) {
+        style.backgroundColor = columnStyle.backgroundColor
+      }
+      if (columnStyle.color) {
+        style.color = columnStyle.color
+      }
+      if (columnStyle.fontWeight !== undefined) {
+        style.fontWeight = String(columnStyle.fontWeight)
+      }
+    }
+  }
+
+  return style
+}
+
+// Column header styling functions
+function getColumnHeaderStyle(column: ColumnDef, columnIndex: number): Record<string, string> {
+  if (!props.columnStyles || props.columnStyles.length === 0) return {}
+
+  const style: Record<string, string> = {}
+
+  for (const columnStyle of props.columnStyles) {
+    let matches = false
+
+    // Check field match
+    if (columnStyle.field && columnStyle.field !== column.field) continue
+
+    // Check column index
+    if (columnStyle.columnIndex !== undefined && columnStyle.columnIndex !== columnIndex) continue
+
+    matches = true
+
+    if (matches) {
+      if (columnStyle.headerBackgroundColor) {
+        style.backgroundColor = columnStyle.headerBackgroundColor
+      }
+      if (columnStyle.headerColor) {
+        style.color = columnStyle.headerColor
+      }
+      if (columnStyle.fontWeight !== undefined) {
+        style.fontWeight = String(columnStyle.fontWeight)
+      }
+    }
+  }
+
+  return style
+}
+
+// Grid container styling functions
+function getGridContainerStyle(): Record<string, string> {
+  if (!props.gridStyles) return {}
+
+  const style: Record<string, string> = {}
+
+  if (props.gridStyles.borderColor) {
+    style['--grid-border'] = props.gridStyles.borderColor
+  }
+  if (props.gridStyles.borderWidth) {
+    style['--grid-border-width'] = props.gridStyles.borderWidth
+  }
+  if (props.gridStyles.cellPadding) {
+    style['--grid-cell-padding'] = props.gridStyles.cellPadding
+  }
+  if (props.gridStyles.headerBackground) {
+    style['--grid-header-bg'] = props.gridStyles.headerBackground
+  }
+  if (props.gridStyles.headerColor) {
+    style['--grid-header-color'] = props.gridStyles.headerColor
+  }
+  if (props.gridStyles.rowBackground) {
+    style['--grid-row-bg'] = props.gridStyles.rowBackground
+  }
+  if (props.gridStyles.rowHoverBackground) {
+    style['--grid-row-hover-bg'] = props.gridStyles.rowHoverBackground
+  }
+  if (props.gridStyles.cellHoverBackground) {
+    style['--grid-cell-hover-bg'] = props.gridStyles.cellHoverBackground
+  }
+  if (props.gridStyles.stripedBackground) {
+    style['--grid-striped-bg'] = props.gridStyles.stripedBackground
+  }
+
+  return style
+}
+
+// Cell hover styling functions
+function getCellHoverStyle(row: Row, column: ColumnDef, rowIndex: number, columnIndex: number): Record<string, string> {
+  if (!props.cellHoverStyles || props.cellHoverStyles.length === 0) return {}
+
+  const style: Record<string, string> = {}
+  const value = columnValue(row, column, rowIndex)
+
+  for (const cellStyle of props.cellHoverStyles) {
+    let matches = false
+
+    if (cellStyle.field && cellStyle.field !== column.field) continue
+    if (cellStyle.rowIndex !== undefined && cellStyle.rowIndex !== rowIndex) continue
+    if (cellStyle.columnIndex !== undefined && cellStyle.columnIndex !== columnIndex) continue
+    if (cellStyle.condition) {
+      if (!cellStyle.condition(row, value, rowIndex)) continue
+    }
+
+    matches = true
+
+    if (matches) {
+      if (cellStyle.backgroundColor) {
+        style['--cell-hover-bg'] = cellStyle.backgroundColor
+      }
+      if (cellStyle.color) {
+        style['--cell-hover-color'] = cellStyle.color
+      }
+    }
+  }
+
+  return style
+}
+
+// Row hover styling functions
+function getRowHoverStyle(row: Row, rowIndex: number): Record<string, string> {
+  if (!props.rowHoverStyles || props.rowHoverStyles.length === 0) return {}
+
+  const style: Record<string, string> = {}
+
+  for (const rowStyle of props.rowHoverStyles) {
+    let matches = false
+
+    if (rowStyle.rowIndex !== undefined && rowStyle.rowIndex !== rowIndex) continue
+    if (rowStyle.rowIndices && !rowStyle.rowIndices.includes(rowIndex)) continue
+    if (rowStyle.condition) {
+      if (!rowStyle.condition(row, rowIndex)) continue
+    }
+
+    matches = true
+
+    if (matches) {
+      if (rowStyle.backgroundColor) {
+        style['--row-hover-bg'] = rowStyle.backgroundColor
+      }
+      if (rowStyle.color) {
+        style['--row-hover-color'] = rowStyle.color
+      }
+    }
+  }
+
+  return style
 }
 
 function handleImageError(event: Event, row: Row, column: ColumnDef) {
@@ -7110,28 +7544,48 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   min-height: 40px;
+  padding: 4px;
 }
 
 .v3grid__image-cell--round {
   border-radius: 50%;
-  overflow: hidden;
+  overflow: visible;
+  aspect-ratio: 1;
+  padding: 0;
+  min-width: 50px;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .v3grid__image-cell--rounded {
   border-radius: 8px;
   overflow: hidden;
+  padding: 4px;
 }
 
 .v3grid__image-cell--square {
   border-radius: 0;
   overflow: hidden;
+  padding: 4px;
 }
 
 .v3grid__image {
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
   display: block;
   object-fit: cover;
+}
+
+.v3grid__image-cell--round .v3grid__image {
+  border-radius: 50%;
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
+  max-width: calc(100% - 8px);
+  max-height: calc(100% - 8px);
+  object-fit: cover;
+  margin: 4px;
 }
 
 .v3grid__image-loading {
@@ -7211,5 +7665,73 @@ onBeforeUnmount(() => {
   font-size: 0.875rem;
   color: #666;
   font-weight: 500;
+}
+
+/* Grid styling - No borders */
+.v3grid--no-borders .v3grid__cell,
+.v3grid--no-borders .v3grid__headercell,
+.v3grid--no-borders .v3grid__row {
+  border: none !important;
+}
+
+.v3grid--no-borders .v3grid__headercell {
+  border-bottom: none !important;
+  border-right: none !important;
+}
+
+/* Row hover styles */
+.v3grid__row:hover {
+  background-color: var(--grid-row-hover-bg, rgba(0, 0, 0, 0.02)) !important;
+  color: var(--row-hover-color, inherit) !important;
+}
+
+/* Cell hover styles */
+.v3grid__cell:hover {
+  background-color: var(--grid-cell-hover-bg, rgba(0, 0, 0, 0.03)) !important;
+  color: var(--cell-hover-color, inherit) !important;
+}
+
+/* Custom cell hover based on data attributes */
+.v3grid__cell[data-cell-row-index][data-cell-col-index]:hover {
+  background-color: var(--cell-hover-bg, rgba(0, 0, 0, 0.03)) !important;
+  color: var(--cell-hover-color, inherit) !important;
+}
+
+/* Custom row hover based on data attributes */
+.v3grid__row[data-row-index]:hover {
+  background-color: var(--row-hover-bg, rgba(0, 0, 0, 0.02)) !important;
+  color: var(--row-hover-color, inherit) !important;
+}
+
+/* Grid style variables */
+.v3grid {
+  --grid-border: #e5e7eb;
+  --grid-border-width: 1px;
+  --grid-cell-padding: 0.5rem 0.75rem;
+  --grid-header-bg: #f9fafb;
+  --grid-header-color: inherit;
+  --grid-row-bg: transparent;
+  --grid-striped-bg: rgba(0, 0, 0, 0.02);
+}
+
+/* Apply custom cell padding */
+.v3grid__cell {
+  padding: var(--grid-cell-padding, 0.5rem 0.75rem);
+}
+
+/* Apply custom header styles */
+.v3grid__headercell {
+  background: var(--grid-header-bg, #f9fafb);
+  color: var(--grid-header-color, inherit);
+}
+
+/* Apply custom row background */
+.v3grid__row {
+  background-color: var(--grid-row-bg, transparent);
+}
+
+/* Apply custom striped background */
+.v3grid--striped .v3grid__row--alt {
+  background-color: var(--grid-striped-bg, rgba(0, 0, 0, 0.02));
 }
 </style>
