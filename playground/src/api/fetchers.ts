@@ -22,11 +22,42 @@ export async function fetchPaged<T = any>(opts: FetchPagedOptions): Promise<{ ro
   if (query != null && query !== '') url.searchParams.set(queryKey, String(query))
   for (const [k, v] of Object.entries(extraParams)) url.searchParams.set(k, String(v))
 
-  const res = await fetch(url.toString())
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const json = await res.json()
-  const rawRows = (json as any)[rowsKey] ?? []
-  const rows = mapRows ? mapRows(rawRows) : rawRows
-  const total = Number((json as any)[totalKey] ?? rawRows.length)
-  return { rows, total, raw: json }
+  try {
+    // Add timeout and better error handling
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+    
+    try {
+      const res = await fetch(url.toString(), {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+        },
+      })
+      
+      clearTimeout(timeoutId)
+      
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`)
+      }
+      
+      const json = await res.json()
+      const rawRows = (json as any)[rowsKey] ?? []
+      const rows = mapRows ? mapRows(rawRows) : rawRows
+      const total = Number((json as any)[totalKey] ?? rawRows.length)
+      return { rows, total, raw: json }
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId)
+      
+      // If it's an abort error (timeout) or network error, throw to be handled by caller
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Request timeout')
+      }
+      
+      throw fetchError
+    }
+  } catch (error) {
+    // Re-throw to be handled by caller with fallback data
+    throw error
+  }
 }

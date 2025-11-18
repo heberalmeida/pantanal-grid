@@ -10,6 +10,21 @@
 export function decodeHtmlEntities(str: string): string {
   if (typeof str !== 'string') return str
   
+  // Check if we're in a browser environment
+  if (typeof document === 'undefined') {
+    // Fallback for SSR: decode common entities manually
+    return str
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&#x27;/g, "'")
+      .replace(/&#x2F;/g, '/')
+      .replace(/&#x60;/g, '`')
+      .replace(/&#x3D;/g, '=')
+  }
+  
   // Create a temporary DOM element to decode entities
   const textarea = document.createElement('textarea')
   textarea.innerHTML = str

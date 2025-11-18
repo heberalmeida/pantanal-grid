@@ -28,9 +28,22 @@ const columns = [
 ]
 
 onMounted(async () => {
-  const res = await fetch('https://dummyjson.com/products?limit=100')
-  const data = await res.json()
-  rows.value = data.products
+  try {
+    const res = await fetch('https://dummyjson.com/products?limit=100')
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`)
+    }
+    const data = await res.json()
+    rows.value = data.products || []
+  } catch (error) {
+    console.error('Failed to fetch products:', error)
+    // Fallback data if API fails
+    rows.value = [
+      { id: 1, title: 'Sample Product 1', brand: 'Brand A', category: 'Electronics', price: 99.99 },
+      { id: 2, title: 'Sample Product 2', brand: 'Brand B', category: 'Clothing', price: 49.99 },
+      { id: 3, title: 'Sample Product 3', brand: 'Brand C', category: 'Accessories', price: 29.99 },
+    ]
+  }
 })
 
 const codeSnippet = exampleSource

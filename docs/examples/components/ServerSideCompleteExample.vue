@@ -20,6 +20,13 @@ const basicColumns: ColumnDef[] = [
 ]
 
 watchEffect(async () => {
+  // Skip fetch during SSR/build
+  if (typeof window === 'undefined') {
+    basicRows.value = []
+    basicTotal.value = 0
+    return
+  }
+  
   basicLoading.value = true
   try {
     const params = new URLSearchParams({
@@ -28,6 +35,13 @@ watchEffect(async () => {
     })
     
     const response = await fetch(`https://dummyjson.com/products?${params}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Response is not JSON')
+    }
     const data = await response.json()
     basicRows.value = data.products || []
     basicTotal.value = data.total || 0
@@ -57,6 +71,11 @@ const providerColumns: ColumnDef[] = [
 ]
 
 const dataProvider: DataProvider = async (args) => {
+  // Skip fetch during SSR/build
+  if (typeof window === 'undefined') {
+    return { rows: [], total: 0 }
+  }
+  
   const params = new URLSearchParams({
     limit: String(args.pageSize),
     skip: String((args.page - 1) * args.pageSize)
@@ -76,12 +95,24 @@ const dataProvider: DataProvider = async (args) => {
     }
   }
   
-  const response = await fetch(`https://dummyjson.com/products?${params}`)
-  const data = await response.json()
-  
-  return {
-    rows: data.products || [],
-    total: data.total || 0
+  try {
+    const response = await fetch(`https://dummyjson.com/products?${params}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Response is not JSON')
+    }
+    const data = await response.json()
+    
+    return {
+      rows: data.products || [],
+      total: data.total || 0
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return { rows: [], total: 0 }
   }
 }
 
@@ -103,6 +134,13 @@ const loadingColumns: ColumnDef[] = [
 ]
 
 watchEffect(async () => {
+  // Skip fetch during SSR/build
+  if (typeof window === 'undefined') {
+    loadingRows.value = []
+    loadingTotal.value = 0
+    return
+  }
+  
   loading.value = true
   try {
     // Simulate network delay
@@ -114,6 +152,13 @@ watchEffect(async () => {
     })
     
     const response = await fetch(`https://dummyjson.com/products?${params}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Response is not JSON')
+    }
     const data = await response.json()
     loadingRows.value = data.products || []
     loadingTotal.value = data.total || 0

@@ -267,14 +267,154 @@ const columns: ColumnDef[] = [
 </template>
 ```
 
+## CSV Export
+
+### Basic Usage
+
+Add `'csv'` to the toolbar:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="id"
+    :toolbar="['csv']"
+  />
+</template>
+```
+
+CSV export is built-in and doesn't require additional dependencies. It's useful for data analysis in spreadsheet applications.
+
+### Programmatic Export
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid } from '@pantanal/grid'
+
+const gridRef = ref<InstanceType<typeof PantanalGrid>>()
+
+function exportToCSV() {
+  gridRef.value?.exportToCSV()
+}
+</script>
+
+<template>
+  <div>
+    <button @click="exportToCSV">Export to CSV</button>
+    <PantanalGrid
+      ref="gridRef"
+      :rows="rows"
+      :columns="columns"
+      key-field="id"
+    />
+  </div>
+</template>
+```
+
+## Word (DOCX) Export
+
+### Installation
+
+Install the required dependencies:
+
+```bash
+npm install docx file-saver
+```
+
+### Basic Usage
+
+Add `'docx'` to the toolbar:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="id"
+    :toolbar="['docx']"
+  />
+</template>
+```
+
+### Programmatic Export
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid } from '@pantanal/grid'
+
+const gridRef = ref<InstanceType<typeof PantanalGrid>>()
+
+function exportToDocx() {
+  gridRef.value?.exportToDocx()
+}
+</script>
+
+<template>
+  <div>
+    <button @click="exportToDocx">Export to Word</button>
+    <PantanalGrid
+      ref="gridRef"
+      :rows="rows"
+      :columns="columns"
+      key-field="id"
+    />
+  </div>
+</template>
+```
+
+### Word Export Features
+
+- Formatted table with headers
+- Proper data type formatting
+- Professional document structure
+- Compatible with Microsoft Word and other word processors
+
+## Export All Pages
+
+Export all data pages instead of just the current page:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  key-field="id"
+  :toolbar="['excel', 'csv', 'docx']"
+  :excel-all-pages="true"
+  :pageable="true"
+/>
+```
+
+This works for Excel, CSV, and DOCX exports. For server-side data, the grid will automatically fetch all pages.
+
+## Combined Export Options
+
+Include multiple export formats in the toolbar:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  key-field="id"
+  :toolbar="['excel', 'csv', 'docx', 'pdf']"
+/>
+```
+
+Users can choose the format that best suits their needs.
+
 ## Tips
 
 - Excel export requires `xlsx` package
 - PDF export requires `jspdf` and `html2canvas` packages
+- DOCX export requires `docx` and `file-saver` packages
+- CSV export is built-in and requires no additional dependencies
 - Exports respect current filters, sorting, and pagination
 - Use custom file names for better organization
 - Configure PDF margins and paper size for professional reports
 - For large datasets, consider server-side export
+- Use `excelAllPages` to export all data when paginated
 
 
 

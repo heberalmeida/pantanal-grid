@@ -17,7 +17,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['@pantanal/grid'],
-    include: ['jspdf', 'html2canvas'],
+    include: ['jspdf', 'html2canvas', 'docx', 'file-saver'],
   },
   server: {
     port: 5173,

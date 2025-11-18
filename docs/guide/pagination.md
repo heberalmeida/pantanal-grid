@@ -168,6 +168,36 @@ Hide the page size selector:
 />
 ```
 
+### Custom Page Size
+
+Enable custom page size input to allow users to enter any number of items per page:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="id"
+    :pageable="true"
+    :pageable-page-sizes="[10, 20, 50, 100]"
+    :pageable-custom-page-size="true"
+  />
+</template>
+```
+
+When `pageableCustomPageSize` is `true`, a "Custom" option appears in the page size selector. Selecting it reveals an input field where users can enter any number between 1 and 10,000.
+
+**Features:**
+- Input validation (min: 1, max: 10,000)
+- Cancel button to return to previous selection
+- Automatically detects when current pageSize is not in the predefined options
+- Works with both client-side and server-side pagination
+
+**Use Cases:**
+- Allow users to view specific number of items (e.g., 25, 75, 150)
+- Support flexible pagination requirements
+- Provide more control over data display
+
 ## Server-Side Pagination
 
 For server-side pagination, use `serverSide` mode:
@@ -262,12 +292,101 @@ const messages = {
 </template>
 ```
 
+## URL Synchronization
+
+Synchronize pagination state with URL query parameters to enable shareable links and browser navigation support.
+
+### Basic Usage
+
+Enable URL synchronization:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="id"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+    :pageable="true"
+    :pageable-sync-url="true"
+  />
+</template>
+```
+
+When enabled, the grid will:
+- Read initial `page` and `pageSize` from URL query parameters
+- Update URL when pagination changes
+- Support browser back/forward navigation
+- Allow sharing links with specific pagination state
+
+### Custom URL Parameter Names
+
+Customize the URL parameter names:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  key-field="id"
+  :pageable-sync-url="true"
+  pageable-url-param-page="p"
+  pageable-url-param-page-size="size"
+/>
+```
+
+### Server-Side with URL Sync
+
+URL synchronization works seamlessly with server-side pagination:
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="[]"
+    :columns="columns"
+    key-field="id"
+    :server-side="true"
+    :pageable="true"
+    :pageable-sync-url="true"
+    :data-provider="dataProvider"
+    v-model:page="page"
+    v-model:pageSize="pageSize"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type DataProvider } from '@pantanal/grid'
+
+const page = ref(1)
+const pageSize = ref(20)
+
+const dataProvider: DataProvider = async (args) => {
+  // URL parameters are automatically read on mount
+  const response = await fetch(`/api/data?page=${args.page}&pageSize=${args.pageSize}`)
+  const data = await response.json()
+  return {
+    rows: data.items,
+    total: data.total,
+  }
+}
+</script>
+```
+
+### Browser Navigation
+
+The grid automatically handles browser back/forward buttons. When users navigate using browser history, the grid updates its pagination state to match the URL.
+
 ## Tips
 
 - Use `pageableAlwaysVisible: false` to hide pagination when not needed
 - For server-side pagination, always provide the `total` prop
 - Use `pageablePageSizes` to match your data size requirements
 - Avoid using `pageableNumeric` and `pageableInput` together
+- Enable `pageableSyncUrl` for shareable pagination links
+- URL sync works with both client-side and server-side pagination
+- Enable `pageableCustomPageSize` to allow users to enter custom page sizes
+- Custom page size is disabled by default - enable it explicitly when needed
 
 
 

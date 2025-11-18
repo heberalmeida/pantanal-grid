@@ -17,14 +17,37 @@
     >
       <label class="pg-label" :class="tailwind ? 'text-xs sm:text-sm whitespace-nowrap' : ''">{{ M.rowsPerPage }}</label>
       <select
+        v-if="!showCustomPageSize"
         class="pg-select"
         :class="tailwind ? 'border border-slate-300 rounded-md bg-white text-xs sm:text-sm px-1 sm:px-2 py-1 min-w-[50px] sm:min-w-[60px]' : ''"
-        :value="pageSize"
-        @change="changeSize(($event.target as HTMLSelectElement).value)"
+        :value="isCustomPageSize ? 'custom' : pageSize"
+        @change="handlePageSizeChange(($event.target as HTMLSelectElement).value)"
         style="flex-shrink: 0;"
       >
         <option v-for="n in pageSizeOptions" :key="n" :value="n">{{ n }}</option>
+        <option v-if="props.customPageSize" value="custom">{{ M.pageableCustom || 'Custom' }}</option>
       </select>
+      <div v-else :class="tailwind ? 'flex items-center gap-1' : ''" style="display: flex; align-items: center; gap: 0.25rem;">
+        <input
+          type="number"
+          :min="1"
+          :max="10000"
+          :value="customPageSizeValue"
+          @input="customPageSizeValue = ($event.target as HTMLInputElement).value"
+          @keydown.enter="handleCustomPageSize"
+          @blur="handleCustomPageSize"
+          :class="tailwind ? 'border border-slate-300 rounded-md bg-white text-xs sm:text-sm px-1 sm:px-2 py-1 w-16 sm:w-20 text-center' : 'pg-input'"
+          style="flex-shrink: 0;"
+        />
+        <button
+          @click="showCustomPageSize = false; customPageSizeValue = String(pageSize)"
+          :class="tailwind ? 'px-1.5 py-1 text-xs border border-slate-300 rounded-md bg-white hover:bg-slate-50' : ''"
+          :title="M.pageableCancel || 'Cancel'"
+          style="flex-shrink: 0;"
+        >
+          ×
+        </button>
+      </div>
     </div>
 
     <!-- variant: simple -->
@@ -351,6 +374,7 @@ const props = withDefaults(defineProps<{
 
   showPageSize?: boolean
   pageSizeOptions?: number[]
+  customPageSize?: boolean  // Enable custom page size input (default: false)
   dense?: boolean
 
   tailwind?: boolean
@@ -373,6 +397,7 @@ const props = withDefaults(defineProps<{
   showIcons: true,
   showPageSize: false,
   pageSizeOptions: () => [10, 20, 50, 100],
+  customPageSize: false,
   dense: false,
   tailwind: true,
   previousNext: true,
@@ -435,6 +460,13 @@ const showEllipsis = computed(() => {
 // })
 
 const pageInputValue = ref<string>('')
+const showCustomPageSize = ref(false)
+const customPageSizeValue = ref<string>('')
+
+// Check if current pageSize is custom (not in the predefined options)
+const isCustomPageSize = computed(() => {
+  return !props.pageSizeOptions.includes(props.pageSize)
+})
 
 // Reserved for future use
 /*
@@ -459,9 +491,37 @@ function handlePageInput() {
   }
 }
 
+function handlePageSizeChange(value: string) {
+  if (value === 'custom') {
+    showCustomPageSize.value = true
+    customPageSizeValue.value = String(props.pageSize)
+  } else {
+    changeSize(value)
+  }
+}
+
+function handleCustomPageSize() {
+  const num = Number.parseInt(customPageSizeValue.value, 10)
+  if (!Number.isNaN(num) && num >= 1 && num <= 10000) {
+    emit('update:pageSize', num)
+    showCustomPageSize.value = false
+  } else {
+    // Reset to current pageSize if invalid
+    customPageSizeValue.value = String(props.pageSize)
+    showCustomPageSize.value = false
+  }
+}
+
 function handleRefresh() {
   emit('refresh')
 }
+
+// Watch pageSize to update custom input if needed
+watch(() => props.pageSize, (newSize) => {
+  if (showCustomPageSize.value) {
+    customPageSizeValue.value = String(newSize)
+  }
+})
 
 const btnClass = computed(() => props.dense ? 'pg-btn pg-btn--dense' : 'pg-btn pg-btn--normal')
 const iconClass = computed(() => (props.dense ? 'pg-icon--dense' : 'pg-icon--normal'))
