@@ -156,6 +156,14 @@ interface GridProps<T = Row> {
   pdfProxyUrl?: string
   pdfProxyTarget?: string
 
+  // ========== STYLING ==========
+  cellStyles?: CellStyleConfig<T>[]  // Array of cell style configurations
+  rowStyles?: RowStyleConfig<T>[]  // Array of row style configurations
+  columnStyles?: ColumnStyleConfig[]  // Array of column style configurations
+  cellHoverStyles?: CellStyleConfig<T>[]  // Array of cell hover style configurations
+  rowHoverStyles?: RowStyleConfig<T>[]  // Array of row hover style configurations
+  gridStyles?: GridStyleConfig  // Grid-wide style configuration (borders, colors, etc.)
+
   // ========== OTHER ==========
   pinnedShadows?: boolean
   columnResizeHandleWidth?: number
@@ -182,6 +190,72 @@ type Row = Record<string, unknown>
 ```
 
 Generic row data type. Can be any object with string keys.
+
+### CellStyleConfig
+
+```typescript
+interface CellStyleConfig<T = Row> {
+  field?: string  // Column field to target
+  condition?: (row: T, value: any, rowIndex: number) => boolean  // Condition function
+  backgroundColor?: string  // Background color (e.g., '#fee2e2' or 'red')
+  color?: string  // Text color (e.g., '#991b1b' or 'white')
+  fontWeight?: string | number  // Font weight (e.g., 'bold', 600)
+  rowIndex?: number  // Specific row index (0-based)
+  columnIndex?: number  // Specific column index (0-based)
+}
+```
+
+Configuration for styling individual cells. See [Styling Props Example](/examples/styling-props) for usage.
+
+### RowStyleConfig
+
+```typescript
+interface RowStyleConfig<T = Row> {
+  condition?: (row: T, rowIndex: number) => boolean  // Condition function
+  backgroundColor?: string  // Background color for entire row
+  color?: string  // Text color for entire row
+  fontWeight?: string | number  // Font weight
+  rowIndex?: number  // Specific row index (0-based)
+  rowIndices?: number[]  // Multiple row indices
+}
+```
+
+Configuration for styling entire rows. See [Styling Props Example](/examples/styling-props) for usage.
+
+### ColumnStyleConfig
+
+```typescript
+interface ColumnStyleConfig {
+  field?: string  // Column field to target
+  columnIndex?: number  // Column index (0-based)
+  backgroundColor?: string  // Background color for entire column
+  color?: string  // Text color for entire column
+  fontWeight?: string | number  // Font weight
+  headerBackgroundColor?: string  // Background color for column header
+  headerColor?: string  // Text color for column header
+}
+```
+
+Configuration for styling entire columns. See [Styling Props Example](/examples/styling-props) for usage.
+
+### GridStyleConfig
+
+```typescript
+interface GridStyleConfig {
+  noBorders?: boolean  // Remove all borders from grid
+  borderColor?: string  // Custom border color (e.g., '#3b82f6')
+  borderWidth?: string  // Custom border width (e.g., '2px')
+  cellPadding?: string  // Custom cell padding (e.g., '0.75rem 1rem')
+  headerBackground?: string  // Custom header background color
+  headerColor?: string  // Custom header text color
+  rowBackground?: string  // Default row background color
+  rowHoverBackground?: string  // Row hover background color (applies to all rows)
+  cellHoverBackground?: string  // Cell hover background color (applies to all cells)
+  stripedBackground?: string  // Striped row background color
+}
+```
+
+Configuration for grid-wide styling. See [Grid Styles Example](/examples/grid-styles) for usage.
 
 ### SortDescriptor
 
