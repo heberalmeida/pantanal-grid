@@ -549,8 +549,25 @@
               :value="columnValue(row, c, r)"
               :rowIndex="r"
               :columnIndex="i">
-              <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, r), c, row as any)"></span>
-              <span v-else>{{ formatColumnValue(columnValue(row, c, r), c, row as any) }}</span>
+              <!-- Image column rendering -->
+              <div v-if="c.image" class="v3grid__image-cell" :class="getImageCellClass(c)">
+                <img
+                  :src="getImageSrc(row, c)"
+                  :alt="getImageAlt(row, c)"
+                  :loading="getImageLoading(c)"
+                  @error="handleImageError($event, row, c)"
+                  :style="getImageStyle(c)"
+                  class="v3grid__image"
+                />
+                <div v-if="imageLoadingStates.get(getImageKey(row, c))" class="v3grid__image-loading">
+                  <div class="v3grid__image-spinner"></div>
+                </div>
+              </div>
+              <!-- Regular cell rendering -->
+              <template v-else>
+                <span v-if="c.encoded === false" v-html="formatColumnValue(columnValue(row, c, r), c, row as any)"></span>
+                <span v-else>{{ formatColumnValue(columnValue(row, c, r), c, row as any) }}</span>
+              </template>
             </slot>
           </div>
         </div>
@@ -1535,13 +1552,22 @@
         </div>
       </div>
     </Teleport>
+    
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="v3grid__loading-overlay" :class="getLoadingOverlayClass()">
+      <div class="v3grid__loading-content">
+        <div v-if="loadingOptions.spinner !== false" class="v3grid__loading-spinner"></div>
+        <div v-if="loadingText" class="v3grid__loading-text">{{ loadingText }}</div>
+        <div v-if="loadingTemplate" v-html="loadingTemplate"></div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Fragment, computed, defineComponent, h, isVNode, nextTick, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
 import type { CSSProperties, ComponentPublicInstance, PropType, VNode, VNodeArrayChildren } from 'vue'
-import type { ColumnDef, ColumnTemplateContext, ColumnTemplateFn, FilterDescriptor, GridEmits, GridProps, SortDescriptor } from '../types'
+import type { ColumnDef, ColumnTemplateContext, ColumnTemplateFn, FilterDescriptor, GridEmits, GridProps, SortDescriptor, ImageColumnOptions, Row } from '../types'
 import { applyFilter, applySort, paginate } from '../composables/data'
 import { useColumnResize } from '../composables/resize'
 import { useColumnReorder } from '../composables/reorder'
@@ -1550,6 +1576,7 @@ import { useVirtual } from '../composables/virtual'
 import { cleanStringValue, deepCleanStrings, decodeHtmlEntities } from '../utils/string'
 import { useEndless } from '../composables/endless'
 import { usePersist } from '../composables/persist'
+import { useFilterPersistence, usePaginationPersistence } from '../composables/persistence'
 import { useEditing } from '../composables/editing'
 import { getMessages } from '../i18n/messages'
 import { buildGroupTree, flattenTree, computeAggregates, type GroupDescriptor, type GroupNode } from '../composables/group'
@@ -1593,6 +1620,24 @@ onMounted(() => {
     if (urlParams.pageSize !== null && urlParams.pageSize > 0) {
       pageSize.value = urlParams.pageSize
     }
+  }
+  
+  // Initialize persistence
+  if (props.persistFilters) {
+    useFilterPersistence(
+      filters,
+      props.persistFilters,
+      props.persistFiltersKey || 'pantanal-grid-filters'
+    )
+  }
+  
+  if (props.persistPagination) {
+    usePaginationPersistence(
+      page,
+      pageSize,
+      props.persistPagination,
+      props.persistPaginationKey || 'pantanal-grid-pagination'
+    )
   }
 })
 
@@ -1747,6 +1792,44 @@ function collectSlotColumns(children: VNodeArrayChildren | VNode | undefined, ac
 }
 
 const msgs = computed(() => getMessages(String(props.locale ?? 'en'), props.messages))
+
+// Loading state
+const loadingOptions = computed(() => {
+  if (typeof props.loading === 'boolean') {
+    return {
+      enabled: props.loading,
+      spinner: true,
+      overlay: true,
+      position: 'center' as const,
+      text: 'Loading...',
+      template: undefined
+    }
+  }
+  return {
+    enabled: props.loading?.enabled !== false,
+    spinner: props.loading?.spinner !== false,
+    overlay: props.loading?.overlay !== false,
+    position: props.loading?.position || 'center',
+    text: props.loading?.text,
+    template: typeof props.loading?.template === 'function' 
+      ? props.loading.template() 
+      : props.loading?.template
+  }
+})
+
+const isLoading = computed(() => loadingOptions.value.enabled)
+const loadingText = computed(() => loadingOptions.value.text)
+const loadingTemplate = computed(() => loadingOptions.value.template)
+
+function getLoadingOverlayClass(): Record<string, boolean> {
+  return {
+    'v3grid__loading-overlay--top': loadingOptions.value.position === 'top',
+    'v3grid__loading-overlay--center': loadingOptions.value.position === 'center',
+    'v3grid__loading-overlay--bottom': loadingOptions.value.position === 'bottom',
+    'v3grid__loading-overlay--no-overlay': !loadingOptions.value.overlay,
+  }
+}
+
 const isCardMode = computed<boolean>(() => {
   if (props.responsive === 'cards') return true
   if (props.responsive === 'table') return false
@@ -2550,6 +2633,117 @@ function formatDate(date: Date, format: string): string {
   }
   
   return result
+}
+
+// Image rendering helpers
+const imageLoadingStates = ref<Map<string, boolean>>(new Map())
+const imageErrorStates = ref<Map<string, string>>(new Map())
+
+function getImageOptions(column: ColumnDef): ImageColumnOptions | null {
+  if (!column.image) return null
+  if (typeof column.image === 'boolean') {
+    return { shape: 'square', size: 40, objectFit: 'cover' }
+  }
+  return column.image
+}
+
+function getImageKey(row: Row, column: ColumnDef): string {
+  const keyField = keyFieldStr.value
+  const rowKey = keyField ? (row as any)[keyField] : undefined
+  return `${column.field}-${rowKey ?? Math.random()}`
+}
+
+function getImageSrc(row: Row, column: ColumnDef): string {
+  const options = getImageOptions(column)
+  if (!options) return ''
+  
+  const value = columnValue(row, column, -1)
+  if (!value) return options.placeholder || ''
+  
+  // Check if there's an error state
+  const errorKey = getImageKey(row, column)
+  if (imageErrorStates.value.has(errorKey)) {
+    return imageErrorStates.value.get(errorKey) || options.errorPlaceholder || options.placeholder || ''
+  }
+  
+  // Handle endpoint
+  if (options.endpoint) {
+    if (typeof options.endpoint === 'function') {
+      const endpoint = options.endpoint(row)
+      return endpoint ? `${endpoint}${value}` : value
+    } else {
+      return `${options.endpoint}${value}`
+    }
+  }
+  
+  return String(value)
+}
+
+function getImageAlt(row: Row, column: ColumnDef): string {
+  const options = getImageOptions(column)
+  if (!options) return ''
+  
+  if (options.alt) {
+    if (typeof options.alt === 'function') {
+      return options.alt(row)
+    }
+    return options.alt
+  }
+  
+  return column.title || String(column.field || '')
+}
+
+function getImageLoading(column: ColumnDef): 'lazy' | 'eager' {
+  const options = getImageOptions(column)
+  return options?.loading || 'lazy'
+}
+
+function getImageStyle(column: ColumnDef): Record<string, string> {
+  const options = getImageOptions(column)
+  if (!options) return {}
+  
+  const style: Record<string, string> = {}
+  
+  // Size
+  if (options.size) {
+    const size = typeof options.size === 'number' ? `${options.size}px` : options.size
+    style.width = size
+    style.height = size
+  }
+  
+  // Object fit
+  if (options.objectFit) {
+    style.objectFit = options.objectFit
+  }
+  
+  return style
+}
+
+function getImageCellClass(column: ColumnDef): Record<string, boolean> {
+  const options = getImageOptions(column)
+  if (!options) return {}
+  
+  return {
+    'v3grid__image-cell--round': options.shape === 'round',
+    'v3grid__image-cell--square': options.shape === 'square',
+    'v3grid__image-cell--rounded': options.shape === 'rounded',
+  }
+}
+
+function handleImageError(event: Event, row: Row, column: ColumnDef) {
+  const options = getImageOptions(column)
+  if (!options) return
+  
+  const errorKey = getImageKey(row, column)
+  const errorPlaceholder = options.errorPlaceholder || options.placeholder
+  
+  if (errorPlaceholder) {
+    imageErrorStates.value.set(errorKey, errorPlaceholder)
+    const img = event.target as HTMLImageElement
+    img.src = errorPlaceholder
+  }
+  
+  imageLoadingStates.value.set(errorKey, false)
 }
 
 function applyValuesTransform(value: any, values?: Array<{ text: string; value: any }>): any {
@@ -6882,3 +7076,117 @@ onBeforeUnmount(() => {
   abortCtl.value?.abort()
 })
 </script>
+
+<style scoped>
+/* Image cell styles */
+.v3grid__image-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 40px;
+}
+
+.v3grid__image-cell--round {
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.v3grid__image-cell--rounded {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.v3grid__image-cell--square {
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.v3grid__image {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.v3grid__image-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 1;
+}
+
+.v3grid__image-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loading overlay styles */
+.v3grid__loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.v3grid__loading-overlay--no-overlay {
+  background-color: transparent;
+  backdrop-filter: none;
+}
+
+.v3grid__loading-overlay--top {
+  align-items: flex-start;
+  padding-top: 2rem;
+}
+
+.v3grid__loading-overlay--bottom {
+  align-items: flex-end;
+  padding-bottom: 2rem;
+}
+
+.v3grid__loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.v3grid__loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.v3grid__loading-text {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+}
+</style>

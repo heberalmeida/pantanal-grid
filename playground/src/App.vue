@@ -151,6 +151,7 @@ const navSections = [
     items: [
       { to: '/styled-table', label: 'Styled table', icon: 'palette' },
       { to: '/gallery', label: 'Image gallery', icon: 'images' },
+      { to: '/images', label: 'Image columns', icon: 'image' },
       { to: '/grouping', label: 'Grouping & aggregates', icon: 'layer-group' },
       { to: '/grouping-basics', label: 'Grouping Basics', icon: 'layer-group' },
       { to: '/groupable-props', label: 'Groupable Props', icon: 'sliders' },
