@@ -1,10 +1,21 @@
 <template>
   <div
     class="pg pg-row"
-    :class="tailwind ? 'flex flex-wrap items-center justify-center gap-1 sm:gap-2' : ''"
+    :class="[
+      tailwind ? 'flex flex-wrap items-center justify-center gap-1 sm:gap-2' : '',
+      isMobile ? 'pg-row--mobile' : ''
+    ]"
     :dir="rtl ? 'rtl' : undefined"
     style="flex-wrap: wrap; justify-content: center;"
   >
+    <!-- Custom template slot (before) -->
+    <slot name="before" :context="paginationContext" />
+    
+    <!-- Custom template -->
+    <div v-if="customTemplate" v-html="renderCustomTemplate()"></div>
+    
+    <!-- Default pagination (if no custom template) -->
+    <template v-else>
     <!-- Info display (pageableInfo) - only show if not already shown in Grid footer -->
     <!-- This is handled in Grid.vue footer, so we don't show it here to avoid duplication -->
 
@@ -52,7 +63,7 @@
 
     <!-- variant: simple -->
     <div
-      v-if="variant==='simple'"
+      v-if="activeVariant==='simple'"
       class="pg-row"
       :class="tailwind ? 'flex items-center gap-0.5 sm:gap-1 flex-wrap justify-center' : ''"
       style="flex-wrap: wrap; justify-content: center;"
@@ -135,7 +146,7 @@
 
     <!-- variant: pages (1 2 3 ...) -->
     <div
-      v-else-if="numeric || variant==='pages'"
+      v-else-if="numeric || activeVariant==='pages'"
       class="pg-row"
       :class="tailwind ? 'flex items-center gap-0.5 sm:gap-1 flex-wrap justify-center' : ''"
       style="flex-wrap: wrap; justify-content: center;"
@@ -250,7 +261,7 @@
 
     <!-- variant: edges (<< < 1 2 3 > >>) -->
     <div
-      v-else-if="variant==='edges' && !numeric"
+      v-else-if="activeVariant==='edges' && !numeric"
       class="pg-row"
       :class="tailwind ? 'flex items-center gap-0.5 sm:gap-1 flex-wrap justify-center' : ''"
       style="flex-wrap: wrap; justify-content: center;"
@@ -349,13 +360,30 @@
         <span v-if="showText" :class="tailwind ? 'hidden sm:inline' : ''">{{ M.pageableRefresh || 'Refresh' }}</span>
       </button>
     </div>
+    </template>
+    
+    <!-- Custom template slots -->
+    <slot name="info" :context="paginationContext">
+      <div v-if="info && !customTemplate" class="pg-total" :class="tailwind ? 'text-xs sm:text-sm whitespace-nowrap' : ''">
+        {{ formatInfoMessage() }}
+      </div>
+    </slot>
+    
+    <slot name="pageSize" :context="paginationContext" />
+    <slot name="pageInput" :context="paginationContext" />
+    <slot name="buttons" :context="paginationContext" />
+    
+    <!-- Custom template slot (after) -->
+    <slot name="after" :context="paginationContext" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import type { Locale, Messages } from '../types'
+import { computed, ref, watch, useSlots, onMounted, onBeforeUnmount } from 'vue'
+import type { Locale, Messages, PaginationTemplateContext } from '../types'
 import { getMessages } from '../i18n/messages'
+
+const slots = useSlots()
 
 // Import SVG assets - Vite will process these correctly with base paths
 import iconPrevSrc from '../assets/arrow-left.svg?url'
@@ -394,6 +422,11 @@ const props = withDefaults(defineProps<{
   refresh?: boolean
   responsive?: boolean
   info?: boolean
+  
+  // Customization props
+  template?: string | ((context: PaginationTemplateContext) => string)
+  mobileBreakpoint?: number
+  mobileVariant?: Variant
 }>(), {
   variant: 'simple',
   showTotal: true,
@@ -413,6 +446,8 @@ const props = withDefaults(defineProps<{
   refresh: false,
   responsive: true,
   info: true,
+  mobileBreakpoint: 768,
+  mobileVariant: undefined,
 })
 
 const emit = defineEmits<{
@@ -426,6 +461,60 @@ const M = computed(() => getMessages(String(props.locale), props.messages))
 const totalPages = computed(() =>
   Math.max(1, Math.ceil((props.total || 0) / Math.max(1, props.pageSize)))
 )
+
+// Mobile detection
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1920)
+const isMobile = computed(() => windowWidth.value < (props.mobileBreakpoint ?? 768))
+
+// Active variant (mobile or desktop)
+const activeVariant = computed(() => {
+  if (isMobile.value && props.mobileVariant) {
+    return props.mobileVariant
+  }
+  return props.variant
+})
+
+// Pagination context for templates and slots
+const paginationContext = computed<PaginationTemplateContext>(() => ({
+  page: props.page,
+  pageSize: props.pageSize,
+  total: props.total,
+  totalPages: totalPages.value,
+  firstItem: props.total > 0 ? (props.page - 1) * props.pageSize + 1 : 0,
+  lastItem: Math.min(props.page * props.pageSize, props.total),
+  canGoPrevious: props.page > 1,
+  canGoNext: props.page < totalPages.value,
+  canGoFirst: props.page > 1,
+  canGoLast: props.page < totalPages.value,
+  messages: M.value,
+}))
+
+// Custom template rendering
+const customTemplate = computed(() => props.template)
+function renderCustomTemplate(): string {
+  if (!customTemplate.value) return ''
+  if (typeof customTemplate.value === 'function') {
+    return customTemplate.value(paginationContext.value)
+  }
+  return customTemplate.value
+}
+
+// Window resize handler for mobile detection
+let resizeHandler: (() => void) | null = null
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    resizeHandler = () => {
+      windowWidth.value = window.innerWidth
+    }
+    window.addEventListener('resize', resizeHandler)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (resizeHandler && typeof window !== 'undefined') {
+    window.removeEventListener('resize', resizeHandler)
+  }
+})
 
 function go(p: number) {
   const next = Math.min(totalPages.value, Math.max(1, p))
@@ -486,6 +575,21 @@ function _formatDisplayMessage(template: string): string {
 
 function formatOfMessage(template: string): string {
   return template.replace('{0}', String(totalPages.value))
+}
+
+function formatInfoMessage(): string {
+  const ctx = paginationContext.value
+  if (ctx.total === 0) {
+    return M.value.pageableEmpty || 'No items'
+  }
+  const display = M.value.pageableDisplay
+  if (display) {
+    return display
+      .replace('{0}', String(ctx.firstItem))
+      .replace('{1}', String(ctx.lastItem))
+      .replace('{2}', String(ctx.total))
+  }
+  return `Showing ${ctx.firstItem}-${ctx.lastItem} of ${ctx.total} items`
 }
 
 function handlePageInput() {

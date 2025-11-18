@@ -1324,9 +1324,32 @@
           :refresh="props.pageableRefresh === true"
           :responsive="props.pageableResponsive !== false"
           :info="props.pageableInfo !== false"
+          :template="props.pageableTemplate"
+          :mobileBreakpoint="props.pageableMobileBreakpoint"
+          :mobileVariant="props.pageableMobileVariant"
+        >
+          <template v-if="props.pageableSlots?.before" #before="slotProps">
+            <slot :name="props.pageableSlots.before" v-bind="slotProps" />
+          </template>
+          <template v-if="props.pageableSlots?.after" #after="slotProps">
+            <slot :name="props.pageableSlots.after" v-bind="slotProps" />
+          </template>
+          <template v-if="props.pageableSlots?.info" #info="slotProps">
+            <slot :name="props.pageableSlots.info" v-bind="slotProps" />
+          </template>
+          <template v-if="props.pageableSlots?.pageSize" #pageSize="slotProps">
+            <slot :name="props.pageableSlots.pageSize" v-bind="slotProps" />
+          </template>
+          <template v-if="props.pageableSlots?.pageInput" #pageInput="slotProps">
+            <slot :name="props.pageableSlots.pageInput" v-bind="slotProps" />
+          </template>
+          <template v-if="props.pageableSlots?.buttons" #buttons="slotProps">
+            <slot :name="props.pageableSlots.buttons" v-bind="slotProps" />
+          </template>
           @update:page="(p: number) => page = p"
           @update:pageSize="(s: number) => pageSize = s"
-          @refresh="() => emit('refresh')" />
+          @refresh="() => emit('refresh')" 
+        </GridPagination>
       </div>
     </div>
 
