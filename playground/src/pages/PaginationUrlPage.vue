@@ -1,17 +1,25 @@
 <template>
   <div class="p-6">
-    <h1 class="text-3xl font-bold mb-4">Paging</h1>
+    <h1 class="text-3xl font-bold mb-4">Pagination with URL Sync</h1>
     <p class="text-gray-600 mb-6">
-      The Grid supports paging functionality to split content into pages. By default, paging is enabled when you set
-      the <code class="bg-gray-100 px-2 py-1 rounded">pageable</code> prop to <code class="bg-gray-100 px-2 py-1 rounded">true</code>.
+      The Grid supports synchronizing pagination state with URL query parameters. This allows users to share links
+      with specific page and page size, and the grid will automatically restore the state when the page loads.
+      This works with both client-side and server-side pagination.
     </p>
 
     <div class="mb-8">
       <h2 class="text-2xl font-semibold mb-4">Basic Usage</h2>
       <p class="text-gray-600 mb-4">
-        To enable paging, set <code class="bg-gray-100 px-2 py-1 rounded">pageable</code> to <code class="bg-gray-100 px-2 py-1 rounded">true</code>,
-        specify the <code class="bg-gray-100 px-2 py-1 rounded">pageSize</code>, and handle the total number of records.
+        Enable URL synchronization by setting <code class="bg-gray-100 px-2 py-1 rounded">pageableSyncUrl</code> to <code class="bg-gray-100 px-2 py-1 rounded">true</code>.
+        The page and pageSize will be automatically synced with the URL query parameters.
       </p>
+      
+      <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded">
+        <p class="text-sm text-blue-800">
+          <strong>Try it:</strong> Change the page or page size, then copy the URL and open it in a new tab.
+          The grid will automatically load with the same pagination state.
+        </p>
+      </div>
       
       <div class="mb-6">
         <PantanalGrid
@@ -20,6 +28,7 @@
           :page="basicPage"
           :pageSize="basicPageSize"
           :pageable="true"
+          :pageableSyncUrl="true"
           responsive="table"
           key-field="orderID"
           @update:page="basicPage = $event"
@@ -31,10 +40,37 @@
     </div>
 
     <div class="mb-8">
-      <h2 class="text-2xl font-semibold mb-4">Server-Side Paging</h2>
+      <h2 class="text-2xl font-semibold mb-4">Custom URL Parameter Names</h2>
       <p class="text-gray-600 mb-4">
-        For large datasets, use server-side paging by setting <code class="bg-gray-100 px-2 py-1 rounded">serverSide</code> to <code class="bg-gray-100 px-2 py-1 rounded">true</code>
-        and providing a <code class="bg-gray-100 px-2 py-1 rounded">dataProvider</code> function.
+        You can customize the URL parameter names using <code class="bg-gray-100 px-2 py-1 rounded">pageableUrlParamPage</code>
+        and <code class="bg-gray-100 px-2 py-1 rounded">pageableUrlParamPageSize</code>.
+      </p>
+      
+      <div class="mb-6">
+        <PantanalGrid
+          :rows="customRows"
+          :columns="customColumns"
+          :page="customPage"
+          :pageSize="customPageSize"
+          :pageable="true"
+          :pageableSyncUrl="true"
+          pageableUrlParamPage="p"
+          pageableUrlParamPageSize="size"
+          responsive="table"
+          key-field="orderID"
+          @update:page="customPage = $event"
+          @update:pageSize="customPageSize = $event"
+        />
+      </div>
+
+      <ExampleCode :source="customCode" />
+    </div>
+
+    <div class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Server-Side Pagination with URL</h2>
+      <p class="text-gray-600 mb-4">
+        URL synchronization works seamlessly with server-side pagination. The grid will read the initial state
+        from the URL and maintain it as the user navigates.
       </p>
       
       <div class="mb-6">
@@ -45,6 +81,7 @@
           v-model:pageSize="serverPageSize"
           :server-side="true"
           :pageable="true"
+          :pageableSyncUrl="true"
           :total="serverTotal"
           responsive="table"
           key-field="id"
@@ -55,69 +92,18 @@
     </div>
 
     <div class="mb-8">
-      <h2 class="text-2xl font-semibold mb-4">Pager Visibility</h2>
+      <h2 class="text-2xl font-semibold mb-4">Browser Navigation</h2>
       <p class="text-gray-600 mb-4">
-        Control pager visibility with <code class="bg-gray-100 px-2 py-1 rounded">pageableAlwaysVisible</code>.
-        When set to <code class="bg-gray-100 px-2 py-1 rounded">false</code>, the pager is hidden when all items fit on a single page.
+        The grid automatically handles browser back/forward buttons. When you navigate using browser history,
+        the grid will update its pagination state to match the URL.
       </p>
       
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-2">Small dataset (less than pageSize):</label>
-        <PantanalGrid
-          :rows="smallRows"
-          :columns="smallColumns"
-          :page="smallPage"
-          :pageSize="smallPageSize"
-          :pageable="true"
-          :pageableAlwaysVisible="false"
-          responsive="table"
-          key-field="id"
-          @update:page="smallPage = $event"
-          @update:pageSize="smallPageSize = $event"
-        />
+      <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded">
+        <p class="text-sm text-green-800">
+          <strong>Try it:</strong> Change the page, then use the browser back button. The grid will restore
+          the previous page state.
+        </p>
       </div>
-
-      <div class="mb-6">
-        <label class="block text-sm font-medium mb-2">Large dataset (greater than pageSize):</label>
-        <PantanalGrid
-          :rows="largeRows"
-          :columns="largeColumns"
-          :page="largePage"
-          :pageSize="largePageSize"
-          :pageable="true"
-          :pageableAlwaysVisible="false"
-          responsive="table"
-          key-field="id"
-          @update:page="largePage = $event"
-          @update:pageSize="largePageSize = $event"
-        />
-      </div>
-
-      <ExampleCode :source="visibilityCode" />
-    </div>
-
-    <div class="mb-8">
-      <h2 class="text-2xl font-semibold mb-4">Custom Page Sizes</h2>
-      <p class="text-gray-600 mb-4">
-        Customize available page sizes using the <code class="bg-gray-100 px-2 py-1 rounded">pageablePageSizes</code> prop.
-      </p>
-      
-      <div class="mb-6">
-        <PantanalGrid
-          :rows="customRows"
-          :columns="customColumns"
-          :page="customPage"
-          :pageSize="customPageSize"
-          :pageable="true"
-          :pageablePageSizes="[5, 10, 20, 50, 100]"
-          responsive="table"
-          key-field="id"
-          @update:page="customPage = $event"
-          @update:pageSize="customPageSize = $event"
-        />
-      </div>
-
-      <ExampleCode :source="customPageSizesCode" />
     </div>
   </div>
 </template>
@@ -132,14 +118,6 @@ interface Order extends Record<string, unknown> {
   shipName: string
   freight: number
   orderDate: string
-}
-
-interface Product extends Record<string, unknown> {
-  id: number
-  productName: string
-  unitPrice: number
-  unitsInStock: number
-  discontinued: boolean
 }
 
 // Basic Usage
@@ -164,6 +142,11 @@ const basicRows = ref<Order[]>([
   { orderID: 18, shipName: 'Reggiani Caseifici', freight: 55.28, orderDate: '1996-07-29' },
   { orderID: 19, shipName: 'Maison Dewey', freight: 25.36, orderDate: '1996-07-30' },
   { orderID: 20, shipName: 'Island Trading', freight: 18.69, orderDate: '1996-07-31' },
+  { orderID: 21, shipName: 'Wartian Herkku', freight: 58.88, orderDate: '1996-08-01' },
+  { orderID: 22, shipName: 'Simons bistro', freight: 13.75, orderDate: '1996-08-02' },
+  { orderID: 23, shipName: 'QUICK-Stop', freight: 62.74, orderDate: '1996-08-05' },
+  { orderID: 24, shipName: 'Wilman Kala', freight: 12.69, orderDate: '1996-08-06' },
+  { orderID: 25, shipName: 'Berglunds snabbköp', freight: 10.96, orderDate: '1996-08-07' },
 ])
 
 const basicColumns: ColumnDef[] = [
@@ -176,8 +159,14 @@ const basicColumns: ColumnDef[] = [
 const basicPage = ref(1)
 const basicPageSize = ref(10)
 
-// Server-Side Paging with real API
-interface ServerProduct extends Record<string, unknown> {
+// Custom URL Parameters
+const customRows = ref<Order[]>([...basicRows.value])
+const customColumns: ColumnDef[] = [...basicColumns]
+const customPage = ref(1)
+const customPageSize = ref(10)
+
+// Server-Side Pagination with real API
+interface Product extends Record<string, unknown> {
   id: number
   title: string
   brand: string
@@ -190,7 +179,7 @@ interface ServerProduct extends Record<string, unknown> {
 const serverPage = ref(1)
 const serverPageSize = ref(20)
 const serverTotal = ref(0)
-const serverRows = ref<ServerProduct[]>([])
+const serverRows = ref<Product[]>([])
 
 // Fetch data when page or pageSize changes
 watchEffect(async () => {
@@ -257,7 +246,7 @@ function generateFallbackData() {
   const limit = serverPageSize.value
   
   // Generate sample data for demonstration
-  const fallbackData: ServerProduct[] = []
+  const fallbackData: Product[] = []
   for (let i = 0; i < limit; i++) {
     const id = skip + i + 1
     fallbackData.push({
@@ -285,110 +274,71 @@ const serverColumns: ColumnDef[] = [
   { field: 'rating', title: 'Rating', width: 100, format: (v: number) => v.toFixed(1) },
 ]
 
-// Pager Visibility
-const smallRows = ref<Product[]>([
-  { id: 1, productName: 'Product 1', unitPrice: 10, unitsInStock: 5, discontinued: false },
-  { id: 2, productName: 'Product 2', unitPrice: 20, unitsInStock: 10, discontinued: false },
-])
-
-const smallColumns: ColumnDef[] = [
-  { field: 'productName', title: 'Product Name' },
-  { field: 'unitPrice', title: 'Unit Price', width: 150 },
-  { field: 'unitsInStock', title: 'Units In Stock', width: 150 },
-  { field: 'discontinued', title: 'Discontinued', width: 150 },
-]
-
-const smallPage = ref(1)
-const smallPageSize = ref(10)
-
-const largeRows = ref<Product[]>(
-  Array.from({ length: 25 }, (_, i) => ({
-    id: i + 1,
-    productName: `Product ${i + 1}`,
-    unitPrice: (i + 1) * 10,
-    unitsInStock: (i + 1) * 5,
-    discontinued: i % 3 === 0,
-  }))
-)
-
-const largeColumns: ColumnDef[] = [
-  { field: 'productName', title: 'Product Name' },
-  { field: 'unitPrice', title: 'Unit Price', width: 150 },
-  { field: 'unitsInStock', title: 'Units In Stock', width: 150 },
-  { field: 'discontinued', title: 'Discontinued', width: 150 },
-]
-
-const largePage = ref(1)
-const largePageSize = ref(10)
-
-// Custom Page Sizes
-const customRows = ref<Product[]>(
-  Array.from({ length: 50 }, (_, i) => ({
-    id: i + 1,
-    productName: `Product ${i + 1}`,
-    unitPrice: (i + 1) * 10,
-    unitsInStock: (i + 1) * 5,
-    discontinued: i % 3 === 0,
-  }))
-)
-
-const customColumns: ColumnDef[] = [
-  { field: 'productName', title: 'Product Name' },
-  { field: 'unitPrice', title: 'Unit Price', width: 150 },
-  { field: 'unitsInStock', title: 'Units In Stock', width: 150 },
-  { field: 'discontinued', title: 'Discontinued', width: 150 },
-]
-
-const customPage = ref(1)
-const customPageSize = ref(10)
-
-const basicCode = `&lt;template&gt;
-  &lt;PantanalGrid
+const basicCode = `<template>
+  <PantanalGrid
     :rows="rows"
     :columns="columns"
     :page="page"
     :pageSize="pageSize"
     :pageable="true"
+    :pageableSyncUrl="true"
     key-field="orderID"
     @update:page="page = $event"
     @update:pageSize="pageSize = $event"
-  /&gt;
-&lt;/template&gt;
+  />
+</template>
 
-&lt;script setup lang="ts"&gt;
+<script setup lang="ts">
 import { ref } from 'vue'
 import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
 
-const rows = ref([
-  { orderID: 1, shipName: 'Vins et alcools Chevalier', freight: 32.38, orderDate: '1996-07-04' },
-  // ... more rows
-])
-
-const columns: ColumnDef[] = [
-  { field: 'orderID', title: 'Order ID', width: 180 },
-  { field: 'shipName', title: 'Ship Name', width: 240 },
-  { field: 'freight', title: 'Freight', width: 180 },
-  { field: 'orderDate', title: 'Order Date', width: 180 },
-]
-
+const rows = ref([...])
+const columns: ColumnDef[] = [...]
 const page = ref(1)
 const pageSize = ref(10)
-&lt;/script&gt;`
+<\/script>`
 
-const serverCode = `&lt;template&gt;
-  &lt;PantanalGrid
+const customCode = `<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    :page="page"
+    :pageSize="pageSize"
+    :pageable="true"
+    :pageableSyncUrl="true"
+    pageableUrlParamPage="p"
+    pageableUrlParamPageSize="size"
+    key-field="orderID"
+    @update:page="page = $event"
+    @update:pageSize="pageSize = $event"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref([...])
+const columns: ColumnDef[] = [...]
+const page = ref(1)
+const pageSize = ref(10)
+<\/script>`
+
+const serverCode = `<template>
+  <PantanalGrid
     :rows="rows"
     :columns="columns"
     v-model:page="page"
     v-model:pageSize="pageSize"
     :server-side="true"
     :pageable="true"
+    :pageableSyncUrl="true"
     :total="total"
     key-field="id"
-  /&gt;
-&lt;/template&gt;
+  />
+</template>
 
-&lt;script setup lang="ts"&gt;
+<script setup lang="ts">
 import { ref, watchEffect } from 'vue'
 import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
 
@@ -437,55 +387,7 @@ const columns: ColumnDef[] = [
   { field: 'stock', title: 'Stock', width: 100 },
   { field: 'rating', title: 'Rating', width: 100, format: (v: number) => v.toFixed(1) },
 ]
-&lt;/script&gt;`
-
-const visibilityCode = `&lt;template&gt;
-  &lt;PantanalGrid
-    :rows="rows"
-    :columns="columns"
-    :page="page"
-    :pageSize="pageSize"
-    :pageable="true"
-    :pageableAlwaysVisible="false"
-    key-field="id"
-    @update:page="page = $event"
-    @update:pageSize="pageSize = $event"
-  /&gt;
-&lt;/template&gt;
-
-&lt;script setup lang="ts"&gt;
-import { ref } from 'vue'
-import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
-
-const rows = ref([...]) // Your data
-const columns: ColumnDef[] = [...] // Your columns
-const page = ref(1)
-const pageSize = ref(10)
-&lt;/script&gt;`
-
-const customPageSizesCode = `&lt;template&gt;
-  &lt;PantanalGrid
-    :rows="rows"
-    :columns="columns"
-    :page="page"
-    :pageSize="pageSize"
-    :pageable="true"
-    :pageablePageSizes="[5, 10, 20, 50, 100]"
-    key-field="id"
-    @update:page="page = $event"
-    @update:pageSize="pageSize = $event"
-  /&gt;
-&lt;/template&gt;
-
-&lt;script setup lang="ts"&gt;
-import { ref } from 'vue'
-import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
-
-const rows = ref([...]) // Your data
-const columns: ColumnDef[] = [...] // Your columns
-const page = ref(1)
-const pageSize = ref(10)
-&lt;/script&gt;`
+<\/script>`
 </script>
 
 <style scoped>

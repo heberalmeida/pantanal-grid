@@ -57,6 +57,8 @@ export interface Messages {
   confirmDeleteTitle?: string
   excel?: string
   pdf?: string
+  csv?: string
+  docx?: string
   expandCollapseColumnHeader?: string
   filterableMessagesAnd?: string
   filterableMessagesOr?: string
@@ -87,6 +89,8 @@ export interface Messages {
   pageablePrevious?: string
   pageableRefresh?: string
   pageableMorePages?: string
+  pageableCustom?: string
+  pageableCancel?: string
   // Aggregate labels
   aggregateSum?: string
   aggregateAvg?: string
@@ -331,6 +335,7 @@ export interface GridProps<T = Row> {
   pageable?: boolean
   pageableAlwaysVisible?: boolean
   pageablePageSizes?: number[] | boolean | (number | 'all')[]
+  pageableCustomPageSize?: boolean  // Enable custom page size input (default: false)
   pageablePreviousNext?: boolean
   pageableNumeric?: boolean
   pageableButtonCount?: number
@@ -338,10 +343,14 @@ export interface GridProps<T = Row> {
   pageableRefresh?: boolean
   pageableResponsive?: boolean
   pageableInfo?: boolean
+  pageableSyncUrl?: boolean  // Sync page and pageSize with URL query parameters
+  pageableUrlParamPage?: string  // URL parameter name for page (default: 'page')
+  pageableUrlParamPageSize?: string  // URL parameter name for pageSize (default: 'pageSize')
 
   showFilterRow?: boolean
   filterable?: boolean
   filterableMode?: 'row' | 'menu' | 'menu, row' | false
+  hideHeader?: boolean  // Hide the table header row
   filterableExtra?: boolean
   filterableOperators?: {
     string?: Record<string, string>
@@ -357,7 +366,7 @@ export interface GridProps<T = Row> {
   autoBind?: boolean
 
   editable?: boolean | 'inline' | 'popup' | 'batch'
-  toolbar?: ('create' | 'save' | 'cancel' | 'excel' | 'pdf')[] | string | (() => string)
+  toolbar?: ('create' | 'save' | 'cancel' | 'excel' | 'pdf' | 'csv' | 'docx')[] | string | (() => string)
   navigatable?: boolean
 
   sortable?: boolean

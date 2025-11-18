@@ -4,7 +4,7 @@ import { resolve } from 'path'
 export default defineConfig({
   title: 'Pantanal Grid',
   description: 'A feature-rich data grid component for Vue 3 applications',
-  base: process.env.VITEPRESS_BASE || '/',
+  base: process.env.VITEPRESS_BASE || '/pantanal-grid/docs/',
   
   themeConfig: {
     nav: [

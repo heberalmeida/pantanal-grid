@@ -1,6 +1,6 @@
 # Column Management
 
-Pantanal Grid provides powerful column management features including resizing, reordering, pinning, locking, and column menu.
+Pantanal Grid provides powerful column management features including resizing, reordering, pinning, locking, column menu, and header visibility control.
 
 ## Column Resizing
 
@@ -63,6 +63,35 @@ const columns: ColumnDef[] = [
 ]
 </script>
 ```
+
+## Hide Header
+
+You can hide the table header row by setting the `hideHeader` prop to `true`. This is useful when you want to display data without column headers, such as in compact views or when the column structure is self-explanatory.
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="id"
+    :hideHeader="true"
+  />
+</template>
+```
+
+### Use Cases
+
+- **Compact Views**: When space is limited and headers are not essential
+- **Self-Explanatory Data**: When the data structure is clear without headers
+- **Custom Headers**: When you want to implement your own header solution outside the grid
+- **Print/Export Views**: When preparing data for printing or export without headers
+
+### Notes
+
+- When `hideHeader` is `true`, all header-related features (sorting indicators, column menu buttons, resize handles) are also hidden
+- The filter row (if enabled) will still be displayed below where the header would be
+- Locked/pinned columns also have their headers hidden when `hideHeader` is `true`
+- Multi-column headers are also hidden when `hideHeader` is `true`
 
 ## Column Menu
 

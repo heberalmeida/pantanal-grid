@@ -50,11 +50,27 @@
         >
           {{ msgs.pdf || 'Export to PDF' }}
         </button>
+        <button
+          v-if="props.toolbar.includes('csv')"
+          type="button"
+          @click="exportToCSV"
+          class="v3grid__btn--toolbar"
+        >
+          {{ msgs.csv || 'Export to CSV' }}
+        </button>
+        <button
+          v-if="props.toolbar.includes('docx')"
+          type="button"
+          @click="exportToDocx"
+          class="v3grid__btn--toolbar"
+        >
+          {{ msgs.docx || 'Export to Word' }}
+        </button>
       </template>
     </div>
     <!-- HSCROLL WRAPPER -->
     <div class="v3grid__scroll" ref="hScrollEl" @scroll="onHScroll"
-      :style="{ marginLeft: lockedLeftWidth + 'px', marginRight: lockedRightWidth + 'px' }">
+      :style="{ marginLeft: lockedLeftWidth + 'px', marginRight: lockedRightWidth + 'px', ...scrollWrapperStyle }">
       <!-- Groupable Drop Zone (when groupable is enabled) -->
       <div v-if="props.groupable && !isCardMode && !props.virtual" 
         class="v3grid__groupable-dropzone"
@@ -109,7 +125,7 @@
       
       <!-- HEADER -->
       <!-- Multi-column headers using HTML table structure -->
-      <table v-if="headerLevels.hasMultiLevel" class="v3grid__head-multi">
+      <table v-if="!props.hideHeader && headerLevels.hasMultiLevel" class="v3grid__head-multi">
         <colgroup>
           <col v-if="props.selectable" style="width: 52px;">
           <col v-if="isGrouped" style="width: 28px;">
@@ -194,7 +210,7 @@
         </thead>
       </table>
       <!-- Single-row header (no nested columns) -->
-      <div v-else class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
+      <div v-else-if="!props.hideHeader" class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: headerTemplate(columns) }">
         <!-- Global selectable column (from Grid prop) -->
         <div v-if="props.selectable" class="v3grid__cell">
           <input class="v3grid__checkbox" type="checkbox" :checked="allVisibleSelected"
@@ -1008,7 +1024,7 @@
       :style="{ width: lockedLeftWidth + 'px', gridTemplateColumns: lockedLeftTemplate }">
 
       <!-- Cabeçalho (agora com gridTemplateColumns) -->
-      <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: lockedLeftTemplate }">
+      <div v-if="!props.hideHeader" class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: lockedLeftTemplate }">
         <div v-for="(c, i) in lockedLeftCols" :key="'h-left-' + i" class="v3grid__cell v3grid__headercell"
           v-bind="c.headerAttributes || {}"
           @click="(c.sortable !== false && (props.sortable || c.sortable === true)) && toggleSort(c)">
@@ -1110,7 +1126,7 @@
     <div class="v3grid__locked-right"
       :style="{ width: lockedRightWidth + 'px', gridTemplateColumns: lockedRightTemplate }">
 
-      <div class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: lockedRightTemplate }">
+      <div v-if="!props.hideHeader" class="v3grid__head" :style="{ display: 'grid', gridTemplateColumns: lockedRightTemplate }">
         <div v-for="(c, i) in lockedRightCols" :key="'h-right-' + i" class="v3grid__cell v3grid__headercell"
           v-bind="c.headerAttributes || {}">
           <span v-if="c.headerTemplate" v-html="renderHeaderTemplate(c)"></span>
@@ -1233,8 +1249,8 @@
         <div v-if="!props.virtual && props.pageable !== false && props.pageablePageSizes !== false && (props.pageablePageSizes === true || Array.isArray(props.pageablePageSizes))" 
           style="display:flex;align-items:center;gap:.5rem;flex-wrap:nowrap;">
           <label class="text-sm" style="white-space:nowrap;">{{ msgs.pageableItemsPerPage || msgs.rowsPerPage }}</label>
-          <select class="v3grid__input" style="width:auto;min-width:60px;" :value="pageSize"
-            @change="pageSize = Number(($event.target as HTMLSelectElement).value)">
+          <select v-if="!showCustomPageSizeInGrid" class="v3grid__input" style="width:auto;min-width:60px;" :value="isCustomPageSizeInGrid ? 'custom' : pageSize"
+            @change="handlePageSizeChangeInGrid(($event.target as HTMLSelectElement).value)">
             <template v-if="Array.isArray(props.pageablePageSizes)">
               <option v-for="n in props.pageablePageSizes" :key="String(n)" :value="typeof n === 'string' && n === 'all' ? total : (typeof n === 'number' ? n : Number(n))">
                 {{ typeof n === 'string' && n === 'all' ? 'All' : String(n) }}
@@ -1243,7 +1259,29 @@
             <template v-else>
               <option v-for="n in [10, 20, 50, 100]" :key="n" :value="n">{{ n }}</option>
             </template>
+            <option v-if="props.pageableCustomPageSize" value="custom">{{ msgs.pageableCustom || 'Custom' }}</option>
           </select>
+          <div v-else style="display: flex; align-items: center; gap: 0.25rem;">
+            <input
+              type="number"
+              :min="1"
+              :max="10000"
+              :value="customPageSizeValueInGrid"
+              @input="customPageSizeValueInGrid = ($event.target as HTMLInputElement).value"
+              @keydown.enter="handleCustomPageSizeInGrid"
+              @blur="handleCustomPageSizeInGrid"
+              class="v3grid__input"
+              style="width:auto;min-width:60px;max-width:80px;text-align:center;"
+            />
+            <button
+              @click="showCustomPageSizeInGrid = false; customPageSizeValueInGrid = String(pageSize)"
+              class="v3grid__btn--toolbar"
+              style="padding: 0.25rem 0.5rem; min-width: auto;"
+              :title="msgs.pageableCancel || 'Cancel'"
+            >
+              ×
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1262,6 +1300,7 @@
           :messages="props.messages" 
           :rtl="props.rtl"
           :previousNext="props.pageablePreviousNext !== false"
+          :customPageSize="props.pageableCustomPageSize"
           :numeric="props.pageableNumeric === true"
           :buttonCount="props.pageableButtonCount ?? props.paginationMaxPages ?? 5"
           :input="props.pageableInput === true"
@@ -1508,7 +1547,7 @@ import { useColumnResize } from '../composables/resize'
 import { useColumnReorder } from '../composables/reorder'
 import { useKeyboardNav } from '../composables/keyboard'
 import { useVirtual } from '../composables/virtual'
-import { cleanStringValue, deepCleanStrings } from '../utils/string'
+import { cleanStringValue, deepCleanStrings, decodeHtmlEntities } from '../utils/string'
 import { useEndless } from '../composables/endless'
 import { usePersist } from '../composables/persist'
 import { useEditing } from '../composables/editing'
@@ -1538,6 +1577,17 @@ onMounted(() => {
   })
   rootObserver = ro
   ro.observe(rootEl.value)
+  
+  // Initialize from URL on mount
+  if (props.pageableSyncUrl) {
+    const urlParams = getUrlParams()
+    if (urlParams.page !== null && urlParams.page > 0) {
+      page.value = urlParams.page
+    }
+    if (urlParams.pageSize !== null && urlParams.pageSize > 0) {
+      pageSize.value = urlParams.pageSize
+    }
+  }
 })
 
 type DataRow = Record<string, unknown>
@@ -1570,6 +1620,7 @@ const props = withDefaults(defineProps<GridProps>(), {
   pageable: true,
   pageableAlwaysVisible: true,
   pageablePageSizes: () => [10, 20, 50, 100],
+  pageableCustomPageSize: false,
   pageablePreviousNext: true,
   pageableNumeric: false,
   pageableButtonCount: undefined,
@@ -1577,11 +1628,15 @@ const props = withDefaults(defineProps<GridProps>(), {
   pageableRefresh: false,
   pageableResponsive: true,
   pageableInfo: true,
+  pageableSyncUrl: false,
+  pageableUrlParamPage: 'page',
+  pageableUrlParamPageSize: 'pageSize',
   sortable: false,
   sortableMode: 'single',
   sortableAllowUnsort: true,
   sortableShowIndexes: false,
   showFilterRow: true,
+  hideHeader: false,
   maxBodyHeight: undefined,
 
   allowCopy: false,
@@ -1696,6 +1751,88 @@ const isCardMode = computed<boolean>(() => {
 const sortState = ref<SortDescriptor[]>(props.sort ?? [])
 const page = ref(props.page!)
 const pageSize = ref(props.pageSize!)
+const showCustomPageSizeInGrid = ref(false)
+const customPageSizeValueInGrid = ref<string>('')
+
+// Check if current pageSize is custom (not in the predefined options)
+const isCustomPageSizeInGrid = computed(() => {
+  if (Array.isArray(props.pageablePageSizes)) {
+    return !props.pageablePageSizes.some(n => {
+      const val = typeof n === 'string' && n === 'all' ? total.value : (typeof n === 'number' ? n : Number(n))
+      return val === pageSize.value
+    })
+  }
+  return ![10, 20, 50, 100].includes(pageSize.value)
+})
+
+function handlePageSizeChangeInGrid(value: string) {
+  if (value === 'custom') {
+    showCustomPageSizeInGrid.value = true
+    customPageSizeValueInGrid.value = String(pageSize.value)
+  } else {
+    pageSize.value = Number(value)
+  }
+}
+
+function handleCustomPageSizeInGrid() {
+  const num = Number.parseInt(customPageSizeValueInGrid.value, 10)
+  if (!Number.isNaN(num) && num >= 1 && num <= 10000) {
+    pageSize.value = num
+    showCustomPageSizeInGrid.value = false
+  } else {
+    // Reset to current pageSize if invalid
+    customPageSizeValueInGrid.value = String(pageSize.value)
+    showCustomPageSizeInGrid.value = false
+  }
+}
+
+// URL synchronization helpers
+function getUrlParams(): { page: number | null; pageSize: number | null } {
+  if (!props.pageableSyncUrl || typeof window === 'undefined') {
+    return { page: null, pageSize: null }
+  }
+  
+  const urlParams = new URLSearchParams(window.location.search)
+  const pageParam = urlParams.get(props.pageableUrlParamPage || 'page')
+  const pageSizeParam = urlParams.get(props.pageableUrlParamPageSize || 'pageSize')
+  
+  return {
+    page: pageParam ? parseInt(pageParam, 10) : null,
+    pageSize: pageSizeParam ? parseInt(pageSizeParam, 10) : null,
+  }
+}
+
+function updateUrlParams(newPage?: number, newPageSize?: number) {
+  if (!props.pageableSyncUrl || typeof window === 'undefined') {
+    return
+  }
+  
+  const url = new URL(window.location.href)
+  const pageParam = props.pageableUrlParamPage || 'page'
+  const pageSizeParam = props.pageableUrlParamPageSize || 'pageSize'
+  
+  if (newPage !== undefined) {
+    if (newPage === 1) {
+      url.searchParams.delete(pageParam)
+    } else {
+      url.searchParams.set(pageParam, String(newPage))
+    }
+  }
+  
+  if (newPageSize !== undefined) {
+    const defaultPageSize = Array.isArray(props.pageablePageSizes) && props.pageablePageSizes.length > 0
+      ? props.pageablePageSizes[0] as number
+      : 20
+    if (newPageSize === defaultPageSize) {
+      url.searchParams.delete(pageSizeParam)
+    } else {
+      url.searchParams.set(pageSizeParam, String(newPageSize))
+    }
+  }
+  
+  // Update URL without page reload
+  window.history.replaceState({}, '', url.toString())
+}
 const filters = ref<FilterDescriptor[]>(props.filter ?? [])
 const cardSortField = ref<string>('')
 const cardSortDir = ref<'asc' | 'desc'>('asc')
@@ -2439,14 +2576,22 @@ function columnValue(row: unknown, column: ColumnDef, rowIndex = -1): any {
   // Apply values transform (enum/transform)
   let transformed = applyValuesTransform(raw, column.values)
   
-  // Apply string cleaning if enabled
-  if (props.cleanStrings && typeof transformed === 'string') {
-    transformed = cleanStringValue(transformed, {
-      decodeEntities: true,
-      normalizeQuotes: true,
-      preferSingleQuotes: true,
-      deep: false,
-    })
+  // Always decode HTML entities in strings to prevent displaying encoded characters like &#39;
+  // This ensures that values like "Chef Anton&#39;s" are displayed as "Chef Anton's"
+  if (typeof transformed === 'string') {
+    // Decode HTML entities first (always, not just when cleanStrings is enabled)
+    // This handles cases where data comes with HTML entities already encoded
+    transformed = decodeHtmlEntities(transformed)
+    
+    // Apply additional string cleaning if enabled
+    if (props.cleanStrings) {
+      transformed = cleanStringValue(transformed, {
+        decodeEntities: false, // Already decoded above
+        normalizeQuotes: true,
+        preferSingleQuotes: true,
+        deep: false,
+      })
+    }
   }
   
   // Apply cell function if provided
@@ -2461,17 +2606,20 @@ function formatColumnValue(value: any, column: ColumnDef, row: any): string {
   // Apply format if provided
   let formatted = formatValue(value, column.format, row)
   
-  // Apply encoding if needed (default: true)
-  if (column.encoded !== false) {
-    // HTML encode (basic implementation)
-    formatted = formatted
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;')
+  // Convert to string if not already
+  if (formatted == null) formatted = ''
+  formatted = String(formatted)
+  
+  // If encoded is false, return as-is (for v-html usage)
+  // The value should already be decoded by columnValue function
+  if (column.encoded === false) {
+    return formatted
   }
   
+  // For {{ }} interpolation (encoded === true or undefined)
+  // Vue automatically escapes HTML in {{ }}, so we don't need to manually encode
+  // The value from columnValue is already decoded, so we return it as-is
+  // Vue will handle the necessary escaping for XSS safety
   return formatted
 }
 
@@ -2885,6 +3033,33 @@ const nonVirtualBodyStyle = computed<CSSProperties>(() => {
   return style
 })
 
+// Prevent double scrollbar when maxBodyHeight is set - ensure parent doesn't scroll vertically
+const scrollWrapperStyle = computed<CSSProperties>(() => {
+  if (props.virtual) return {}
+  
+  const style: CSSProperties = {}
+  const limit = typeof props.maxBodyHeight === 'number' ? Math.max(props.maxBodyHeight, 0) : undefined
+  const shouldAuto = autoHeightEnabled.value && !isCardMode.value
+  const bodyOverflowY = nonVirtualBodyStyle.value.overflowY
+  
+  // When maxBodyHeight is set and autoHeight is enabled, ALWAYS prevent wrapper from scrolling vertically
+  // The body will handle its own vertical scrolling
+  // Keep horizontal scroll for locked columns (overflow-x: auto from CSS)
+  // Force overflow-y: hidden with !important equivalent (inline style has higher specificity)
+  if (limit && shouldAuto) {
+    // Always hide vertical overflow on wrapper when maxBodyHeight is set with autoHeight
+    // This prevents double scrollbar regardless of body height
+    style.overflowY = 'hidden'
+    style.maxHeight = 'none'
+    style.height = 'auto'
+  } else if (bodyOverflowY === 'auto') {
+    // Also hide when body has auto overflow (even without maxBodyHeight)
+    style.overflowY = 'hidden'
+  }
+  
+  return style
+})
+
 /** ---- helpers de agregados ---- */
 type AggName = 'sum' | 'avg' | 'min' | 'max' | 'count'
 
@@ -2948,10 +3123,35 @@ const someVisibleSelected = computed<boolean>(() => {
 
 watch(() => props.sort, v => { if (v) sortState.value = v })
 watch(sortState, v => emit('update:sort', v))
+// Listen to browser back/forward buttons
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', () => {
+    if (props.pageableSyncUrl) {
+      const urlParams = getUrlParams()
+      if (urlParams.page !== null && urlParams.page > 0) {
+        page.value = urlParams.page
+      }
+      if (urlParams.pageSize !== null && urlParams.pageSize > 0) {
+        pageSize.value = urlParams.pageSize
+      }
+    }
+  })
+}
+
 watch(() => props.page, v => { if (v) page.value = v })
-watch(page, v => emit('update:page', v))
+watch(page, v => {
+  emit('update:page', v)
+  if (props.pageableSyncUrl) {
+    updateUrlParams(v, undefined)
+  }
+})
 watch(() => props.pageSize, v => { if (v) pageSize.value = v })
-watch(pageSize, v => emit('update:pageSize', v))
+watch(pageSize, v => {
+  emit('update:pageSize', v)
+  if (props.pageableSyncUrl) {
+    updateUrlParams(undefined, v)
+  }
+})
 watch(() => props.filter, v => { if (v) filters.value = v })
 watch(filters, v => emit('update:filter', v))
 watch(() => groupState.value, (v) => {
@@ -5479,12 +5679,13 @@ async function exportToCSV() {
       return true
     })
     
-    // Build CSV content
+    // Build CSV content with semicolon delimiter
+    const delimiter = ';'
     function escapeCsvValue(value: string): string {
       if (value === null || value === undefined) return ''
       const str = String(value)
-      // If value contains comma, quote, newline, or carriage return, wrap in quotes
-      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+      // If value contains semicolon, quote, newline, or carriage return, wrap in quotes
+      if (str.includes(delimiter) || str.includes('"') || str.includes('\n') || str.includes('\r')) {
         // Escape quotes by doubling them
         return `"${str.replace(/"/g, '""')}"`
       }
@@ -5521,8 +5722,8 @@ async function exportToCSV() {
     
     // Create CSV content - use \r\n for Windows line endings
     const csvLines = [
-      headers.join(','),
-      ...csvRows.map(row => row.join(','))
+      headers.join(delimiter),
+      ...csvRows.map(row => row.join(delimiter))
     ]
     const csvContent = csvLines.join('\r\n')
     
@@ -6458,12 +6659,214 @@ function exposedIsRowEditing(row: any): boolean {
   return editingState.isRowEditing(key)
 }
 
+async function exportToDocx() {
+  // Check if docx library is available
+  let docx: any = null
+  try {
+    // Try to dynamically import docx library
+    // @ts-ignore - Optional peer dependency, may not be installed
+    const docxMod: any = await import('docx')
+    // Handle different module export structures
+    // Use 'in' operator to safely check for 'default' property
+    if (docxMod && typeof docxMod === 'object') {
+      docx = ('default' in docxMod && docxMod.default) ? docxMod.default : docxMod
+    } else {
+      docx = docxMod
+    }
+  } catch (error) {
+    console.warn('docx library not found. Install docx package for Word export: npm install docx file-saver', error)
+    alert('Word export requires docx and file-saver libraries. Please install them: npm install docx file-saver')
+    return
+  }
+  
+  try {
+    // Get data to export
+    let dataToExport: any[] = []
+    
+    if (props.excelAllPages) {
+      // Export all pages
+      if (props.dataProvider && typeof props.dataProvider === 'function') {
+        // For server-side, fetch all pages
+        const allData: any[] = []
+        let currentPage = 1
+        const pageSize = 1000 // Large page size to minimize requests
+        let hasMore = true
+        let totalRecords = 0
+        
+        while (hasMore) {
+          try {
+            const result = await props.dataProvider({
+              page: currentPage,
+              pageSize: pageSize,
+              sort: sortState.value,
+              filter: filters.value,
+              signal: new AbortController().signal,
+            })
+            
+            if (result.rows && result.rows.length > 0) {
+              // Clean strings if enabled
+              const cleanedRows = props.cleanStrings 
+                ? deepCleanStrings(result.rows)
+                : result.rows
+              allData.push(...cleanedRows)
+              totalRecords = result.total || allData.length
+              
+              // Check if we have all data
+              if (cleanedRows.length < pageSize || allData.length >= totalRecords) {
+                hasMore = false
+              } else {
+                currentPage++
+              }
+            } else {
+              hasMore = false
+            }
+          } catch (error) {
+            console.error('Error fetching page for export:', error)
+            hasMore = false
+          }
+        }
+        
+        dataToExport = allData.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+      } else {
+        // Client-side: get all filtered/sorted data
+        dataToExport = sorted.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+      }
+    } else {
+      // Export current page only
+      dataToExport = visibleRows.value.filter((row: any) => !isGroupNode(row) && !isGroupFooter(row))
+    }
+    
+    // Get visible columns (excluding command columns and hidden columns)
+    const colsToExport = unlockedCols.value.filter(col => {
+      if (col.command) return false
+      if (!col.field) return false
+      return true
+    })
+    
+    // Build table rows for Word document
+    const tableRows: any[] = []
+    
+    // Extract classes from docx module
+    const Document = docx.Document || (docx as any).default?.Document || (docx as any).Document
+    const Paragraph = docx.Paragraph || (docx as any).default?.Paragraph || (docx as any).Paragraph
+    const Table = docx.Table || (docx as any).default?.Table || (docx as any).Table
+    const TableRow = docx.TableRow || (docx as any).default?.TableRow || (docx as any).TableRow
+    const TableCell = docx.TableCell || (docx as any).default?.TableCell || (docx as any).TableCell
+    const AlignmentType = docx.AlignmentType || (docx as any).default?.AlignmentType || (docx as any).AlignmentType
+    const WidthType = docx.WidthType || (docx as any).default?.WidthType || (docx as any).WidthType
+    const Packer = docx.Packer || (docx as any).default?.Packer || (docx as any).Packer
+    
+    if (!Document || !Paragraph || !Table || !TableRow || !TableCell || !Packer) {
+      throw new Error('docx module structure is not as expected')
+    }
+    
+    // Add header row
+    const headerCells = colsToExport.map(col => {
+      return new TableCell({
+        children: [
+          new Paragraph({
+            text: col.title || String(col.field),
+            alignment: AlignmentType.CENTER,
+          }),
+        ],
+        shading: {
+          fill: 'D3D3D3',
+        },
+      })
+    })
+    tableRows.push(new TableRow({ children: headerCells }))
+    
+    // Add data rows
+    dataToExport.forEach(row => {
+      const rowCells = colsToExport.map(col => {
+        const value = columnValue(row, col, 0)
+        let cellText = ''
+        
+        if (value == null || value === '') {
+          cellText = ''
+        } else if (col.type === 'number') {
+          cellText = String(Number(value))
+        } else if (col.type === 'boolean') {
+          cellText = value ? 'Yes' : 'No'
+        } else if (col.type === 'date' && value instanceof Date) {
+          cellText = value.toLocaleDateString()
+        } else {
+          cellText = String(value)
+        }
+        
+        return new TableCell({
+          children: [
+            new Paragraph({
+              text: cellText,
+            }),
+          ],
+        })
+      })
+      tableRows.push(new TableRow({ children: rowCells }))
+    })
+    
+    // Create Word document
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            new Table({
+              rows: tableRows,
+              width: {
+                size: 100,
+                type: WidthType.PERCENTAGE,
+              },
+            }),
+          ],
+        },
+      ],
+    })
+    
+    // Generate blob and download
+    const blob = await Packer.toBlob(doc)
+    
+    // Use file-saver if available, otherwise fallback
+    let saveAs: any = null
+    try {
+      // @ts-ignore - Optional peer dependency, may not be installed
+      const fileSaverMod = await import('file-saver')
+      const fileSaver = fileSaverMod.default || fileSaverMod
+      saveAs = fileSaver.saveAs || fileSaver
+    } catch (error) {
+      // Fallback download
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = props.excelFileName?.replace(/\.(xlsx|xls|csv)$/, '.docx') || 'export.docx'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      return
+    }
+    
+    let fileName = props.excelFileName?.replace(/\.(xlsx|xls|csv)$/, '.docx') || 'export.docx'
+    if (!fileName.endsWith('.docx')) {
+      fileName = fileName + '.docx'
+    }
+    
+    saveAs(blob, fileName)
+  } catch (error) {
+    console.error('Error exporting to Word:', error)
+    emit('error', error)
+  }
+}
+
 // Expose methods for parent component access
 defineExpose({
   getOptions,
   setOptions,
   exportToPdf,
   saveAsPdf: exportToPdf, // Alias for Kendo UI compatibility
+  exportToCSV,
+  exportToExcel,
+  exportToDocx,
   isRowEditing: exposedIsRowEditing,
 })
 

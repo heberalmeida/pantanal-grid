@@ -33,7 +33,7 @@ export function useColumnLocked(columns: () => ColumnDef[], widths: Ref<number[]
 
     function lockedClass(i: number) {
         const meta = lockedMeta.value[i]
-        if (!meta.side) return {}
+        if (!meta || !meta.side) return {}
         return {
             'v3grid__cell--locked': true,
             'v3grid__cell--locked-left': meta.side === 'left',
@@ -43,7 +43,7 @@ export function useColumnLocked(columns: () => ColumnDef[], widths: Ref<number[]
 
     function lockedStyle(i: number) {
         const meta = lockedMeta.value[i]
-        if (!meta.side) return undefined
+        if (!meta || !meta.side) return undefined
 
         const cols = columns()
         const w = widths.value[i] ?? (cols[i] ? cols[i].width ?? 120 : 120)

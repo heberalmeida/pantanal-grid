@@ -17,6 +17,7 @@
     "version-packages": "changeset version",
     "release": "changeset publish",
     "test": "yarn workspace @pantanal/grid test",
+    "test:sumary": "yarn workspace @pantanal/grid test:sumary",
     "test:watch": "yarn workspace @pantanal/grid test:watch",
     "test:ui": "yarn workspace @pantanal/grid test:ui",
     "validate": "yarn test && yarn build && yarn playground:build && yarn docs:build",
