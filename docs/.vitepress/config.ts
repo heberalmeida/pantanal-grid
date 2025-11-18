@@ -158,6 +158,7 @@ export default defineConfig({
     ssr: {
       noExternal: ['@pantanal/grid']
     },
+    assetsInclude: ['**/*.svg'],
     server: {
       fs: {
         allow: ['..']

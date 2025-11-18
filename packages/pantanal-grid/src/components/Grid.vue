@@ -1557,10 +1557,16 @@ import type { AggregateName, Messages } from '../types'
 import GridPagination from './Pagination.vue'
 import PantanalColumn from './Column.vue'
 
-const iconArrowRight = new URL('../assets/arrow-right.svg', import.meta.url).href
-const iconArrowDown = new URL('../assets/arrow-down.svg', import.meta.url).href
-const iconOrderUp = new URL('../assets/order-up.svg', import.meta.url).href
-const iconOrderDown = new URL('../assets/order-down.svg', import.meta.url).href
+// Import SVG assets - Vite will process these correctly with base paths
+import iconArrowRightSrc from '../assets/arrow-right.svg?url'
+import iconArrowDownSrc from '../assets/arrow-down.svg?url'
+import iconOrderUpSrc from '../assets/order-up.svg?url'
+import iconOrderDownSrc from '../assets/order-down.svg?url'
+
+const iconArrowRight = iconArrowRightSrc
+const iconArrowDown = iconArrowDownSrc
+const iconOrderUp = iconOrderUpSrc
+const iconOrderDown = iconOrderDownSrc
 
 const isDevMode = typeof import.meta !== 'undefined' && !!(import.meta as any).env?.DEV
 

@@ -357,6 +357,12 @@ import { computed, ref, watch } from 'vue'
 import type { Locale, Messages } from '../types'
 import { getMessages } from '../i18n/messages'
 
+// Import SVG assets - Vite will process these correctly with base paths
+import iconPrevSrc from '../assets/arrow-left.svg?url'
+import iconNextSrc from '../assets/arrow-right.svg?url'
+import iconFirstSrc from '../assets/previous.svg?url'
+import iconLastSrc from '../assets/next.svg?url'
+
 type Variant = 'simple' | 'pages' | 'edges'
 
 const props = withDefaults(defineProps<{
@@ -531,10 +537,10 @@ const tailwind = computed(() => !!props.tailwind)
 const btnTW = 'inline-flex items-center gap-1.5 border border-slate-300 rounded-md bg-white disabled:opacity-50'
 const iconTW = 'w-3.5 h-3.5'
 
-const iconPrev  = new URL('../assets/arrow-left.svg',  import.meta.url).href
-const iconNext  = new URL('../assets/arrow-right.svg', import.meta.url).href
-const iconFirst = new URL('../assets/previous.svg',    import.meta.url).href
-const iconLast  = new URL('../assets/next.svg',        import.meta.url).href
+const iconPrev  = iconPrevSrc
+const iconNext  = iconNextSrc
+const iconFirst = iconFirstSrc
+const iconLast  = iconLastSrc
 
 // Sync pageInputValue with page prop
 watch(() => props.page, (newPage) => {
