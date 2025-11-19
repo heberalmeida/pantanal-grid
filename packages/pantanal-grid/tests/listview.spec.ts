@@ -378,5 +378,142 @@ describe('PantanalListView', () => {
     const alternateItems = wrapper.findAll('.pantanal-listview__item--alternate')
     expect(alternateItems.length).toBeGreaterThan(0)
   })
+
+  it('should expose clearSelection method', async () => {
+    const wrapper = mount(PantanalListView, {
+      props: {
+        dataSource: items,
+        template,
+        selectable: 'multiple',
+        autoBind: true,
+      },
+    })
+
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    const vm = wrapper.vm as any
+    vm.selectItem(items[0])
+    await nextTick()
+
+    vm.clearSelection()
+    await nextTick()
+
+    const selected = vm.selectedItems()
+    expect(selected.length).toBe(0)
+  })
+
+  it('should expose selectItem and deselectItem methods', async () => {
+    const wrapper = mount(PantanalListView, {
+      props: {
+        dataSource: items,
+        template,
+        selectable: 'multiple',
+        autoBind: true,
+      },
+    })
+
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    const vm = wrapper.vm as any
+    vm.selectItem(items[0])
+    await nextTick()
+
+    let selected = vm.selectedItems()
+    expect(selected.length).toBe(1)
+    expect(selected[0]).toBe(items[0])
+
+    vm.deselectItem(items[0])
+    await nextTick()
+
+    selected = vm.selectedItems()
+    expect(selected.length).toBe(0)
+  })
+
+  it('should expose startEdit, cancelEdit, and saveEdit methods', async () => {
+    const editTemplate = (item: any) => `<input value="${item.name}" />`
+
+    const wrapper = mount(PantanalListView, {
+      props: {
+        dataSource: items,
+        template,
+        editTemplate,
+        autoBind: true,
+      },
+    })
+
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    const vm = wrapper.vm as any
+    
+    vm.startEdit(items[0])
+    await nextTick()
+
+    expect(wrapper.find('.pantanal-listview__item--editing').exists()).toBe(true)
+
+    vm.cancelEdit()
+    await nextTick()
+
+    expect(wrapper.find('.pantanal-listview__item--editing').exists()).toBe(false)
+  })
+
+  it('should expose removeItem method', async () => {
+    const editTemplate = (item: any) => `<input value="${item.name}" />`
+
+    const wrapper = mount(PantanalListView, {
+      props: {
+        dataSource: items,
+        template,
+        editTemplate,
+        autoBind: true,
+      },
+    })
+
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    const vm = wrapper.vm as any
+    vm.removeItem(items[0])
+
+    await nextTick()
+
+    expect(wrapper.emitted('remove')).toBeDefined()
+  })
+
+  it('should handle DataSource props object', async () => {
+    const wrapper = mount(PantanalListView, {
+      props: {
+        dataSource: {
+          data: items,
+          type: 'local',
+        },
+        template,
+        autoBind: true,
+      },
+    })
+
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    const listItems = wrapper.findAll('.pantanal-listview__item')
+    expect(listItems.length).toBe(items.length)
+  })
+
+  it('should handle empty data source', async () => {
+    const wrapper = mount(PantanalListView, {
+      props: {
+        dataSource: [],
+        template,
+        autoBind: true,
+      },
+    })
+
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    expect(wrapper.find('.pantanal-listview__empty').exists()).toBe(true)
+  })
 })
 

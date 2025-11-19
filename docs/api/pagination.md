@@ -221,9 +221,195 @@ const dataProvider: DataProvider = async (args) => {
 />
 ```
 
+## Messages Configuration
+
+The pagination component supports comprehensive message customization through the `messages` prop. All pagination-related messages can be customized to match your application's locale or branding requirements.
+
+### Available Messages
+
+| Property | Type | Default (en) | Description |
+|----------|------|--------------|-------------|
+| `pageableDisplay` | `string` | `"Showing {0}-{1} of {2} items"` | The information text displayed in the pagination footer. Contains placeholders: `{0}` (first item index), `{1}` (last item index), `{2}` (total items) |
+| `pageableEmpty` | `string` | `"No items to display"` | The text displayed when the DataSource view does not contain items |
+| `pageablePage` | `string` | `"Page"` | The label displayed before the page number input |
+| `pageableOf` | `string` | `"of {0}"` | The label displayed after the page number input. Contains placeholder `{0}` (total pages) |
+| `pageableItemsPerPage` | `string` | `"items per page"` | The label displayed after the page size drop-down list |
+| `pageableFirst` | `string` | `"First page"` | The tooltip of the button which navigates to the first page |
+| `pageableLast` | `string` | `"Last page"` | The tooltip of the button which navigates to the last page |
+| `pageablePrevious` | `string` | `"Previous page"` | The tooltip of the button which navigates to the previous page |
+| `pageableNext` | `string` | `"Next page"` | The tooltip of the button which navigates to the next page |
+| `pageableRefresh` | `string` | `"Refresh"` | The tooltip of the **Refresh** button |
+| `pageableMorePages` | `string` | `"More pages"` | The tooltip of the ellipsis button that appears when there are more pages to display |
+| `pageableCustom` | `string` | `"Custom"` | The text displayed for the item which represents the custom page size option |
+| `pageableCancel` | `string` | `"Cancel"` | The text displayed on the cancel button when using custom page size |
+
+### Message Placeholders
+
+Some messages support placeholders for dynamic content:
+
+#### pageableDisplay
+
+Format: `"Showing {0}-{1} of {2} items"`
+
+- `{0}` - The index of the first data item (1-based)
+- `{1}` - The index of the last data item (1-based)
+- `{2}` - The total number of data items
+
+**Example:**
+```typescript
+{
+  pageableDisplay: 'Displaying {0} to {1} of {2} products'
+}
+// Output: "Displaying 1 to 20 of 100 products"
+```
+
+#### pageableOf
+
+Format: `"of {0}"`
+
+- `{0}` - The total number of pages
+
+**Example:**
+```typescript
+{
+  pageableOf: 'of {0} pages'
+}
+// Output: "of 10 pages"
+```
+
+### Customizing Messages
+
+You can customize pagination messages in several ways:
+
+#### 1. Through Grid Component
+
+```vue
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    key-field="id"
+    :messages="customMessages"
+  />
+</template>
+
+<script setup>
+import { PantanalGrid } from '@pantanal/grid'
+
+const customMessages = {
+  pageableDisplay: 'Exibindo {0} a {1} de {2} itens',
+  pageablePage: 'Página',
+  pageableOf: 'de {0}',
+  pageableItemsPerPage: 'itens por página',
+  pageableFirst: 'Primeira página',
+  pageableLast: 'Última página',
+  pageablePrevious: 'Página anterior',
+  pageableNext: 'Próxima página',
+  pageableRefresh: 'Atualizar'
+}
+</script>
+```
+
+#### 2. Through Locale Configuration
+
+```typescript
+import { registerLocale } from '@pantanal/grid'
+import type { Messages } from '@pantanal/grid'
+
+const portugueseMessages: Messages = {
+  // ... other messages
+  pageableDisplay: 'Exibindo {0} a {1} de {2} itens',
+  pageableEmpty: 'Nenhum item para exibir',
+  pageablePage: 'Página',
+  pageableOf: 'de {0}',
+  pageableItemsPerPage: 'itens por página',
+  pageableFirst: 'Primeira página',
+  pageableLast: 'Última página',
+  pageableNext: 'Próxima página',
+  pageablePrevious: 'Página anterior',
+  pageableRefresh: 'Atualizar',
+  pageableMorePages: 'Mais páginas',
+  pageableCustom: 'Personalizado',
+  pageableCancel: 'Cancelar'
+}
+
+registerLocale('pt', portugueseMessages)
+```
+
+#### 3. Through Pagination Component (Standalone)
+
+```vue
+<template>
+  <PantanalPagination
+    :page="page"
+    :page-size="pageSize"
+    :total="total"
+    :messages="customMessages"
+    @update:page="page = $event"
+    @update:page-size="pageSize = $event"
+  />
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import { PantanalPagination } from '@pantanal/grid'
+
+const page = ref(1)
+const pageSize = ref(20)
+const total = ref(100)
+
+const customMessages = {
+  pageableDisplay: 'Showing {0} to {1} of {2}',
+  pageablePage: 'Page',
+  pageableOf: 'of {0}',
+  pageableItemsPerPage: 'per page'
+}
+</script>
+```
+
+### Built-in Locales
+
+Pantanal Grid includes three built-in locales with all pagination messages pre-configured:
+
+- **English (`en`)** - Default locale
+- **Spanish (`es`)** - Español
+- **Portuguese (`pt`)** - Português
+
+### Complete Message Example
+
+```typescript
+import type { Messages } from '@pantanal/grid'
+
+const completePaginationMessages: Partial<Messages> = {
+  // Display information
+  pageableDisplay: 'Showing {0}-{1} of {2} items',
+  pageableEmpty: 'No items to display',
+  
+  // Page navigation labels
+  pageablePage: 'Page',
+  pageableOf: 'of {0}',
+  
+  // Page size selector
+  pageableItemsPerPage: 'items per page',
+  pageableCustom: 'Custom',
+  pageableCancel: 'Cancel',
+  
+  // Navigation buttons
+  pageableFirst: 'First page',
+  pageableLast: 'Last page',
+  pageablePrevious: 'Previous page',
+  pageableNext: 'Next page',
+  
+  // Additional controls
+  pageableRefresh: 'Refresh',
+  pageableMorePages: 'More pages'
+}
+```
+
 ## See Also
 
 - [Pagination Guide](/guide/pagination) - Complete pagination guide
 - [PantanalGrid API](/api/grid) - Main component reference
 - [Server-Side Mode Guide](/guide/server-side) - Server-side pagination
+- [Messages API](/api/messages) - Complete messages reference
 

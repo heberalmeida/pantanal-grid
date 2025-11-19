@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends Row = Row">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, shallowRef, computed, watch, onMounted } from 'vue'
 import type { ListViewProps, ListViewEmits, Row, DataSourceInstance, DataSourceProps } from '../types'
 
 const props = withDefaults(defineProps<ListViewProps<T>>(), {
@@ -70,7 +70,7 @@ const emit = defineEmits<ListViewEmits<T>>()
 const rootEl = ref<HTMLElement>()
 const itemEls = ref<HTMLElement[]>([])
 const items = ref<T[]>([])
-const selectedItems = ref<Set<T>>(new Set())
+const selectedItems = shallowRef<Set<T>>(new Set())
 const editingItem = ref<T | null>(null)
 const focusedIndex = ref<number>(-1)
 const loading = ref(false)
@@ -85,7 +85,7 @@ function getItemKey(item: any, index: number): string | number {
 }
 
 function isSelected(item: any): boolean {
-  return selectedItems.value.has(item as any)
+  return selectedItems.value.has(item as T)
 }
 
 function isEditing(item: any): boolean {
