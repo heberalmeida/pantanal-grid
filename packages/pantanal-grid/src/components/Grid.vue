@@ -1470,8 +1470,8 @@
           <template v-if="props.pageableSlots?.buttons" #buttons="slotProps">
             <slot :name="props.pageableSlots.buttons" v-bind="slotProps" />
           </template>
-          @update:page="(p: number) => { isInternalPageUpdate = true; page.value = p }"
-          @update:pageSize="(s: number) => { isInternalPageSizeUpdate = true; pageSize.value = s }"
+          @update:page="(p: number) => { page.value = p }"
+          @update:pageSize="(s: number) => { pageSize.value = s }"
           @refresh="() => emit('refresh')" 
         </GridPagination>
       </div>
@@ -1988,8 +1988,6 @@ const sortState = ref<SortDescriptor[]>(props.sort ?? [])
 const page = ref(props.page ?? 1)
 const pageSize = ref(props.pageSize ?? 20)
 const showCustomPageSizeInGrid = ref(false)
-let isInternalPageUpdate = false
-let isInternalPageSizeUpdate = false
 const customPageSizeValueInGrid = ref<string>('')
 
 // Check if current pageSize is custom (not in the predefined options)
@@ -3866,41 +3864,29 @@ if (typeof window !== 'undefined') {
 }
 
 watch(() => props.page, v => { 
-  if (v !== undefined && v !== null && v !== page.value && !isInternalPageUpdate) {
-    isInternalPageUpdate = true
+  if (v !== undefined && v !== null && v !== page.value) {
     page.value = v
-    isInternalPageUpdate = false
-  } else {
-    isInternalPageUpdate = false
   }
 })
 watch(page, v => {
-  if (isInternalPageUpdate) {
-    // Update came from internal Pagination component, emit to parent
-    isInternalPageUpdate = false
-    emit('update:page', v)
-    if (props.pageableSyncUrl) {
-      updateUrlParams(v, undefined)
-    }
+  // Always emit when internal page ref changes
+  // This handles both internal updates (from Pagination) and external updates (from props)
+  emit('update:page', v)
+  if (props.pageableSyncUrl) {
+    updateUrlParams(v, undefined)
   }
 })
 watch(() => props.pageSize, v => { 
-  if (v !== undefined && v !== null && v !== pageSize.value && !isInternalPageSizeUpdate) {
-    isInternalPageSizeUpdate = true
+  if (v !== undefined && v !== null && v !== pageSize.value) {
     pageSize.value = v
-    isInternalPageSizeUpdate = false
-  } else {
-    isInternalPageSizeUpdate = false
   }
 })
 watch(pageSize, v => {
-  if (isInternalPageSizeUpdate) {
-    // Update came from internal Pagination component, emit to parent
-    isInternalPageSizeUpdate = false
-    emit('update:pageSize', v)
-    if (props.pageableSyncUrl) {
-      updateUrlParams(undefined, v)
-    }
+  // Always emit when internal pageSize ref changes
+  // This handles both internal updates (from Pagination) and external updates (from props)
+  emit('update:pageSize', v)
+  if (props.pageableSyncUrl) {
+    updateUrlParams(undefined, v)
   }
 })
 watch(() => props.filter, v => { if (v) filters.value = v })
