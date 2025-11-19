@@ -1470,8 +1470,8 @@
           <template v-if="props.pageableSlots?.buttons" #buttons="slotProps">
             <slot :name="props.pageableSlots.buttons" v-bind="slotProps" />
           </template>
-          @update:page="(p: number) => page.value = p"
-          @update:pageSize="(s: number) => pageSize.value = s"
+          @update:page="(p: number) => { isInternalPageUpdate = true; page.value = p }"
+          @update:pageSize="(s: number) => { isInternalPageSizeUpdate = true; pageSize.value = s }"
           @refresh="() => emit('refresh')" 
         </GridPagination>
       </div>
