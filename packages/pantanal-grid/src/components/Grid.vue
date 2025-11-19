@@ -1988,6 +1988,8 @@ const sortState = ref<SortDescriptor[]>(props.sort ?? [])
 const page = ref(props.page ?? 1)
 const pageSize = ref(props.pageSize ?? 20)
 const showCustomPageSizeInGrid = ref(false)
+let isInternalPageUpdate = false
+let isInternalPageSizeUpdate = false
 const customPageSizeValueInGrid = ref<string>('')
 
 // Check if current pageSize is custom (not in the predefined options)
@@ -3864,29 +3866,33 @@ if (typeof window !== 'undefined') {
 }
 
 watch(() => props.page, v => { 
-  if (v !== undefined && v !== null && v !== page.value) {
+  if (v !== undefined && v !== null && v !== page.value && !isInternalPageUpdate) {
     page.value = v
   }
+  isInternalPageUpdate = false
 })
 watch(page, v => {
-  if (v !== props.page) {
+  if (!isInternalPageUpdate) {
+    isInternalPageUpdate = true
     emit('update:page', v)
-  }
-  if (props.pageableSyncUrl) {
-    updateUrlParams(v, undefined)
+    if (props.pageableSyncUrl) {
+      updateUrlParams(v, undefined)
+    }
   }
 })
 watch(() => props.pageSize, v => { 
-  if (v !== undefined && v !== null && v !== pageSize.value) {
+  if (v !== undefined && v !== null && v !== pageSize.value && !isInternalPageSizeUpdate) {
     pageSize.value = v
   }
+  isInternalPageSizeUpdate = false
 })
 watch(pageSize, v => {
-  if (v !== props.pageSize) {
+  if (!isInternalPageSizeUpdate) {
+    isInternalPageSizeUpdate = true
     emit('update:pageSize', v)
-  }
-  if (props.pageableSyncUrl) {
-    updateUrlParams(undefined, v)
+    if (props.pageableSyncUrl) {
+      updateUrlParams(undefined, v)
+    }
   }
 })
 watch(() => props.filter, v => { if (v) filters.value = v })
