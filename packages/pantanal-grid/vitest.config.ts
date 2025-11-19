@@ -29,6 +29,10 @@ export default defineConfig({
         '**/*.spec.js',
         '**/coverage-summary.cjs',
         '**/types.ts', // Types-only file, no executable code
+        '**/vite.config.ts', // Configuration file
+        '**/vitest.config.ts', // Configuration file
+        '**/vite-env.d.ts', // Type definitions file
+        '**/*.d.ts', // All TypeScript declaration files
       ]
     }
   }
