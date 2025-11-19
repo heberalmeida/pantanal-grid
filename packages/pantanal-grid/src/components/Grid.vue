@@ -1429,8 +1429,8 @@
       <!-- Bottom row: pagination controls -->
       <div v-if="!props.virtual && props.pageable !== false" style="display:flex;justify-content:center;align-items:center;width:100%;overflow-x:auto;">
         <GridPagination 
-          :page="page?.value ?? props.page ?? 1" 
-          :pageSize="pageSize?.value ?? props.pageSize ?? 20" 
+          :page="currentPage" 
+          :pageSize="currentPageSize" 
           :total="total" 
           :variant="props.paginationVariant ?? 'simple'"
           :showText="props.paginationShowText ?? true" 
@@ -1985,8 +1985,8 @@ const isCardMode = computed<boolean>(() => {
 })
 
 const sortState = ref<SortDescriptor[]>(props.sort ?? [])
-const page = ref(props.page!)
-const pageSize = ref(props.pageSize!)
+const page = ref(props.page ?? 1)
+const pageSize = ref(props.pageSize ?? 20)
 const showCustomPageSizeInGrid = ref(false)
 const customPageSizeValueInGrid = ref<string>('')
 
@@ -3653,6 +3653,10 @@ const total = computed(() => {
   }
   return sorted.value.length
 })
+
+// Computed properties for pagination to ensure reactivity
+const currentPage = computed(() => page.value ?? props.page ?? 1)
+const currentPageSize = computed(() => pageSize.value ?? props.pageSize ?? 20)
 
 // Helper function to format pageableDisplay message
 function formatPageableDisplay(template: string): string {
