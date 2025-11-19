@@ -16,8 +16,8 @@ const rows = ref<RowData[]>([
 ])
 
 const sparklineTemplate: ColumnTemplateFn = (ctx) => {
-  const row = ctx?.row as RowData
-  const data = row.trend || []
+  const row = ctx?.row as unknown as RowData
+  const data = row?.trend || []
   if (data.length === 0) return h('span', 'No data')
   
   const width = 100

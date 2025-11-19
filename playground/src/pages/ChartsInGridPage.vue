@@ -104,7 +104,6 @@ const barChartRows = ref<SalesData[]>([
 
 const barChartTemplate: ColumnTemplateFn = (ctx) => {
   const value = ctx?.value ?? 0
-  const row = ctx?.row as SalesData
   const maxValue = Math.max(...barChartRows.value.map(r => r.sales), 1000)
   const percentage = Math.min((value / maxValue) * 100, 100)
   const width = 100
@@ -261,8 +260,8 @@ const sparklineRows = ref<SalesData[]>([
 ])
 
 const sparklineTemplate: ColumnTemplateFn = (ctx) => {
-  const row = ctx?.row as SalesData
-  const data = row.trend || []
+  const row = ctx?.row as unknown as SalesData
+  const data = row?.trend || []
   if (data.length === 0) return h('span', 'No data')
   
   const width = 100

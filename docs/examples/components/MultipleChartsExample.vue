@@ -120,8 +120,8 @@ const progressTemplate: ColumnTemplateFn = (ctx) => {
 }
 
 const sparklineTemplate: ColumnTemplateFn = (ctx) => {
-  const row = ctx?.row as SalesData
-  const data = row.trend || []
+  const row = ctx?.row as unknown as SalesData
+  const data = row?.trend || []
   if (data.length === 0) return h('span', 'No data')
   
   const width = 100
