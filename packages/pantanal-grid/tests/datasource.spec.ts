@@ -620,6 +620,618 @@ describe('PantanalDataSource', () => {
       const instance = wrapper.vm as any
       expect(typeof instance.query).toBe('function')
     })
+
+    it('should expose query() method with all options', async () => {
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'local',
+          data: mockData,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const instance = wrapper.vm as any
+      instance.query({
+        page: 3,
+        pageSize: 2,
+        sort: [{ field: 'price', dir: 'asc' }],
+        filter: [{ field: 'category', operator: 'eq', value: 'Electronics' }],
+        group: [{ field: 'category', dir: 'asc' }],
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const data = instance.data()
+      expect(data.length).toBeLessThanOrEqual(2)
+    })
+  })
+
+  describe('Remote DataSource - Server Operations', () => {
+    let mockFetch: ReturnType<typeof vi.fn>
+
+    beforeEach(() => {
+      mockFetch = vi.fn()
+      global.fetch = mockFetch
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('should trigger read on page change with serverPaging', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: mockData, total: 5 }),
+      })
+
+      const transport: DataSourceTransport = {
+        read: 'https://api.example.com/products',
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          serverPaging: true,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const initialCallCount = mockFetch.mock.calls.length
+
+      await wrapper.setProps({ page: 2 })
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Should have triggered another read
+      expect(mockFetch.mock.calls.length).toBeGreaterThan(initialCallCount)
+    })
+
+    it('should trigger read on pageSize change with serverPaging', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: mockData, total: 5 }),
+      })
+
+      const transport: DataSourceTransport = {
+        read: 'https://api.example.com/products',
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          serverPaging: true,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const initialCallCount = mockFetch.mock.calls.length
+
+      await wrapper.setProps({ pageSize: 5 })
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Should have triggered another read
+      expect(mockFetch.mock.calls.length).toBeGreaterThan(initialCallCount)
+    })
+
+    it('should trigger read on sort change with serverSorting', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: mockData, total: 5 }),
+      })
+
+      const transport: DataSourceTransport = {
+        read: 'https://api.example.com/products',
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          serverSorting: true,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const initialCallCount = mockFetch.mock.calls.length
+
+      await wrapper.setProps({
+        sort: [{ field: 'name', dir: 'asc' }],
+      })
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Should have triggered another read
+      expect(mockFetch.mock.calls.length).toBeGreaterThan(initialCallCount)
+    })
+
+    it('should trigger read on filter change with serverFiltering', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: mockData, total: 5 }),
+      })
+
+      const transport: DataSourceTransport = {
+        read: 'https://api.example.com/products',
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          serverFiltering: true,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const initialCallCount = mockFetch.mock.calls.length
+
+      await wrapper.setProps({
+        filter: [{ field: 'category', operator: 'eq', value: 'Electronics' }],
+      })
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Should have triggered another read
+      expect(mockFetch.mock.calls.length).toBeGreaterThan(initialCallCount)
+    })
+
+    it('should trigger read on group change with serverGrouping', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: mockData, total: 5 }),
+      })
+
+      const transport: DataSourceTransport = {
+        read: 'https://api.example.com/products',
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          serverGrouping: true,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const initialCallCount = mockFetch.mock.calls.length
+
+      await wrapper.setProps({
+        group: [{ field: 'category', dir: 'asc' }],
+      })
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Should have triggered another read
+      expect(mockFetch.mock.calls.length).toBeGreaterThan(initialCallCount)
+    })
+
+    it('should handle sync() method call', async () => {
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'local',
+          data: mockData,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const instance = wrapper.vm as any
+      await instance.sync()
+
+      expect(wrapper.emitted('sync')).toBeDefined()
+    })
+  })
+
+  describe('DataSource Schema Parsing', () => {
+    it('should parse schema with results array', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          results: mockData,
+          count: 5,
+        }),
+      })
+
+      global.fetch = mockFetch
+
+      const transport: DataSourceTransport = {
+        read: 'https://api.example.com/products',
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const instance = wrapper.vm as any
+      const data = instance.data()
+      expect(data).toHaveLength(5)
+      expect(instance.total()).toBe(5)
+
+      vi.restoreAllMocks()
+    })
+
+    it('should parse schema with custom data function', async () => {
+      const mockRead = vi.fn().mockResolvedValue({
+        custom: {
+          items: mockData,
+          totalCount: 5,
+        },
+      })
+
+      const transport: DataSourceTransport = {
+        read: mockRead,
+      }
+
+      const schema: DataSourceSchema = {
+        data: (response: any) => response.custom.items || [],
+        total: (response: any) => response.custom.totalCount || 0,
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          schema,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const instance = wrapper.vm as any
+      const data = instance.data()
+      expect(data).toHaveLength(5)
+      expect(instance.total()).toBe(5)
+    })
+
+    it('should parse schema with string paths', async () => {
+      const mockRead = vi.fn().mockResolvedValue({
+        response: {
+          items: mockData,
+          metadata: {
+            total: 5,
+          },
+        },
+      })
+
+      const transport: DataSourceTransport = {
+        read: mockRead,
+      }
+
+      const schema: DataSourceSchema = {
+        data: 'response.items',
+        total: 'response.metadata.total',
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          schema,
+          page: 1,
+          pageSize: 10,
+          autoBind: true,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 200))
+
+      const instance = wrapper.vm as any
+      const data = instance.data()
+      expect(data).toHaveLength(5)
+      expect(instance.total()).toBe(5)
+    })
+
+    it('should parse schema with parse function', async () => {
+      const mockRead = vi.fn().mockResolvedValue({
+        products: mockData,
+        total: 5,
+      })
+
+      const transport: DataSourceTransport = {
+        read: mockRead,
+      }
+
+      const schema: DataSourceSchema = {
+        parse: (response: any) => ({
+          data: response.products,
+          total: response.total,
+        }),
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          schema,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      const instance = wrapper.vm as any
+      const data = instance.data()
+      expect(data).toHaveLength(5)
+      expect(instance.total()).toBe(5)
+    })
+
+    it('should handle schema errors', async () => {
+      const mockRead = vi.fn().mockResolvedValue({
+        data: mockData,
+        errors: ['Error 1', 'Error 2'],
+      })
+
+      const transport: DataSourceTransport = {
+        read: mockRead,
+      }
+
+      const schema: DataSourceSchema = {
+        data: 'data',
+        errors: 'errors',
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          schema,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      expect(wrapper.emitted('error')).toBeDefined()
+    })
+
+    it('should handle relative URLs', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: mockData }),
+      })
+
+      global.fetch = mockFetch
+
+      const transport: DataSourceTransport = {
+        read: '/api/products',
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      expect(mockFetch).toHaveBeenCalled()
+      // Should convert relative URL to absolute
+      const fetchCall = mockFetch.mock.calls[0][0]
+      expect(fetchCall).toContain('/api/products')
+
+      vi.restoreAllMocks()
+    })
+
+    it('should handle AbortError gracefully', async () => {
+      const mockFetch = vi.fn().mockImplementation(() => {
+        const controller = new AbortController()
+        controller.abort()
+        return Promise.reject(new DOMException('Aborted', 'AbortError'))
+      })
+
+      global.fetch = mockFetch
+
+      const transport: DataSourceTransport = {
+        read: 'https://api.example.com/products',
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Should not emit error for AbortError
+      const errorEvents = wrapper.emitted('error')
+      // AbortError should not emit error event
+      expect(errorEvents).toBeUndefined() || (errorEvents && errorEvents.length === 0)
+
+      vi.restoreAllMocks()
+    })
+
+    it('should handle HTTP error responses', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      })
+
+      global.fetch = mockFetch
+
+      const transport: DataSourceTransport = {
+        read: 'https://api.example.com/products',
+      }
+
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'remote',
+          transport,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      expect(wrapper.emitted('error')).toBeDefined()
+
+      vi.restoreAllMocks()
+    })
+  })
+
+  describe('DataSource Grouping', () => {
+    it('should group data client-side', async () => {
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'local',
+          data: mockData,
+          page: 1,
+          pageSize: 10,
+          group: [{ field: 'category', dir: 'asc' }],
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const instance = wrapper.vm as any
+      const data = instance.data()
+      expect(Array.isArray(data)).toBe(true)
+    })
+
+    it('should paginate grouped data', async () => {
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'local',
+          data: mockData,
+          page: 1,
+          pageSize: 2,
+          group: [{ field: 'category', dir: 'asc' }],
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const instance = wrapper.vm as any
+      const data = instance.data()
+      expect(data.length).toBeLessThanOrEqual(2)
+    })
+  })
+
+  describe('DataSource Edge Cases', () => {
+    it('should handle empty data array', async () => {
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'local',
+          data: [],
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const instance = wrapper.vm as any
+      const data = instance.data()
+      expect(data).toHaveLength(0)
+      expect(instance.total()).toBe(0)
+    })
+
+    it('should handle null data', async () => {
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'local',
+          data: null as any,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const instance = wrapper.vm as any
+      const data = instance.data()
+      expect(Array.isArray(data)).toBe(true)
+    })
+
+    it('should handle undefined data', async () => {
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'local',
+          data: undefined as any,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const instance = wrapper.vm as any
+      const data = instance.data()
+      expect(Array.isArray(data)).toBe(true)
+    })
+
+    it('should handle read() when no transport', async () => {
+      const wrapper = mount(DataSource, {
+        props: {
+          type: 'local',
+          data: mockData,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+
+      await wrapper.vm.$nextTick()
+
+      const instance = wrapper.vm as any
+      // Should not throw when calling read() without transport
+      await expect(instance.read()).resolves.not.toThrow()
+    })
   })
 })
 

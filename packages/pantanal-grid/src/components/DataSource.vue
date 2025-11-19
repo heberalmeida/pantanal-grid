@@ -139,10 +139,25 @@ function parseSchema(response: any, schema?: DataSourceSchema): { data: any[]; t
   let data: any[] = []
   let totalValue: number | undefined
 
+  // Helper function to resolve nested paths
+  function getNestedValue(obj: any, path: string): any {
+    if (!path) return undefined
+    const parts = path.split('.')
+    let current = obj
+    for (const part of parts) {
+      if (current == null) return undefined
+      current = current[part]
+    }
+    return current
+  }
+
   // Parse data
   if (schema.data) {
     if (typeof schema.data === 'function') {
       data = schema.data(response) ?? []
+    } else if (schema.data.includes('.')) {
+      // Handle nested paths like 'response.items'
+      data = getNestedValue(response, schema.data) ?? []
     } else {
       data = response?.[schema.data] ?? []
     }
@@ -154,6 +169,9 @@ function parseSchema(response: any, schema?: DataSourceSchema): { data: any[]; t
   if (schema.total) {
     if (typeof schema.total === 'function') {
       totalValue = schema.total(response)
+    } else if (schema.total.includes('.')) {
+      // Handle nested paths like 'response.metadata.total'
+      totalValue = getNestedValue(response, schema.total)
     } else {
       totalValue = response?.[schema.total]
     }
