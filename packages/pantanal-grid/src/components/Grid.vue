@@ -3863,16 +3863,28 @@ if (typeof window !== 'undefined') {
   })
 }
 
-watch(() => props.page, v => { if (v) page.value = v })
+watch(() => props.page, v => { 
+  if (v !== undefined && v !== null && v !== page.value) {
+    page.value = v
+  }
+})
 watch(page, v => {
-  emit('update:page', v)
+  if (v !== props.page) {
+    emit('update:page', v)
+  }
   if (props.pageableSyncUrl) {
     updateUrlParams(v, undefined)
   }
 })
-watch(() => props.pageSize, v => { if (v) pageSize.value = v })
+watch(() => props.pageSize, v => { 
+  if (v !== undefined && v !== null && v !== pageSize.value) {
+    pageSize.value = v
+  }
+})
 watch(pageSize, v => {
-  emit('update:pageSize', v)
+  if (v !== props.pageSize) {
+    emit('update:pageSize', v)
+  }
   if (props.pageableSyncUrl) {
     updateUrlParams(undefined, v)
   }
