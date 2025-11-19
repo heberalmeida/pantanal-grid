@@ -3867,13 +3867,17 @@ if (typeof window !== 'undefined') {
 
 watch(() => props.page, v => { 
   if (v !== undefined && v !== null && v !== page.value && !isInternalPageUpdate) {
+    isInternalPageUpdate = true
     page.value = v
+    isInternalPageUpdate = false
+  } else {
+    isInternalPageUpdate = false
   }
-  isInternalPageUpdate = false
 })
 watch(page, v => {
-  if (!isInternalPageUpdate) {
-    isInternalPageUpdate = true
+  if (isInternalPageUpdate) {
+    // Update came from internal Pagination component, emit to parent
+    isInternalPageUpdate = false
     emit('update:page', v)
     if (props.pageableSyncUrl) {
       updateUrlParams(v, undefined)
@@ -3882,13 +3886,17 @@ watch(page, v => {
 })
 watch(() => props.pageSize, v => { 
   if (v !== undefined && v !== null && v !== pageSize.value && !isInternalPageSizeUpdate) {
+    isInternalPageSizeUpdate = true
     pageSize.value = v
+    isInternalPageSizeUpdate = false
+  } else {
+    isInternalPageSizeUpdate = false
   }
-  isInternalPageSizeUpdate = false
 })
 watch(pageSize, v => {
-  if (!isInternalPageSizeUpdate) {
-    isInternalPageSizeUpdate = true
+  if (isInternalPageSizeUpdate) {
+    // Update came from internal Pagination component, emit to parent
+    isInternalPageSizeUpdate = false
     emit('update:pageSize', v)
     if (props.pageableSyncUrl) {
       updateUrlParams(undefined, v)
