@@ -25,6 +25,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/hide-header', component: () => import('./pages/HideHeaderPage.vue') },
   { path: '/pagination', component: () => import('./pages/PaginationShowcase.vue') },
   { path: '/pagination/standalone', component: () => import('./pages/PaginationStandalonePage.vue') },
+  { path: '/pager/advanced', component: () => import('./pages/PagerAdvancedPage.vue') },
   { path: '/locked', component: () => import('./pages/LockedColumnsPage.vue') },
   { path: '/adaptive-height', component: () => import('./pages/AdaptiveHeightSlotsPage.vue') },
   { path: '/data-binding', component: () => import('./pages/DataBindingPage.vue') },

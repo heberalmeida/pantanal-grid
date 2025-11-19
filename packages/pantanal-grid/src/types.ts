@@ -89,6 +89,7 @@ export interface Messages {
   pageablePrevious?: string
   pageableRefresh?: string
   pageableMorePages?: string
+  pageableAllPages?: string
   pageableCustom?: string
   pageableCancel?: string
   // Aggregate labels
