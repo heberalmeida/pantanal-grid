@@ -1728,7 +1728,7 @@ import { useEditing } from '../composables/editing'
 import { getMessages } from '../i18n/messages'
 import { buildGroupTree, flattenTree, computeAggregates, type GroupDescriptor, type GroupNode } from '../composables/group'
 import type { AggregateName, Messages } from '../types'
-import GridPagination from './Pagination.vue'
+import GridPagination from './GridPagination.vue'
 import PantanalColumn from './Column.vue'
 
 // Import SVG assets - Vite will process these correctly with base paths
