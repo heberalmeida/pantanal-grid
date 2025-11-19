@@ -18,7 +18,18 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json-summary'],
-      reportsDirectory: './coverage'
+      reportsDirectory: './coverage',
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/.git/**',
+        '**/coverage/**',
+        '**/tests/**',
+        '**/*.spec.ts',
+        '**/*.spec.js',
+        '**/coverage-summary.cjs',
+        '**/types.ts', // Types-only file, no executable code
+      ]
     }
   }
 })
