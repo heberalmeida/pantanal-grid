@@ -3867,11 +3867,13 @@ watch(() => props.page, v => {
   if (v !== undefined && v !== null && v !== page.value) {
     page.value = v
   }
-})
+}, { immediate: true })
 watch(page, v => {
-  // Always emit when internal page ref changes
-  // This handles both internal updates (from Pagination) and external updates (from props)
-  emit('update:page', v)
+  // Only emit if value is different from prop to avoid infinite loops
+  // This ensures parent is notified when page changes internally
+  if (v !== props.page) {
+    emit('update:page', v)
+  }
   if (props.pageableSyncUrl) {
     updateUrlParams(v, undefined)
   }
@@ -3880,11 +3882,13 @@ watch(() => props.pageSize, v => {
   if (v !== undefined && v !== null && v !== pageSize.value) {
     pageSize.value = v
   }
-})
+}, { immediate: true })
 watch(pageSize, v => {
-  // Always emit when internal pageSize ref changes
-  // This handles both internal updates (from Pagination) and external updates (from props)
-  emit('update:pageSize', v)
+  // Only emit if value is different from prop to avoid infinite loops
+  // This ensures parent is notified when pageSize changes internally
+  if (v !== props.pageSize) {
+    emit('update:pageSize', v)
+  }
   if (props.pageableSyncUrl) {
     updateUrlParams(undefined, v)
   }
