@@ -1451,6 +1451,9 @@
           :template="props.pageableTemplate"
           :mobileBreakpoint="props.pageableMobileBreakpoint"
           :mobileVariant="props.pageableMobileVariant"
+          @update:page="handlePaginationPageChange"
+          @update:pageSize="handlePaginationPageSizeChange"
+          @refresh="handlePaginationRefresh" 
         >
           <template v-if="props.pageableSlots?.before" #before="slotProps">
             <slot :name="props.pageableSlots.before" v-bind="slotProps" />
@@ -1470,9 +1473,6 @@
           <template v-if="props.pageableSlots?.buttons" #buttons="slotProps">
             <slot :name="props.pageableSlots.buttons" v-bind="slotProps" />
           </template>
-          @update:page="(p: number) => { page.value = p }"
-          @update:pageSize="(s: number) => { pageSize.value = s }"
-          @refresh="() => emit('refresh')" 
         </GridPagination>
       </div>
     </div>
@@ -1728,7 +1728,7 @@ import { useEditing } from '../composables/editing'
 import { getMessages } from '../i18n/messages'
 import { buildGroupTree, flattenTree, computeAggregates, type GroupDescriptor, type GroupNode } from '../composables/group'
 import type { AggregateName, Messages } from '../types'
-import GridPagination from './GridPagination.vue'
+import GridPagination from './Pagination.vue'
 import PantanalColumn from './Column.vue'
 
 // Import SVG assets - Vite will process these correctly with base paths
@@ -1989,6 +1989,18 @@ const page = ref(props.page ?? 1)
 const pageSize = ref(props.pageSize ?? 20)
 const showCustomPageSizeInGrid = ref(false)
 const customPageSizeValueInGrid = ref<string>('')
+
+function handlePaginationPageChange(newPage: number) {
+  page.value = newPage
+}
+
+function handlePaginationPageSizeChange(newSize: number) {
+  pageSize.value = newSize
+}
+
+function handlePaginationRefresh() {
+  emit('refresh')
+}
 
 // Check if current pageSize is custom (not in the predefined options)
 const isCustomPageSizeInGrid = computed(() => {
