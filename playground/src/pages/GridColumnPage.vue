@@ -5,6 +5,37 @@
       The Grid Column API provides extensive configuration options for customizing column behavior, appearance, and functionality.
     </p>
 
+    <!-- Declarative Columns with PantanalColumn -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Declarative Columns (PantanalColumn)</h2>
+      <p class="text-gray-600 mb-4 content-text">
+        Use <code class="bg-gray-100 px-2 py-1 rounded">&lt;PantanalColumn&gt;</code> components as children of <code class="bg-gray-100 px-2 py-1 rounded">&lt;PantanalGrid&gt;</code> for a declarative approach to column definitions. This is especially useful when using templates.
+      </p>
+      <div class="mb-6">
+        <PantanalGrid
+          :rows="declarativeRows"
+          key-field="id"
+          responsive="table"
+        >
+          <PantanalColumn field="id" title="ID" :width="80" />
+          <PantanalColumn field="name" title="Name" :width="200" />
+          <PantanalColumn 
+            field="price" 
+            title="Price" 
+            :width="120"
+            :template="priceTemplate"
+          />
+          <PantanalColumn 
+            field="inStock" 
+            title="In Stock" 
+            :width="100"
+            :template="stockTemplate"
+          />
+        </PantanalGrid>
+      </div>
+      <ExampleCode :source="declarativeCode" />
+    </div>
+
     <!-- Column Templates -->
     <div class="mb-8">
       <h2 class="text-2xl font-semibold mb-4">Column Templates</h2>
@@ -237,7 +268,7 @@
 
 <script setup lang="ts">
 import { ref, h } from 'vue'
-import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+import { PantanalGrid, PantanalColumn, type ColumnDef, type ColumnTemplateFn } from '@pantanal/grid'
 import ExampleCode from '../components/ExampleCode.vue'
 
 interface Product {
@@ -251,6 +282,70 @@ interface Product {
   htmlContent: string
   orderDate: string
 }
+
+// Declarative Columns with PantanalColumn
+const declarativeRows = ref<Product[]>([
+  { id: 1, name: 'Product 1', category: 'Electronics', price: 99.99, inStock: true, status: 1, description: 'A great product', htmlContent: '<strong>Bold</strong> text', orderDate: '2024-01-15' },
+  { id: 2, name: 'Product 2', category: 'Clothing', price: 49.99, inStock: false, status: 2, description: 'Another product', htmlContent: '<em>Italic</em> text', orderDate: '2024-02-20' },
+  { id: 3, name: 'Product 3', category: 'Books', price: 19.99, inStock: true, status: 1, description: 'Yet another product', htmlContent: '<u>Underlined</u> text', orderDate: '2024-03-10' },
+])
+
+const priceTemplate: ColumnTemplateFn = (ctx) => {
+  const value = ctx?.value ?? 0
+  return h('span', { style: { color: value > 50 ? 'green' : 'red', fontWeight: 'bold' } }, `$${value.toFixed(2)}`)
+}
+
+const stockTemplate: ColumnTemplateFn = (ctx) => {
+  const value = ctx?.value ?? false
+  return h('span', {
+    class: value ? 'text-green-600' : 'text-red-600',
+    style: { fontWeight: 'bold' }
+  }, value ? '✓ Yes' : '✗ No')
+}
+
+const declarativeCode = `&lt;template&gt;
+  &lt;PantanalGrid
+    :rows="rows"
+    key-field="id"
+  &gt;
+    &lt;PantanalColumn field="id" title="ID" :width="80" /&gt;
+    &lt;PantanalColumn field="name" title="Name" :width="200" /&gt;
+    &lt;PantanalColumn 
+      field="price" 
+      title="Price" 
+      :width="120"
+      :template="priceTemplate"
+    /&gt;
+    &lt;PantanalColumn 
+      field="inStock" 
+      title="In Stock" 
+      :width="100"
+      :template="stockTemplate"
+    /&gt;
+  &lt;/PantanalGrid&gt;
+&lt;/template&gt;
+
+&lt;script setup lang="ts"&gt;
+import { ref, h } from 'vue'
+import { PantanalGrid, PantanalColumn, type ColumnTemplateFn } from '@pantanal/grid'
+
+const rows = ref([...])
+
+const priceTemplate: ColumnTemplateFn = (ctx) => {
+  const value = ctx?.value ?? 0
+  return h('span', { 
+    style: { color: value > 50 ? 'green' : 'red', fontWeight: 'bold' } 
+  }, \`$\${value.toFixed(2)}\`)
+}
+
+const stockTemplate: ColumnTemplateFn = (ctx) => {
+  const value = ctx?.value ?? false
+  return h('span', {
+    class: value ? 'text-green-600' : 'text-red-600',
+    style: { fontWeight: 'bold' }
+  }, value ? '✓ Yes' : '✗ No')
+}
+&lt;/script&gt;`
 
 // Column Templates
 const templateRows = ref<Product[]>([
