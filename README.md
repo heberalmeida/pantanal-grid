@@ -1,10 +1,9 @@
 # Pantanal Grid (Vue 3 + Tailwind)
 
 ![npm version](https://img.shields.io/npm/v/@pantanal/grid?style=flat-square&label=npm)
-![GitHub package version](https://img.shields.io/github/package-json/v/heberalmeida/pantanal-grid/main/packages/pantanal-grid/package.json?style=flat-square&label=version)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/heberalmeida/pantanal-grid?style=flat-square&label=version)
 ![npm downloads](https://img.shields.io/npm/dm/@pantanal/grid?style=flat-square)
 ![GitHub last commit](https://img.shields.io/github/last-commit/heberalmeida/pantanal-grid?style=flat-square&label=last%20update)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/heberalmeida/pantanal-grid?style=flat-square)
 ![GitHub stars](https://img.shields.io/github/stars/heberalmeida/pantanal-grid?style=flat-square)
 ![GitHub forks](https://img.shields.io/github/forks/heberalmeida/pantanal-grid?style=flat-square)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
