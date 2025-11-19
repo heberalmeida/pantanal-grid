@@ -1,5 +1,14 @@
 # Pantanal Grid (Vue 3 + Tailwind)
 
+![npm version](https://img.shields.io/npm/v/@pantanal/grid?style=flat-square)
+![npm downloads](https://img.shields.io/npm/dm/@pantanal/grid?style=flat-square)
+![GitHub stars](https://img.shields.io/github/stars/heberalmeida/pantanal-grid?style=flat-square)
+![GitHub forks](https://img.shields.io/github/forks/heberalmeida/pantanal-grid?style=flat-square)
+![License](https://img.shields.io/npm/l/@pantanal/grid?style=flat-square)
+![Vue 3](https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vue.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square&logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-339933?style=flat-square&logo=node.js&logoColor=white)
+
 A feature-rich data grid for **Vue 3** applications. Pantanal Grid ships with a Vite/Tailwind playground, supports both client-side and server-side data flows, exposes a typed API, and includes quality-of-life features such as keyboard navigation, persisted state, virtual scrolling, grouping, and internationalization.
 
 👉 **Live demo:** [https://heberalmeida.github.io/pantanal-grid/](https://heberalmeida.github.io/pantanal-grid/)  
