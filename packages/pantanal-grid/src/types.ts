@@ -570,6 +570,7 @@ export interface GridEmits {
   (e: 'pdfExport', options: { fileName: string }): void
 }
 
+// Aggregate Types
 export type AggregateName = 'sum' | 'avg' | 'min' | 'max' | 'count'
 
 export interface GroupDescriptor { field: string; dir?: 'asc' | 'desc' }
@@ -955,6 +956,37 @@ export interface SchedulerDataSourceInstance extends DataSourceInstance {
   add(event: Partial<SchedulerEvent>): void
   remove(event: SchedulerEvent | number | string): void
   update(event: SchedulerEvent): void
+}
+
+// ListView Types
+export type ListViewTemplate<T = Row> = string | ((dataItem: T, index: number) => string)
+export type ListViewSelectable = boolean | 'single' | 'multiple'
+
+export interface ListViewProps<T = Row> {
+  autoBind?: boolean
+  dataSource?: T[] | DataSourceProps<T> | DataSourceInstance
+  editTemplate?: ListViewTemplate<T>
+  navigatable?: boolean
+  selectable?: ListViewSelectable
+  template?: ListViewTemplate<T>
+  altTemplate?: ListViewTemplate<T>
+}
+
+export interface ListViewEmits<T = Row> {
+  (e: 'cancel'): void
+  (e: 'change', data: T[]): void
+  (e: 'databound', data: T[]): void
+  (e: 'databinding'): void
+  (e: 'edit', dataItem: T): void
+  (e: 'remove', dataItem: T): void
+  (e: 'save', dataItem: T): void
+}
+
+export interface ListViewInstance {
+  widget(): ListViewInstance
+  dataItem(element: HTMLElement): Row | null
+  refresh(): void
+  setDataSource(dataSource: DataSourceInstance): void
 }
 
 // TreeListDataSource Types

@@ -1,6 +1,19 @@
-# PantanalGrid API Reference
+---
+title: PantanalGrid API
 
-Complete API reference for the PantanalGrid component. This is the main component for displaying tabular data with sorting, filtering, pagination, grouping, and more.
+description: "API Index | PantanalGrid"
+
+api_reference: true
+
+slug: api_pantanalgridcomponent
+
+---
+
+# PantanalGrid
+
+## Directive
+
+`pantanal-grid`
 
 ## Component
 
@@ -307,21 +320,117 @@ gridRef.value?.getOptions()
 </script>
 ```
 
-### Export Methods
+### getOptions
 
-| Method | Parameters | Description | Returns |
-|--------|------------|-------------|---------|
-| `exportToPdf` | - | Export grid data to PDF | `Promise<void>` |
-| `saveAsPdf` | - | Alias for `exportToPdf` | `Promise<void>` |
+##### returns
 
-**Note:** Excel export (`exportToExcel`) is available via toolbar button but not exposed as a method. Use the toolbar prop with `'excel'` to enable Excel export.
+Returns the current grid state including sort, filter, page, pageSize, column order, widths, and selectedKeys (if persistSelection is enabled).
 
-### Options Methods
+**Returns:** `GridOptions`
 
-| Method | Parameters | Description | Returns |
-|--------|------------|-------------|---------|
-| `getOptions` | - | Get current grid state (sort, filter, page, etc.) | `GridOptions` |
-| `setOptions` | `options: GridOptions` | Set grid state programmatically | `void` |
+**Example:**
+```typescript
+const options = gridRef.value?.getOptions()
+// { sort: [{ field: 'name', dir: 'asc' }], page: 1, pageSize: 20, order: [0, 1, 2], widths: [100, 200, 150] }
+```
+
+### setOptions
+
+##### parameters
+
+- `options: GridOptions` - The grid state to set
+
+##### returns
+
+Sets the grid state programmatically. Updates sort, filter, page, pageSize, column order, widths, and selectedKeys.
+
+**Example:**
+```typescript
+gridRef.value?.setOptions({
+  sort: [{ field: 'price', dir: 'desc' }],
+  page: 2,
+  pageSize: 50,
+  order: [1, 0, 2],
+  widths: [150, 200, 100]
+})
+```
+
+### exportToPdf
+
+##### returns
+
+Exports the grid data to PDF format. The PDF will be downloaded with the filename specified in `pdfFileName` prop (default: `'export.pdf'`).
+
+**Returns:** `Promise<void>`
+
+**Example:**
+```typescript
+await gridRef.value?.exportToPdf()
+```
+
+### saveAsPdf
+
+##### returns
+
+Alias for `exportToPdf`. Exports the grid data to PDF format.
+
+**Returns:** `Promise<void>`
+
+### exportToExcel
+
+##### returns
+
+Exports the grid data to Excel format (.xlsx). The file will be downloaded with the filename specified in `excelFileName` prop (default: `'export.xlsx'`).
+
+**Returns:** `Promise<void>`
+
+**Example:**
+```typescript
+await gridRef.value?.exportToExcel()
+```
+
+### exportToCSV
+
+##### returns
+
+Exports the grid data to CSV format. The file will be downloaded with a `.csv` extension.
+
+**Returns:** `Promise<void>`
+
+**Example:**
+```typescript
+await gridRef.value?.exportToCSV()
+```
+
+### exportToDocx
+
+##### returns
+
+Exports the grid data to Word document format (.docx). The file will be downloaded with a `.docx` extension.
+
+**Returns:** `Promise<void>`
+
+**Example:**
+```typescript
+await gridRef.value?.exportToDocx()
+```
+
+### isRowEditing
+
+##### parameters
+
+- `row: any` - The row to check
+
+##### returns
+
+Returns `true` if the specified row is currently in edit mode, `false` otherwise.
+
+**Returns:** `boolean`
+
+**Example:**
+```typescript
+const isEditing = gridRef.value?.isRowEditing(row)
+```
 
 #### GridOptions Interface
 
@@ -335,21 +444,6 @@ interface GridOptions {
   widths?: (number | undefined)[]  // Column widths
   selectedKeys?: any[]  // Only if persistSelection is enabled
 }
-```
-
-**Example:**
-```typescript
-// Get current state
-const options = gridRef.value?.getOptions()
-console.log(options)
-// { sort: [{ field: 'name', dir: 'asc' }], page: 1, pageSize: 20 }
-
-// Set state
-gridRef.value?.setOptions({
-  sort: [{ field: 'price', dir: 'desc' }],
-  page: 2,
-  pageSize: 50
-})
 ```
 
 **Note:** `group` is not included in `getOptions`/`setOptions` as it's controlled via props. Use `v-model:group` to manage grouping.

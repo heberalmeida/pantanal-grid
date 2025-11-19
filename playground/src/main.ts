@@ -67,6 +67,8 @@ import {
   faPaintBrush,
   faArrowsUpDown,
   faChartLine,
+  faStar,
+  faList,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -133,6 +135,8 @@ library.add(
   faPaintBrush,
   faArrowsUpDown,
   faChartLine,
+  faStar,
+  faList,
 )
 
 createApp(App)

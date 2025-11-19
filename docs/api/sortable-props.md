@@ -309,7 +309,6 @@ watchEffect(async () => {
 
 ## Suggested Links
 
-* [`Sortable` in Kendo UI Grid for jQuery](https://docs.telerik.com/kendo-ui/api/javascript/ui/grid/configuration/sortable)
 * [Sorting Guide](/guide/sorting) - Complete sorting documentation
 * [Sorting Examples](/examples/sorting) - Practical examples
 * [Grid Props API](/api/grid-props) - All grid props
