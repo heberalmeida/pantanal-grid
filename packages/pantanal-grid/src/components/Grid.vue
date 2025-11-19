@@ -3868,10 +3868,10 @@ watch(() => props.page, v => {
     page.value = v
   }
 }, { immediate: true })
-watch(page, v => {
-  // Only emit if value is different from prop to avoid infinite loops
-  // This ensures parent is notified when page changes internally
-  if (v !== props.page) {
+watch(page, (v, oldV) => {
+  // Only emit if value actually changed to avoid infinite loops
+  // But always emit if it's a different value from prop (internal update from Pagination)
+  if (v !== oldV && v !== props.page) {
     emit('update:page', v)
   }
   if (props.pageableSyncUrl) {
@@ -3883,10 +3883,10 @@ watch(() => props.pageSize, v => {
     pageSize.value = v
   }
 }, { immediate: true })
-watch(pageSize, v => {
-  // Only emit if value is different from prop to avoid infinite loops
-  // This ensures parent is notified when pageSize changes internally
-  if (v !== props.pageSize) {
+watch(pageSize, (v, oldV) => {
+  // Only emit if value actually changed to avoid infinite loops
+  // But always emit if it's a different value from prop (internal update from Pagination)
+  if (v !== oldV && v !== props.pageSize) {
     emit('update:pageSize', v)
   }
   if (props.pageableSyncUrl) {

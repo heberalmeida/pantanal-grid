@@ -520,7 +520,9 @@ onBeforeUnmount(() => {
 
 function go(p: number) {
   const next = Math.min(totalPages.value, Math.max(1, p))
-  if (next !== props.page) emit('update:page', next)
+  // Always emit to ensure parent is notified, even if value seems the same
+  // This is necessary because props.page may not be updated yet
+  emit('update:page', next)
 }
 function changeSize(v: string) {
   const n = Number(v)
