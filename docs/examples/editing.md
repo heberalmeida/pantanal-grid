@@ -9,7 +9,14 @@ Pantanal Grid supports inline editing, batch editing, and popup editing modes wi
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import EditingCompleteExample from './components/EditingCompleteExample.vue'
+import EditingExample from './components/EditingExample.vue'
 </script>
+
+## Basic Editing
+
+<ExamplePreview>
+  <EditingExample />
+</ExamplePreview>
 
 ## Code
 

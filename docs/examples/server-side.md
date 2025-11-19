@@ -9,7 +9,14 @@ Pantanal Grid supports server-side data operations for pagination, sorting, and 
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import ServerSideCompleteExample from './components/ServerSideCompleteExample.vue'
+import ServerSideExample from './components/ServerSideExample.vue'
 </script>
+
+## Basic Server-Side Data
+
+<ExamplePreview>
+  <ServerSideExample />
+</ExamplePreview>
 
 ## Code
 

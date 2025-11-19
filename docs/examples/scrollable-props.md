@@ -6,6 +6,8 @@ Pantanal Grid provides advanced scrolling capabilities through `scrollable-virtu
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import ScrollableVirtualCompleteExample from './components/ScrollableVirtualCompleteExample.vue'
 import ScrollableEndlessCompleteExample from './components/ScrollableEndlessCompleteExample.vue'
+import ScrollableVirtualExample from './components/ScrollableVirtualExample.vue'
+import ScrollableEndlessExample from './components/ScrollableEndlessExample.vue'
 </script>
 
 <ExamplePreview>
@@ -15,6 +17,10 @@ import ScrollableEndlessCompleteExample from './components/ScrollableEndlessComp
 ## scrollable-virtual
 
 The `scrollable-virtual` prop enables virtual scrolling, rendering only visible rows for optimal performance with large datasets.
+
+<ExamplePreview>
+  <ScrollableVirtualExample />
+</ExamplePreview>
 
 ### Basic Usage
 
@@ -110,6 +116,10 @@ The `scrollable-endless` prop enables infinite scrolling, progressively loading 
 
 <ExamplePreview>
   <ScrollableEndlessCompleteExample />
+</ExamplePreview>
+
+<ExamplePreview>
+  <ScrollableEndlessExample />
 </ExamplePreview>
 
 ### Basic Usage

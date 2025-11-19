@@ -9,7 +9,14 @@ Pantanal Grid supports multi-level grouping with aggregates, group footers, and 
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import GroupingCompleteExample from './components/GroupingCompleteExample.vue'
+import GroupingExample from './components/GroupingExample.vue'
 </script>
+
+## Basic Grouping with Aggregates
+
+<ExamplePreview>
+  <GroupingExample />
+</ExamplePreview>
 
 ## Code
 

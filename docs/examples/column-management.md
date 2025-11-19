@@ -9,7 +9,14 @@ Demonstrates column resizing, reordering, and pinned columns.
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import ColumnManagementCompleteExample from './components/ColumnManagementCompleteExample.vue'
+import ColumnManagementExample from './components/ColumnManagementExample.vue'
 </script>
+
+## Basic Column Management
+
+<ExamplePreview>
+  <ColumnManagementExample />
+</ExamplePreview>
 
 ## Code
 

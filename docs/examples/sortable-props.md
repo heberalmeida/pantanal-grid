@@ -9,7 +9,14 @@ Pantanal Grid provides comprehensive sorting configuration through `sortableProp
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import SortablePropsCompleteExample from './components/SortablePropsCompleteExample.vue'
+import SortablePropsExample from './components/SortablePropsExample.vue'
 </script>
+
+## Basic Sortable Props
+
+<ExamplePreview>
+  <SortablePropsExample />
+</ExamplePreview>
 
 ## sortable-allow-unsort
 

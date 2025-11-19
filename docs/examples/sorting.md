@@ -9,9 +9,14 @@ Pantanal Grid supports single and multiple column sorting. Click column headers 
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import SortingCompleteExample from './components/SortingCompleteExample.vue'
+import SortingExample from './components/SortingExample.vue'
 </script>
 
 ## Single Column Sorting
+
+<ExamplePreview>
+  <SortingExample />
+</ExamplePreview>
 
 By default, clicking a column header cycles through: none → ascending → descending → none.
 

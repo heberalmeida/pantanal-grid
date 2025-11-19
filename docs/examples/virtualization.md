@@ -9,6 +9,15 @@ Virtual scrolling is an alternative to paging and optimizes Pantanal Grid perfor
 
 > **Note**: Virtual scrolling works with both local and remote data sources.
 
+<ExamplePreview>
+  <VirtualizationCompleteExample />
+</ExamplePreview>
+
+<script setup>
+import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
+import VirtualizationCompleteExample from './components/VirtualizationCompleteExample.vue'
+</script>
+
 ## How It Works
 
 When virtual scrolling is enabled, the grid:
@@ -182,9 +191,12 @@ There are multiple ways to enable virtual scrolling:
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `scrollable-virtual` | `boolean` | `false` | Enable virtual scrolling |
-| `height` | `number` | `420` | Height of the grid in pixels |
+| `virtual` | `boolean` | `false` | Legacy prop to enable virtual scrolling |
+| `scrollable` | `object` | `{ virtual: false }` | Scrollable configuration object |
+| `height` | `number` | `420` | Height of the grid in pixels (required for virtual scrolling) |
 | `pageSize` | `number` | `20` | Number of visible rows to render |
-| `rowHeight` | `number` | `44` | Height of each row in pixels |
+| `rowHeight` | `number` | `44` | Height of each row in pixels (recommended for performance) |
+| `maxBodyHeight` | `number` | - | Maximum body height when using auto-height |
 
 ## Performance Considerations
 
@@ -192,14 +204,33 @@ There are multiple ways to enable virtual scrolling:
 - **Remote Data**: When using remote data, ensure your API supports efficient pagination. The grid will render all loaded data, so manage the data array size appropriately.
 - **Row Height**: Consistent row heights improve performance. Variable row heights can cause visual glitches during scrolling.
 
+## Key Features
+
+Virtual scrolling supports most grid features:
+
+✅ **Supported Features:**
+- Sorting (single and multi-column)
+- Filtering (all filter operators)
+- Row selection (single and multiple)
+- Inline editing
+- Column resizing and reordering
+- Keyboard navigation
+- Custom cell templates
+- Column formatting
+
+❌ **Not Supported:**
+- Grouping (use regular pagination instead)
+- Card/responsive mode (table layout only)
+- Row expansion (detail templates)
+- Multi-column headers (limited support)
+
 ## Limitations
 
-- Virtual scrolling is not compatible with:
-  - Grouping
-  - Card/responsive mode
-  - Row expansion (detail templates)
-- Fixed height is required for proper operation
-- Row selection may need special handling with very large datasets
+- **Fixed height required**: Virtual scrolling requires a fixed `height` prop for proper operation
+- **No grouping**: Grouping is not compatible with virtual scrolling
+- **No responsive cards**: Card layout mode is not supported
+- **Row selection**: May need special handling with very large datasets (10,000+ rows)
+- **Variable row heights**: While supported, fixed row heights provide better performance
 
 ## Virtual Scrolling with Inline Editing
 
@@ -339,17 +370,110 @@ Virtual scrolling provides significant performance improvements with large datas
 
 **Note**: Actual performance depends on row complexity, browser, and hardware.
 
+## Advanced Features
+
+### Virtual Scrolling with Selection
+
+Virtual scrolling works with row selection. For very large datasets, consider using `persistSelection`:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+const rows = ref(/* large dataset */)
+const columns: ColumnDef[] = [/* ... */]
+const selectedKeys = ref<number[]>([])
+
+function handleSelectionChange(keys: number[]) {
+  selectedKeys.value = keys
+  console.log(`Selected ${keys.length} rows`)
+}
+</script>
+
+<template>
+  <PantanalGrid
+    :rows="rows"
+    :columns="columns"
+    scrollable-virtual
+    :height="600"
+    :page-size="20"
+    key-field="id"
+    selectable="multiple"
+    :persist-selection="true"
+    @selectionChange="handleSelectionChange"
+  />
+</template>
+```
+
+### Virtual Scrolling with Keyboard Navigation
+
+Enable keyboard navigation for better accessibility:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  scrollable-virtual
+  :height="600"
+  :page-size="20"
+  key-field="id"
+  :navigatable="true"
+/>
+```
+
+### Auto Height with Virtual Scrolling
+
+You can use `auto-height` with virtual scrolling, but you must provide `maxBodyHeight`:
+
+```vue
+<PantanalGrid
+  :rows="rows"
+  :columns="columns"
+  scrollable-virtual
+  auto-height
+  :maxBodyHeight="600"
+  :page-size="20"
+  key-field="id"
+/>
+```
+
+### Virtual Scrolling with Custom Templates
+
+Custom cell templates work with virtual scrolling, but keep them lightweight:
+
+```vue
+<script setup lang="ts">
+const columns: ColumnDef[] = [
+  {
+    field: 'status',
+    title: 'Status',
+    template: ({ value }) => {
+      // Keep templates simple for best performance
+      return `<span class="badge">${value}</span>`
+    }
+  }
+]
+</script>
+```
+
 ## Best Practices
 
-1. **Set appropriate pageSize**: A pageSize between 20-50 rows typically provides the best balance of performance and UX.
+1. **Set appropriate pageSize**: A pageSize between 20-50 rows typically provides the best balance of performance and UX. Smaller values (10-15) for complex rows, larger values (50-100) for simple rows.
 
-2. **Use consistent row heights**: For best performance, ensure all rows have the same height using the `rowHeight` prop.
+2. **Use consistent row heights**: For best performance, ensure all rows have the same height using the `rowHeight` prop. Variable heights work but may cause slight visual glitches.
 
-3. **Optimize column rendering**: Use `template` or `format` functions efficiently to avoid heavy computations during scrolling.
+3. **Optimize column rendering**: Use `template` or `format` functions efficiently to avoid heavy computations during scrolling. Cache expensive calculations.
 
-4. **Consider data loading**: For remote data, implement efficient pagination or lazy loading to avoid loading all records at once.
+4. **Consider data loading**: For remote data, implement efficient pagination or lazy loading to avoid loading all records at once. Load data in chunks as the user scrolls.
 
-5. **Monitor scroll performance**: If you notice performance issues, reduce `pageSize` or simplify row templates.
+5. **Monitor scroll performance**: If you notice performance issues, reduce `pageSize` or simplify row templates. Use browser DevTools to profile scroll performance.
+
+6. **Use fixed height**: Always provide a fixed `height` prop. Auto-height with virtual scrolling requires `maxBodyHeight`.
+
+7. **Limit column count**: Fewer columns mean faster rendering. Consider hiding less important columns or using column visibility features.
+
+8. **Avoid complex nested templates**: Deeply nested templates can slow down rendering. Keep templates flat and simple.
 
 ## Related Features
 

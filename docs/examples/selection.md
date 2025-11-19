@@ -9,9 +9,16 @@ Pantanal Grid supports single and multiple row selection with checkboxes or prog
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import SelectionCompleteExample from './components/SelectionCompleteExample.vue'
+import SelectionExample from './components/SelectionExample.vue'
 </script>
 
 ## Selection Modes
+
+### Multiple Selection
+
+<ExamplePreview>
+  <SelectionExample />
+</ExamplePreview>
 
 ### Single Selection
 
