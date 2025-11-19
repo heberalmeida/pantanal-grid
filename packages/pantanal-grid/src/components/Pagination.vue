@@ -60,7 +60,7 @@
 
     <!-- variant: simple -->
     <div
-      v-if="activeVariant==='simple'"
+      v-if="activeVariant==='simple' && !numeric"
       class="pg-row"
       :class="tailwind ? 'flex items-center gap-0.5 sm:gap-1 flex-wrap justify-center' : ''"
       style="flex-wrap: wrap; justify-content: center;"

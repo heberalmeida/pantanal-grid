@@ -587,7 +587,7 @@ describe('PantanalPagination (Standalone)', () => {
   })
 
   describe('Advanced Features', () => {
-    it('should show numeric page buttons when numeric is true', () => {
+    it('should show numeric page buttons when numeric is true', async () => {
       const wrapper = mount(Pagination, {
         props: {
           page: 1,
@@ -597,6 +597,8 @@ describe('PantanalPagination (Standalone)', () => {
           buttonCount: 5,
         },
       })
+
+      await wrapper.vm.$nextTick()
 
       const pageButtons = wrapper.findAll('.pg-pill')
       expect(pageButtons.length).toBeGreaterThan(0)
