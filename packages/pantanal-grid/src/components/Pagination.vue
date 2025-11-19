@@ -28,11 +28,13 @@
         v-if="!showCustomPageSize"
         class="pg-select"
         :class="tailwind ? 'border border-slate-300 rounded-md bg-white text-xs sm:text-sm px-1 sm:px-2 py-1 min-w-[50px] sm:min-w-[60px]' : ''"
-        :value="isCustomPageSize ? 'custom' : pageSize"
+        :value="isCustomPageSize ? 'custom' : (pageSize === total && pageSizeOptions?.includes('all') ? 'all' : pageSize)"
         @change="handlePageSizeChange(($event.target as HTMLSelectElement).value)"
         style="flex-shrink: 0;"
       >
-        <option v-for="n in pageSizeOptions" :key="n" :value="n">{{ n }}</option>
+        <option v-for="n in pageSizeOptions" :key="n" :value="n">
+          {{ n === 'all' ? (M.pageableAllPages || 'All') : n }}
+        </option>
         <option v-if="props.customPageSize" value="custom">{{ M.pageableCustom || 'Custom' }}</option>
       </select>
       <div v-else :class="tailwind ? 'flex items-center gap-1' : ''" style="display: flex; align-items: center; gap: 0.25rem;">
@@ -402,7 +404,7 @@ const props = withDefaults(defineProps<{
   showIcons?: boolean
 
   showPageSize?: boolean
-  pageSizeOptions?: number[]
+  pageSizeOptions?: (number | 'all')[]
   customPageSize?: boolean  // Enable custom page size input (default: false)
   dense?: boolean
 
@@ -560,7 +562,7 @@ const customPageSizeValue = ref<string>('')
 
 // Check if current pageSize is custom (not in the predefined options)
 const isCustomPageSize = computed(() => {
-  return !props.pageSizeOptions.includes(props.pageSize)
+  return !props.pageSizeOptions.some(opt => opt === props.pageSize || opt === 'all')
 })
 
 // Reserved for future use
@@ -605,6 +607,8 @@ function handlePageSizeChange(value: string) {
   if (value === 'custom') {
     showCustomPageSize.value = true
     customPageSizeValue.value = String(props.pageSize)
+  } else if (value === 'all') {
+    emit('update:pageSize', props.total)
   } else {
     changeSize(value)
   }

@@ -193,7 +193,7 @@
             Items {{ context.firstItem }}-{{ context.lastItem }} of {{ context.total }}
           </span>
         </template>
-        <template #after="{ context }">
+        <template #after>
           <button
             @click="exportData"
             class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
