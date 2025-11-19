@@ -9,7 +9,14 @@ Virtual scrolling renders only visible rows, providing smooth performance even w
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import VirtualCompleteExample from './components/VirtualCompleteExample.vue'
+import VirtualExample from './components/VirtualExample.vue'
 </script>
+
+## Basic Virtual Scrolling
+
+<ExamplePreview>
+  <VirtualExample />
+</ExamplePreview>
 
 ## Code
 

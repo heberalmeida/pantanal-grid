@@ -63,6 +63,10 @@ import {
   faDatabase,
   faGlobe,
   faEyeSlash,
+  faImage,
+  faPaintBrush,
+  faArrowsUpDown,
+  faChartLine,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -125,6 +129,10 @@ library.add(
   faGlobe,
   faFileExport,
   faEyeSlash,
+  faImage,
+  faPaintBrush,
+  faArrowsUpDown,
+  faChartLine,
 )
 
 createApp(App)

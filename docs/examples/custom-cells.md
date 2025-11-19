@@ -9,7 +9,14 @@ Demonstrates custom cell templates with formatting and styling.
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import CustomCellsCompleteExample from './components/CustomCellsCompleteExample.vue'
+import CustomCellsExample from './components/CustomCellsExample.vue'
 </script>
+
+## Basic Custom Cells
+
+<ExamplePreview>
+  <CustomCellsExample />
+</ExamplePreview>
 
 ## Code
 

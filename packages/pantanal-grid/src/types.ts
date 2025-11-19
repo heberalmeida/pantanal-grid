@@ -112,6 +112,18 @@ export interface ColumnTemplateContext<T = Row> {
 export type ColumnTemplateResult = VNodeChild | string | null | undefined
 export type ColumnTemplateFn<T = Row> = (ctx?: ColumnTemplateContext<T>) => ColumnTemplateResult
 
+export interface ImageColumnOptions {
+  shape?: 'round' | 'square' | 'rounded'  // Image shape: round (circle), square, or rounded (rounded corners)
+  size?: number | string  // Image size (width/height in pixels or CSS value)
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down'  // CSS object-fit property
+  placeholder?: string  // Placeholder image URL or base64
+  loading?: 'lazy' | 'eager'  // Image loading strategy
+  errorPlaceholder?: string  // Image to show on error
+  endpoint?: string | ((row: Row) => string)  // API endpoint prefix or function to get full URL
+  alt?: string | ((row: Row) => string)  // Alt text for image
+  rowHeight?: number | string  // Optional row height when this image column is present (in pixels or CSS value)
+}
+
 export interface ColumnDef<T = Row> {
   field?: keyof T | string  // Made optional for group columns
   title?: string
@@ -128,6 +140,7 @@ export interface ColumnDef<T = Row> {
   lockable?: boolean  // If false, column cannot be locked/unlocked
   slot?: string
   template?: ColumnTemplateFn<T>
+  image?: boolean | ImageColumnOptions  // Enable image rendering with options
   editor?: (container: HTMLElement, options: { field: string; value: any; row: T }) => void | HTMLElement
   validation?: {
     required?: boolean
@@ -256,6 +269,71 @@ export type PaginationVariant = 'simple' | 'pages' | 'edges'
 
 export type ResponsiveMode = 'auto' | 'table' | 'cards'
 
+export interface PaginationTemplateContext {
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+  firstItem: number
+  lastItem: number
+  canGoPrevious: boolean
+  canGoNext: boolean
+  canGoFirst: boolean
+  canGoLast: boolean
+  messages: Messages
+}
+
+export interface LoadingOptions {
+  enabled?: boolean  // Show loading indicator
+  template?: string | (() => string)  // Custom loading template
+  text?: string  // Loading text
+  spinner?: boolean  // Show spinner
+  overlay?: boolean  // Show overlay
+  position?: 'top' | 'center' | 'bottom'  // Loading position
+}
+
+export interface CellStyleConfig<T = Row> {
+  field?: string  // Column field to target
+  condition?: (row: T, value: any, rowIndex: number) => boolean  // Condition function
+  backgroundColor?: string  // Background color (e.g., '#fee2e2' or 'red')
+  color?: string  // Text color (e.g., '#991b1b' or 'white')
+  fontWeight?: string | number  // Font weight (e.g., 'bold', 600)
+  rowIndex?: number  // Specific row index (0-based)
+  columnIndex?: number  // Specific column index (0-based)
+}
+
+export interface RowStyleConfig<T = Row> {
+  condition?: (row: T, rowIndex: number) => boolean  // Condition function
+  backgroundColor?: string  // Background color for entire row
+  color?: string  // Text color for entire row
+  fontWeight?: string | number  // Font weight
+  rowIndex?: number  // Specific row index (0-based)
+  rowIndices?: number[]  // Multiple row indices
+}
+
+export interface ColumnStyleConfig {
+  field?: string  // Column field to target
+  columnIndex?: number  // Column index (0-based)
+  backgroundColor?: string  // Background color for entire column
+  color?: string  // Text color for entire column
+  fontWeight?: string | number  // Font weight
+  headerBackgroundColor?: string  // Background color for column header
+  headerColor?: string  // Text color for column header
+}
+
+export interface GridStyleConfig {
+  noBorders?: boolean  // Remove all borders from grid
+  borderColor?: string  // Custom border color
+  borderWidth?: string  // Custom border width
+  cellPadding?: string  // Custom cell padding
+  headerBackground?: string  // Custom header background color
+  headerColor?: string  // Custom header text color
+  rowBackground?: string  // Default row background color
+  rowHoverBackground?: string  // Row hover background color
+  cellHoverBackground?: string  // Cell hover background color
+  stripedBackground?: string  // Striped row background color
+}
+
 export interface GridProps<T = Row> {
   rows?: T[]
   columns?: ColumnDef<T>[]
@@ -289,6 +367,20 @@ export interface GridProps<T = Row> {
 
   // Persist selection
   persistSelection?: boolean
+  
+  // Persistence options for filters and pagination
+  persistFilters?: boolean | 'localStorage' | 'sessionStorage'  // Persist filters to storage
+  persistFiltersKey?: string  // Storage key for filters (default: 'pantanal-grid-filters')
+  persistPagination?: boolean | 'localStorage' | 'sessionStorage'  // Persist pagination to storage
+  persistPaginationKey?: string  // Storage key for pagination (default: 'pantanal-grid-pagination')
+
+  // Cell, Row, and Column Styling
+  cellStyles?: CellStyleConfig<T>[]  // Array of cell style configurations
+  rowStyles?: RowStyleConfig<T>[]  // Array of row style configurations
+  columnStyles?: ColumnStyleConfig[]  // Array of column style configurations
+  cellHoverStyles?: CellStyleConfig<T>[]  // Array of cell hover style configurations
+  rowHoverStyles?: RowStyleConfig<T>[]  // Array of row hover style configurations
+  gridStyles?: GridStyleConfig  // Grid-wide style configuration (borders, colors, etc.)
 
   // Scrollable configuration
   scrollable?: boolean | {
@@ -316,6 +408,7 @@ export interface GridProps<T = Row> {
 
   serverSide?: boolean
   total?: number
+  loading?: boolean | LoadingOptions  // Loading state and options
 
   group?: GroupDescriptor[]
   aggregates?: Record<string, AggregateName[]>
@@ -346,6 +439,17 @@ export interface GridProps<T = Row> {
   pageableSyncUrl?: boolean  // Sync page and pageSize with URL query parameters
   pageableUrlParamPage?: string  // URL parameter name for page (default: 'page')
   pageableUrlParamPageSize?: string  // URL parameter name for pageSize (default: 'pageSize')
+  pageableTemplate?: string | ((context: PaginationTemplateContext) => string)  // Custom pagination template
+  pageableSlots?: {
+    before?: string  // Slot name for content before pagination
+    after?: string  // Slot name for content after pagination
+    info?: string  // Slot name for custom info display
+    pageSize?: string  // Slot name for custom page size selector
+    pageInput?: string  // Slot name for custom page input
+    buttons?: string  // Slot name for custom page buttons
+  }
+  pageableMobileBreakpoint?: number  // Breakpoint for mobile pagination (default: 768)
+  pageableMobileVariant?: PaginationVariant  // Variant to use on mobile
 
   showFilterRow?: boolean
   filterable?: boolean

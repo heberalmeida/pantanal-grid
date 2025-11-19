@@ -92,18 +92,67 @@ const columns: ColumnDef[] = [
 
 ## Core capabilities
 
+**Data Operations**
 - Sorting (multi-column) with ascending/descending cycles
-- Per-column filtering with multiple operators
-- Row selection: single, multiple, or disabled
+- Per-column filtering with multiple operators (equals, contains, starts with, ends with, etc.)
+- Row selection: single, multiple, or disabled with checkbox support
+- Inline cell and row editing with validation support
+- Copy to clipboard functionality
+- Export to Excel, PDF, CSV, and Word (DOCX) formats
+
+**Pagination & Scrolling**
 - Client-side pagination + server-side mode (`:serverSide="true"`)
-- Column resize and reorder (drag & drop)
-- Keyboard navigation (arrow keys + focus outline)
+- Custom pagination variants (simple, pages, edges)
 - Virtual scrolling for large datasets (100,000+ rows)
+- Endless scrolling mode
+- Adaptive height with custom slots
+
+**Column Management**
+- Column resize and reorder (drag & drop)
 - Pinned and locked columns (left/right) with optional sticky shadows
-- Persisted state (sort, filter, page, order, widths) via `persistStateKey`
-- Internationalization (en, es, pt) with pluggable messages
+- Multi-column headers support
+- Column menu with customizable actions
+- Foreign key columns with lookup support
+- Custom column templates (cell, header, footer)
+
+**Data Visualization**
 - Grouping with drag-and-drop UI, aggregations and expandable tree nodes
 - Aggregates (sum, avg, min, max, count) with customizable templates
+- Image columns with loading states, placeholders, and error handling
+- Custom row heights
+- Cell, row, and column styling with conditional formatting
+- Grid styles customization (striped rows, hover effects, etc.)
+
+**User Experience**
+- Keyboard navigation (arrow keys + focus outline)
+- Responsive design with automatic card layout for mobile devices
+- Internationalization (en, es, pt) with pluggable messages and custom locales
+- RTL (Right-to-Left) language support
+- Customizable messages for all UI elements
+- No records customization (message, template, or function)
+- Loading states with custom templates
+
+**State Management**
+- Persisted state (sort, filter, page, order, widths) via `persistStateKey`
+- Grid events (rowClick, cellClick, sortChange, filterChange, etc.)
+- Custom commands (edit, update, destroy, cancel)
+
+**Data Binding**
+- Flexible data binding: Local arrays, REST APIs, GraphQL, WebSocket, and offline mode
+- Data source adapters (Gantt, Scheduler, TreeList, Pivot, Hierarchical)
+- Custom data providers with async support
+
+**Styling & Theming**
+- Flexible styling options with CSS variables
+- Tailwind CSS support
+- Custom styling props (gridStyles, rowHoverStyles, cellHoverStyles)
+- Template-based customization
+- Customizable toolbar and command buttons
+
+**Configuration**
+- Configurable props for sortable, filterable, groupable, pageable features
+- Customizable column definitions with extensive options
+- TypeScript support with full type definitions
 
 ---
 

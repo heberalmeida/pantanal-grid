@@ -151,6 +151,11 @@ const navSections = [
     items: [
       { to: '/styled-table', label: 'Styled table', icon: 'palette' },
       { to: '/gallery', label: 'Image gallery', icon: 'images' },
+      { to: '/images', label: 'Image columns', icon: 'image' },
+      { to: '/row-height', label: 'Row Height', icon: 'arrows-up-down' },
+      { to: '/cell-row-column-styling', label: 'Cell/Row/Column Styling', icon: 'paintbrush' },
+      { to: '/styling-props', label: 'Styling Props', icon: 'sliders' },
+      { to: '/grid-styles', label: 'Grid Styles & Hover', icon: 'palette' },
       { to: '/grouping', label: 'Grouping & aggregates', icon: 'layer-group' },
       { to: '/grouping-basics', label: 'Grouping Basics', icon: 'layer-group' },
       { to: '/groupable-props', label: 'Groupable Props', icon: 'sliders' },
@@ -165,6 +170,7 @@ const navSections = [
       { to: '/pagination', label: 'Pagination variants', icon: 'ellipsis' },
       { to: '/pagination/standalone', label: 'Pagination standalone', icon: 'ellipsis' },
       { to: '/custom-cells', label: 'Custom cells & slots', icon: 'puzzle-piece' },
+      { to: '/charts-in-grid', label: 'Charts in Grid', icon: 'chart-line' },
     ],
   },
   {

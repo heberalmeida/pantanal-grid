@@ -402,8 +402,65 @@ const inlineCode = `<template>
     :toolbar="['create']"
     @edit="onEdit"
     @editSave="onEditSave"
+    @editCancel="onEditCancel"
+    @create="onCreate"
+    @destroy="onDestroy"
   />
-</template>`
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+
+interface Product {
+  productID: number
+  productName: string
+  unitPrice: number
+  unitsInStock: number
+  discontinued: boolean
+}
+
+const rows = ref<Product[]>([
+  { productID: 1, productName: 'Chai', unitPrice: 18, unitsInStock: 39, discontinued: false },
+  { productID: 2, productName: 'Chang', unitPrice: 19, unitsInStock: 17, discontinued: false },
+])
+
+const columns: ColumnDef[] = [
+  { field: 'productID', title: 'ID', width: 80, editable: false },
+  { field: 'productName', title: 'Product Name', width: 200, editable: true },
+  { field: 'unitPrice', title: 'Unit Price', width: 120, editable: true, type: 'number' },
+  { field: 'unitsInStock', title: 'Units In Stock', width: 140, editable: true, type: 'number' },
+  { field: 'discontinued', title: 'Discontinued', width: 120, editable: true, type: 'boolean' },
+  { field: 'command', title: ' ', width: 180, command: ['edit', 'destroy'] },
+]
+
+function onEditSave(data: { row: unknown }) {
+  const product = data.row as Product
+  const index = rows.value.findIndex(r => r.productID === product.productID)
+  if (index !== -1) {
+    rows.value[index] = { ...rows.value[index], ...product }
+  }
+}
+
+function onEditCancel() {
+  console.log('Edit cancelled')
+}
+
+function onCreate(data: { row: unknown }) {
+  const product = data.row as Product
+  const maxId = Math.max(...rows.value.map(r => r.productID), 0)
+  product.productID = maxId + 1
+  rows.value.push(product)
+}
+
+function onDestroy(data: { row: unknown }) {
+  const product = data.row as Product
+  const index = rows.value.findIndex(r => r.productID === product.productID)
+  if (index !== -1) {
+    rows.value.splice(index, 1)
+  }
+}
+<\/script>`
 
 const popupCode = `<template>
   <PantanalGrid

@@ -17,30 +17,33 @@ const inlineRows = ref<ProductRow[]>([
 ])
 
 const inlineColumns: ColumnDef[] = [
-  { field: 'id', title: 'ID', width: 80 },
-  { field: 'name', title: 'Name', editable: true },
+  { field: 'id', title: 'ID', width: 80, editable: false },
+  { field: 'name', title: 'Name', width: 200, editable: true },
   { 
     field: 'price', 
     title: 'Price', 
+    width: 120,
     editable: true,
+    type: 'number',
     format: (v: number) => `$${v.toFixed(2)}`,
     validation: {
       required: true,
       min: 0
     }
   },
-  { field: 'category', title: 'Category', editable: true },
-  { field: 'stock', title: 'Stock', editable: true, type: 'number' },
+  { field: 'category', title: 'Category', width: 150, editable: true },
+  { field: 'stock', title: 'Stock', width: 120, editable: true, type: 'number' },
   {
     field: 'command',
     title: 'Actions',
-    width: 150,
+    width: 180,
     command: ['edit', 'destroy']
   }
 ]
 
-function handleDestroy(row: any) {
-  const index = inlineRows.value.findIndex(r => r.id === row.id)
+function handleDestroy(data: { row: unknown }) {
+  const product = data.row as ProductRow
+  const index = inlineRows.value.findIndex(r => r.id === product.id)
   if (index !== -1) {
     inlineRows.value.splice(index, 1)
   }
@@ -118,11 +121,25 @@ const validationColumns: ColumnDef[] = [
         Use the Delete button to remove rows. Price must be positive (validation).
       </p>
       <PantanalGrid
-        :rows="inlineRows.value"
+        :rows="inlineRows"
         :columns="inlineColumns"
         key-field="id"
-        :editable="true"
-        :toolbar="['save', 'cancel']"
+        editable="inline"
+        :toolbar="['create']"
+        @editSave="(data: any) => {
+          const product = data.row as ProductRow
+          const index = inlineRows.value.findIndex(r => r.id === product.id)
+          if (index !== -1) {
+            inlineRows.value[index] = { ...inlineRows.value[index], ...product }
+          }
+        }"
+        @editCancel="() => console.log('Edit cancelled')"
+        @create="(data: any) => {
+          const product = data.row as ProductRow
+          const maxId = Math.max(...inlineRows.value.map(r => r.id), 0)
+          product.id = maxId + 1
+          inlineRows.value.push(product)
+        }"
         @destroy="handleDestroy"
         :height="300"
         locale="en"
@@ -138,7 +155,7 @@ const validationColumns: ColumnDef[] = [
         Use Cancel to discard all changes.
       </p>
       <PantanalGrid
-        :rows="batchRows.value"
+        :rows="batchRows"
         :columns="batchColumns"
         key-field="id"
         :editable="true"
@@ -159,7 +176,7 @@ const validationColumns: ColumnDef[] = [
         and email must be a valid email address.
       </p>
       <PantanalGrid
-        :rows="validationRows.value"
+        :rows="validationRows"
         :columns="validationColumns"
         key-field="id"
         :editable="true"

@@ -9,9 +9,14 @@ Pantanal Grid provides powerful filtering capabilities with multiple operators a
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import FilteringCompleteExample from './components/FilteringCompleteExample.vue'
+import FilteringExample from './components/FilteringExample.vue'
 </script>
 
 ## Filter Row Mode
+
+<ExamplePreview>
+  <FilteringExample />
+</ExamplePreview>
 
 Display filter inputs directly in the header row:
 

@@ -88,9 +88,14 @@ export default defineConfig({
           text: 'Customization',
           items: [
             { text: 'Custom Cells', link: '/examples/custom-cells' },
+            { text: 'Charts in Grid', link: '/examples/charts-in-grid' },
             { text: 'Templates', link: '/examples/templates' },
             { text: 'Responsive Cards', link: '/examples/responsive-cards' },
-            { text: 'Styling', link: '/examples/styling' }
+            { text: 'Styling', link: '/examples/styling' },
+            { text: 'Styling Props', link: '/examples/styling-props' },
+            { text: 'Grid Styles & Hover', link: '/examples/grid-styles' },
+            { text: 'Images', link: '/examples/images' },
+            { text: 'Row Height', link: '/examples/row-height' }
           ]
         },
         {

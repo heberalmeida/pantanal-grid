@@ -9,9 +9,14 @@ Pantanal Grid supports aggregate calculations (sum, avg, min, max, count) displa
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import AggregatesCompleteExample from './components/AggregatesCompleteExample.vue'
+import AggregatesExample from './components/AggregatesExample.vue'
 </script>
 
 ## Basic Aggregates
+
+<ExamplePreview>
+  <AggregatesExample />
+</ExamplePreview>
 
 Calculate aggregates for numeric fields:
 

@@ -9,9 +9,14 @@ Pantanal Grid provides flexible pagination options with customizable page sizes 
 <script setup>
 import ExamplePreview from '../.vitepress/components/ExamplePreview.vue'
 import PaginationCompleteExample from './components/PaginationCompleteExample.vue'
+import PaginationExample from './components/PaginationExample.vue'
 </script>
 
 ## Basic Pagination
+
+<ExamplePreview>
+  <PaginationExample />
+</ExamplePreview>
 
 Enable pagination with default settings:
 

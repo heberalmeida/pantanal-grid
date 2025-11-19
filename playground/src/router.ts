@@ -71,6 +71,12 @@ const routes: RouteRecordRaw[] = [
   { path: '/no-records-props', component: () => import('./pages/NoRecordsPropsPage.vue') },
   { path: '/pageable-props', component: () => import('./pages/PageablePropsPage.vue') },
   { path: '/pdf-export', component: () => import('./pages/PdfExportPage.vue') },
+  { path: '/images', component: () => import('./pages/ImagesPage.vue') },
+  { path: '/row-height', component: () => import('./pages/RowHeightPage.vue') },
+  { path: '/cell-row-column-styling', component: () => import('./pages/CellRowColumnStylingPage.vue') },
+  { path: '/styling-props', component: () => import('./pages/StylingPropsPage.vue') },
+  { path: '/grid-styles', component: () => import('./pages/GridStylesPage.vue') },
+  { path: '/charts-in-grid', component: () => import('./pages/ChartsInGridPage.vue') },
 ]
 
 export const router = createRouter({
