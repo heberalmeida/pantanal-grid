@@ -359,7 +359,7 @@
             <input class="v3grid__checkbox" type="checkbox" :checked="isSelected(row)" @change="toggleRow(row)" />
           </div>
           <div v-if="isGrouped" class="v3grid__cell"></div>
-          <div v-for="(c, i) in unlockedCols" :key="c._idx" class="v3grid__cell" :class="[{ 'v3grid__cell--editing': isCellEditing(row, c) }, pinClass(c._idx)]"
+          <div v-for="(c, i) in unlockedCols" :key="`${c._idx}-${editingEpoch}-${getRowKeyValue(row)}`" class="v3grid__cell" :class="[{ 'v3grid__cell--editing': isCellEditing(row, c) }, pinClass(c._idx)]"
             :style="[pinStyle(c._idx), getColumnStyle(c, c._idx ?? i), getCellStyle(row, c, (start ?? 0) + r, c._idx ?? i), getCellHoverStyle(row, c, (start ?? 0) + r, c._idx ?? i)]"
             :data-cell-row-index="(start ?? 0) + r"
             :data-cell-col-index="c._idx ?? i" 
@@ -2091,20 +2091,51 @@ const popupState = ref<{ open: boolean; row: any | null }>({ open: false, row: n
 const customEditorCleanup = new Map<string, () => void>()
 const editingEpoch = ref(0)
 const inlineEditingKeys = ref<Set<string | number>>(new Set())
+// Create a computed array from the Set for better reactivity
+const inlineEditingKeysArray = computed(() => Array.from(inlineEditingKeys.value))
+// Create a reactive map for cell editing state: "rowKey:field" -> boolean
+const cellEditingState = ref<Map<string, boolean>>(new Map())
+
 watch(() => editingState.editingRows.value, () => {
   editingEpoch.value++
   if (isDevMode) {
     console.log('editingEpoch bump', editingEpoch.value)
   }
 })
+watch(inlineEditingKeysArray, () => {
+  editingEpoch.value++
+  if (isDevMode) {
+    console.log('editingEpoch bump from inlineEditingKeys', editingEpoch.value, Array.from(inlineEditingKeys.value))
+  }
+})
+watch(() => cellEditingState.value, () => {
+  editingEpoch.value++
+  if (isDevMode) {
+    console.log('editingEpoch bump from cellEditingState', editingEpoch.value, Array.from(cellEditingState.value.entries()))
+  }
+}, { deep: true })
 
 function startInlineEditingKey(rowKey: string | number | undefined) {
   if (rowKey === undefined) return
   const next = new Set(inlineEditingKeys.value)
   next.add(rowKey)
   inlineEditingKeys.value = next
+  
+  // Update cell editing state for all editable columns in this row
+  const nextCellState = new Map(cellEditingState.value)
+  // Use unlockedCols computed to get the correct columns
+  const colsToCheck = unlockedCols.value.length > 0 ? unlockedCols.value : columns.value.filter(c => c.field && !c.locked)
+  colsToCheck.forEach(col => {
+    if (col.field && columnIsEditable(col, {})) {
+      const cellKey = `${rowKey}:${col.field}`
+      nextCellState.set(cellKey, true)
+    }
+  })
+  cellEditingState.value = nextCellState
+  
   if (isDevMode) {
     console.log('startInlineEditingKey', rowKey, Array.from(inlineEditingKeys.value))
+    console.log('cellEditingState updated', Array.from(cellEditingState.value.entries()))
   }
 }
 
@@ -2114,6 +2145,19 @@ function stopInlineEditingKey(rowKey: string | number | undefined) {
   const next = new Set(inlineEditingKeys.value)
   next.delete(rowKey)
   inlineEditingKeys.value = next
+  
+  // Clear cell editing state for all columns in this row
+  const nextCellState = new Map(cellEditingState.value)
+  // Get all columns to clear editing state
+  const allCols = columns.value.filter(c => c.field)
+  allCols.forEach(col => {
+    if (col.field) {
+      const cellKey = `${rowKey}:${col.field}`
+      nextCellState.delete(cellKey)
+    }
+  })
+  cellEditingState.value = nextCellState
+  
   if (isDevMode) {
     console.log('stopInlineEditingKey', rowKey, Array.from(inlineEditingKeys.value))
   }
@@ -2121,6 +2165,7 @@ function stopInlineEditingKey(rowKey: string | number | undefined) {
 
 function resetInlineEditingKeys() {
   inlineEditingKeys.value = new Set()
+  cellEditingState.value = new Map()
 }
 type PossibleElement = Element | ComponentPublicInstance | null
 
@@ -2203,20 +2248,39 @@ function popupEditableColumns(row: any) {
 }
 
 function isCellEditing(row: any, column: ColumnDef): boolean {
+  // Access reactive values to ensure reactivity
   editingState.editingRows.value
+  inlineEditingKeysArray.value // Use computed array for reactivity
+  cellEditingState.value // Access the reactive map
+  
   const rowKey = getRowKeyValue(row)
-  if (isInlineMode.value && rowKey !== undefined && inlineEditingKeys.value.has(rowKey)) {
-    return true
-  }
   if (!columnIsEditable(column, row)) return false
+  
+  if (isInlineMode.value && rowKey !== undefined) {
+    // Use the reactive map for better reactivity
+    const field = getFieldName(column)
+    if (field) {
+      const cellKey = `${rowKey}:${field}`
+      const isEditing = cellEditingState.value.get(cellKey) === true
+      if (isDevMode && isEditing) {
+        console.log('isCellEditing returning true', { rowKey, field, cellKey, cellState: Array.from(cellEditingState.value.entries()) })
+      }
+      if (isEditing) {
+        return true
+      }
+    }
+    // Fallback to Set check
+    const isEditing = inlineEditingKeys.value.has(rowKey)
+    if (isEditing) {
+      return true
+    }
+  }
+  
   if (isBatchMode.value) {
     const key = getRowKeyValue(row)
     const field = getFieldName(column)
     if (key === undefined || !field) return false
     return editingState.isCellEditing(key, field)
-  }
-  if (isInlineMode.value) {
-    return false
   }
   return false
 }
@@ -3986,8 +4050,31 @@ const orderedCols = computed(() => {
 function headerTemplate(cols: any[]) {
   ensureOrder(); ensureWidths()
 
+  // For multi-level headers, use bodyColumnWidths to match body exactly
+  if (headerLevels.value.hasMultiLevel) {
+    // Use bodyCols and bodyColumnWidths for exact alignment
+    const tracksUnlocked = bodyColumnWidths.value.map((width, idx) => {
+      const c = bodyCols.value[idx]
+      if (!c) return '120px'
+      
+      // If column is selectable, add a checkbox column (52px) before the data column
+      if (c.selectable) {
+        return ['52px', `${width}px`]
+      }
+      
+      // Regular column - use exact width from bodyColumnWidths (same as colgroup and body)
+      return `${width}px`
+    })
+    
+    const sel = props.selectable ? ['52px'] : []
+    const exp = isGrouped.value ? ['28px'] : []
+    const detail = (props.detailTemplate && !props.selectable) ? ['28px'] : []
+    
+    return [...sel, ...exp, ...detail, ...tracksUnlocked.flat()].join(' ')
+  }
+
   // Use ordered leaf columns if multi-level headers, otherwise use provided cols
-  const colsToUse = headerLevels.value.hasMultiLevel ? headerLevels.value.leafColumns : cols
+  const colsToUse = cols
   const ordered = mapColumns(colsToUse)
   const hasPinnedOrLocked = ordered.some(c => c.locked || c.pinned)
 
@@ -3997,32 +4084,15 @@ function headerTemplate(cols: any[]) {
     const idx = ordered.findIndex(o => o.field === c.field)
     const orderIdx = order.value[idx] ?? idx
     
-    // For multi-level headers, use exact widths from columnWidths
-    let width: number
-    if (headerLevels.value.hasMultiLevel) {
-      // Find the index in leafColumns to get the exact width
-      const leafIdx = headerLevels.value.leafColumns.findIndex(lc => lc.field === c.field)
-      if (leafIdx >= 0 && headerLevels.value.columnWidths[leafIdx] != null) {
-        width = headerLevels.value.columnWidths[leafIdx]
-      } else {
-        width = effW(orderIdx, c)
-      }
-    } else {
-      width = effW(orderIdx, c)
-    }
+    const width = effW(orderIdx, c)
 
     // If column is selectable, add a checkbox column (52px) before the data column
     if (c.selectable) {
       const checkboxCol = '52px'
-      const dataCol = !hasPinnedOrLocked && (c.width == null && !headerLevels.value.hasMultiLevel)
+      const dataCol = !hasPinnedOrLocked && (c.width == null)
         ? 'minmax(0px, 1fr)'
         : `${width}px`
       return [checkboxCol, dataCol]
-    }
-
-    // Regular column - use exact width for multi-level headers
-    if (headerLevels.value.hasMultiLevel) {
-      return [`${width}px`]
     }
 
     // For single-level headers, use flexible width if no fixed width
@@ -6157,9 +6227,22 @@ function handleEdit(row: any, field?: string) {
     editingState.startEditingRow(rowKey)
     if (isInlineMode.value) {
       startInlineEditingKey(rowKey)
+      // Force immediate reactivity update
+      editingEpoch.value++
+      // Also force update in nextTick to ensure DOM updates
+      nextTick(() => {
+        editingEpoch.value++
+        if (isDevMode) {
+          console.log('editingEpoch after nextTick', editingEpoch.value)
+          console.log('inlineEditingKeys after nextTick', Array.from(inlineEditingKeys.value))
+          console.log('isCellEditing check for rowKey', rowKey, inlineEditingKeys.value.has(rowKey))
+        }
+      })
     }
     if (isDevMode) {
       console.log('editing rows after start', Array.from(editingState.editingRows.value))
+      console.log('inlineEditingKeys after start', Array.from(inlineEditingKeys.value))
+      console.log('editingEpoch after start', editingEpoch.value)
     }
     clearRowValidation(rowKey)
     if (isPopupMode.value) {
