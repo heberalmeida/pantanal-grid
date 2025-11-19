@@ -137,12 +137,20 @@ const group = ref<GroupDescriptor[]>([
 </template>
 ```
 
+## Alignment
+
+Multi-column headers are automatically aligned with the body columns below. The grid ensures that:
+- Header cells align perfectly with their corresponding data cells
+- Column widths are consistent between headers and body
+- The alignment is maintained even when columns are resized or reordered
+
 ## Important Notes
 
 1. **Leaf columns only**: Only columns with a `field` property can be sorted, filtered, or grouped
 2. **Header columns**: Columns without a `field` are header-only and cannot have data operations
 3. **Nesting depth**: You can nest columns to any depth
 4. **Column width**: Parent column width is calculated from child columns
+5. **Alignment**: Headers are automatically aligned with body columns for perfect visual consistency
 
 ## See Also
 
