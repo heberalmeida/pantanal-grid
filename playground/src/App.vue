@@ -171,6 +171,7 @@ const navSections = [
       { to: '/aggregates', label: 'Aggregates', icon: 'layer-group' },
       { to: '/pagination', label: 'Pagination variants', icon: 'ellipsis' },
       { to: '/pagination/standalone', label: 'Pagination standalone', icon: 'ellipsis' },
+      { to: '/pager/advanced', label: 'Pager Advanced Examples', icon: 'sliders' },
       { to: '/custom-cells', label: 'Custom cells & slots', icon: 'puzzle-piece' },
       { to: '/charts-in-grid', label: 'Charts in Grid', icon: 'chart-line' },
     ],
