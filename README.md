@@ -2,9 +2,10 @@
 
 ![npm version](https://img.shields.io/npm/v/@pantanal/grid?style=flat-square)
 ![npm downloads](https://img.shields.io/npm/dm/@pantanal/grid?style=flat-square)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/heberalmeida/pantanal-grid?style=flat-square)
 ![GitHub stars](https://img.shields.io/github/stars/heberalmeida/pantanal-grid?style=flat-square)
 ![GitHub forks](https://img.shields.io/github/forks/heberalmeida/pantanal-grid?style=flat-square)
-![License](https://img.shields.io/npm/l/@pantanal/grid?style=flat-square)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
 ![Tests](https://img.shields.io/github/actions/workflow/status/heberalmeida/pantanal-grid/publish.yml?label=tests&branch=main&style=flat-square)
 ![Coverage](https://img.shields.io/badge/coverage-68%25-yellow?style=flat-square&logo=vitest)
 ![Deploy](https://img.shields.io/github/actions/workflow/status/heberalmeida/pantanal-grid/deploy-pages.yml?label=deploy&branch=main&style=flat-square)
