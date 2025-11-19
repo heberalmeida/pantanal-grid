@@ -170,6 +170,7 @@ const navSections = [
       { to: '/pagination', label: 'Pagination variants', icon: 'ellipsis' },
       { to: '/pagination/standalone', label: 'Pagination standalone', icon: 'ellipsis' },
       { to: '/custom-cells', label: 'Custom cells & slots', icon: 'puzzle-piece' },
+      { to: '/charts-in-grid', label: 'Charts in Grid', icon: 'chart-line' },
     ],
   },
   {

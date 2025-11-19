@@ -76,6 +76,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/cell-row-column-styling', component: () => import('./pages/CellRowColumnStylingPage.vue') },
   { path: '/styling-props', component: () => import('./pages/StylingPropsPage.vue') },
   { path: '/grid-styles', component: () => import('./pages/GridStylesPage.vue') },
+  { path: '/charts-in-grid', component: () => import('./pages/ChartsInGridPage.vue') },
 ]
 
 export const router = createRouter({
