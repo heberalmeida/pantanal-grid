@@ -95,6 +95,89 @@
       />
       <ExampleCode :source="dataSourceCode" />
     </article>
+
+    <!-- Keyboard Navigation Example -->
+    <article class="space-y-4">
+      <h2 class="text-2xl font-semibold">Keyboard Navigation</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-400">
+        Enable keyboard navigation for better accessibility. Use Arrow keys to navigate, Space to select, Enter to edit, Escape to cancel, Delete to remove.
+      </p>
+
+      <PantanalListView
+        :data-source="navigationData"
+        :template="navigationTemplate"
+        :edit-template="navigationEditTemplate"
+        :navigatable="true"
+        selectable="multiple"
+        :auto-bind="true"
+        @edit="handleNavigationEdit"
+        @save="handleNavigationSave"
+        @cancel="handleNavigationCancel"
+      />
+      <ExampleCode :source="navigationCode" />
+    </article>
+
+    <!-- Complex Template Example -->
+    <article class="space-y-4">
+      <h2 class="text-2xl font-semibold">Complex Template with Multiple Fields</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-400">
+        Use complex templates with multiple fields and styling.
+      </p>
+
+      <PantanalListView
+        :data-source="complexData"
+        :template="complexTemplate"
+        :auto-bind="true"
+      />
+      <ExampleCode :source="complexCode" />
+    </article>
+
+    <!-- Programmatic Control Example -->
+    <article class="space-y-4">
+      <h2 class="text-2xl font-semibold">Programmatic Control</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-400">
+        Control the ListView programmatically using component methods.
+      </p>
+
+      <div class="flex gap-2 mb-4">
+        <button
+          @click="programmaticRef?.refresh()"
+          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Refresh
+        </button>
+        <button
+          @click="programmaticRef?.clearSelection()"
+          class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+        >
+          Clear Selection
+        </button>
+        <button
+          @click="programmaticRef?.selectItem(programmaticData[0])"
+          class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Select First Item
+        </button>
+        <button
+          @click="programmaticRef?.startEdit(programmaticData[0])"
+          class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+        >
+          Edit First Item
+        </button>
+      </div>
+
+      <PantanalListView
+        ref="programmaticRef"
+        :data-source="programmaticData"
+        :template="programmaticTemplate"
+        :edit-template="programmaticEditTemplate"
+        selectable="multiple"
+        :navigatable="true"
+        :auto-bind="true"
+        @change="handleProgrammaticChange"
+      />
+      <ExampleCode :source="programmaticCode" />
+    </article>
   </div>
 </template>
 
@@ -277,6 +360,198 @@ const items = ref([
   { id: 1, name: 'Item 1' },
   { id: 2, name: 'Item 2' },
 ])
+<\/script>`
+
+// Keyboard Navigation Example
+const navigationData = ref([
+  { id: 1, name: 'Task 1', priority: 'High', status: 'Pending' },
+  { id: 2, name: 'Task 2', priority: 'Medium', status: 'In Progress' },
+  { id: 3, name: 'Task 3', priority: 'Low', status: 'Completed' },
+  { id: 4, name: 'Task 4', priority: 'High', status: 'Pending' },
+])
+
+const navigationTemplate = (item: any) => `
+  <div style="padding: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <strong>${item.name}</strong>
+      <div style="color: #6b7280; font-size: 0.875rem;">
+        Priority: ${item.priority} | Status: ${item.status}
+      </div>
+    </div>
+  </div>
+`
+
+const navigationEditTemplate = (item: any) => `
+  <div style="padding: 0.5rem;">
+    <input type="text" value="${item.name}" style="width: 100%; padding: 0.25rem; margin-bottom: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.25rem;" />
+    <select style="width: 100%; padding: 0.25rem; border: 1px solid #d1d5db; border-radius: 0.25rem;">
+      <option ${item.status === 'Pending' ? 'selected' : ''}>Pending</option>
+      <option ${item.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+      <option ${item.status === 'Completed' ? 'selected' : ''}>Completed</option>
+    </select>
+  </div>
+`
+
+function handleNavigationEdit(item: any) {
+  console.log('Edit:', item)
+}
+
+function handleNavigationSave(item: any) {
+  console.log('Save:', item)
+}
+
+function handleNavigationCancel() {
+  console.log('Cancel')
+}
+
+const navigationCode = `<PantanalListView
+  :data-source="items"
+  :template="template"
+  :edit-template="editTemplate"
+  :navigatable="true"
+  selectable="multiple"
+  @edit="handleEdit"
+  @save="handleSave"
+  @cancel="handleCancel"
+/>
+
+<script setup>
+const items = ref([
+  { id: 1, name: 'Task 1', status: 'Pending' },
+  { id: 2, name: 'Task 2', status: 'In Progress' },
+])
+
+// Keyboard shortcuts:
+// Arrow Up/Down - Navigate
+// Space - Select
+// Enter - Edit
+// Escape - Cancel
+// Delete - Remove
+<\/script>`
+
+// Complex Template Example
+const complexData = ref([
+  {
+    id: 1,
+    title: 'Product A',
+    price: 29.99,
+    category: 'Electronics',
+    rating: 4.5,
+    stock: 150,
+    description: 'High-quality product with great features'
+  },
+  {
+    id: 2,
+    title: 'Product B',
+    price: 49.99,
+    category: 'Clothing',
+    rating: 4.8,
+    stock: 75,
+    description: 'Comfortable and stylish design'
+  },
+  {
+    id: 3,
+    title: 'Product C',
+    price: 19.99,
+    category: 'Accessories',
+    rating: 4.2,
+    stock: 200,
+    description: 'Essential accessory for everyday use'
+  },
+])
+
+const complexTemplate = (item: any) => `
+  <div style="padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 0.5rem; background: white;">
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+      <div>
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.25rem; color: #111827;">${item.title}</h3>
+        <span style="font-size: 0.875rem; color: #6b7280; background: #f3f4f6; padding: 0.125rem 0.5rem; border-radius: 0.25rem;">${item.category}</span>
+      </div>
+      <div style="font-size: 1.5rem; font-weight: 700; color: #059669;">$${item.price.toFixed(2)}</div>
+    </div>
+    <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">${item.description}</p>
+    <div style="display: flex; gap: 1rem; font-size: 0.875rem;">
+      <span style="color: #6b7280;">
+        ⭐ ${item.rating}/5.0
+      </span>
+      <span style="color: ${item.stock > 100 ? '#059669' : '#dc2626'};">
+        ${item.stock > 100 ? 'In Stock' : 'Low Stock'} (${item.stock})
+      </span>
+    </div>
+  </div>
+`
+
+const complexCode = `<PantanalListView
+  :data-source="items"
+  :template="template"
+/>
+
+<script setup>
+const template = (item) => \`
+  <div style="padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem;">
+    <h3>\${item.title}</h3>
+    <p>\${item.description}</p>
+    <div>Price: $\${item.price}</div>
+  </div>
+\`
+<\/script>`
+
+// Programmatic Control Example
+const programmaticData = ref([
+  { id: 1, name: 'Item 1', value: 100 },
+  { id: 2, name: 'Item 2', value: 200 },
+  { id: 3, name: 'Item 3', value: 300 },
+  { id: 4, name: 'Item 4', value: 400 },
+])
+
+const programmaticRef = ref<any>()
+
+const programmaticTemplate = (item: any) => `
+  <div style="padding: 0.5rem; display: flex; justify-content: space-between;">
+    <strong>${item.name}</strong>
+    <span>Value: ${item.value}</span>
+  </div>
+`
+
+const programmaticEditTemplate = (item: any) => `
+  <div style="padding: 0.5rem;">
+    <input type="text" value="${item.name}" style="width: 100%; padding: 0.25rem; margin-bottom: 0.5rem;" />
+    <input type="number" value="${item.value}" style="width: 100%; padding: 0.25rem;" />
+  </div>
+`
+
+function handleProgrammaticChange(items: any[]) {
+  console.log('Selection changed:', items)
+}
+
+const programmaticCode = `<template>
+  <div>
+    <div class="controls">
+      <button @click="listViewRef?.refresh()">Refresh</button>
+      <button @click="listViewRef?.clearSelection()">Clear Selection</button>
+      <button @click="listViewRef?.selectItem(items[0])">Select First</button>
+    </div>
+    
+    <PantanalListView
+      ref="listViewRef"
+      :data-source="items"
+      :template="template"
+      selectable="multiple"
+      @change="handleChange"
+    />
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import { PantanalListView } from '@pantanal/grid'
+
+const listViewRef = ref()
+const items = ref([...])
+
+function handleChange(selectedItems) {
+  console.log('Selected:', selectedItems)
+}
 <\/script>`
 </script>
 
