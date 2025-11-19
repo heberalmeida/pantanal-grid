@@ -224,7 +224,7 @@ All core features support server-side operations for handling large datasets:
 
 - Explore [Advanced Features](/guide/editing) like editing and export
 - Learn about [Column Management](/guide/column-management)
-- Check out [Examples](/examples) to see these features in action
+- Check out [Examples](/examples/basic) to see these features in action
 - Read the [API Reference](/api/grid) for detailed documentation
 
 

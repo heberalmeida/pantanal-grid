@@ -582,7 +582,7 @@ Pantanal Grid supports all modern browsers:
 - Check out [Quick Start](/guide/quick-start) for a complete example
 - Browse [Examples](/examples/basic) to see Pantanal Grid in action
 - Read the [API Reference](/api/grid) for detailed documentation
-- Explore [Advanced Features](/examples) for grouping, editing, and more
+- Explore [Advanced Features](/examples/grouping) for grouping, editing, and more
 
 
 
