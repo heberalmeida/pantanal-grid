@@ -3475,7 +3475,7 @@ function renderRowTemplate(row: any, rowIndex: number, isAlt: boolean = false): 
     const result = template(row, rowIndex)
     return typeof result === 'string' ? result : null
   }
-  // String template - simple replacement (similar to Kendo's template syntax)
+  // String template - simple replacement
   // Replace #: FieldName # with actual values
   let html = template
   if (row && typeof row === 'object') {
@@ -7028,7 +7028,7 @@ async function exportToPdf() {
           // Add PDF template (header/footer) if provided
           if (props.pdfTemplate) {
             const templateHtml = renderPdfTemplate(props.pdfTemplate, pageNumber, totalPages)
-            // Note: jsPDF doesn't directly support HTML templates in the way Kendo does
+            // Note: jsPDF doesn't directly support HTML templates
             // This is a simplified implementation - full HTML rendering would require additional libraries
             // For now, we'll add it as text if it's simple text
             if (templateHtml && !templateHtml.includes('<')) {
@@ -7603,7 +7603,7 @@ defineExpose({
   getOptions,
   setOptions,
   exportToPdf,
-  saveAsPdf: exportToPdf, // Alias for Kendo UI compatibility
+  saveAsPdf: exportToPdf, // Alias for saveAsPdf method
   exportToCSV,
   exportToExcel,
   exportToDocx,

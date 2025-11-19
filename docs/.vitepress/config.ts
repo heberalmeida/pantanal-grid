@@ -53,6 +53,8 @@ export default defineConfig({
           text: 'Basic Examples',
           items: [
             { text: 'Basic Grid', link: '/examples/basic' },
+            { text: 'Complete Example', link: '/examples/complete-example' },
+            { text: 'ListView', link: '/examples/listview' },
             { text: 'Sorting', link: '/examples/sorting' },
             { text: 'Filtering', link: '/examples/filtering' },
             { text: 'Pagination', link: '/examples/pagination' },
@@ -116,6 +118,7 @@ export default defineConfig({
           items: [
             { text: 'PantanalGrid', link: '/api/grid' },
             { text: 'PantanalColumn', link: '/api/column' },
+            { text: 'PantanalListView', link: '/api/listview' },
             { text: 'Data Sources', link: '/api/data-sources' }
           ]
         },

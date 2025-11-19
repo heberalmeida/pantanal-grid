@@ -196,7 +196,6 @@ const columns: ColumnDef[] = [
 
 ## Suggested Links
 
-* [`Scrollable` in Kendo UI Grid for jQuery](https://docs.telerik.com/kendo-ui/api/javascript/ui/grid/configuration/scrollable)
 * [Virtual Scrolling Guide](/guide/virtual-scrolling)
 * [Grid Props API](/api/grid-props)
 

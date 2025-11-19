@@ -77,6 +77,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/styling-props', component: () => import('./pages/StylingPropsPage.vue') },
   { path: '/grid-styles', component: () => import('./pages/GridStylesPage.vue') },
   { path: '/charts-in-grid', component: () => import('./pages/ChartsInGridPage.vue') },
+  { path: '/complete-example', component: () => import('./pages/CompleteExamplePage.vue') },
+  { path: '/listview', component: () => import('./pages/ListViewPage.vue') },
 ]
 
 export const router = createRouter({

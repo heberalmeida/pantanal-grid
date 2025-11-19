@@ -96,6 +96,8 @@ const navSections = [
       { to: '/docs', label: 'Documentation', icon: 'book-open' },
       { to: '/setup', label: 'Setup & usage', icon: 'circle-play' },
       { to: '/basic', label: 'Basic grid', icon: 'table-cells-large' },
+      { to: '/complete-example', label: 'Complete Example', icon: 'star' },
+      { to: '/listview', label: 'ListView', icon: 'list' },
       { to: '/grid-events', label: 'Grid events', icon: 'bell' },
       { to: '/editing', label: 'Editing', icon: 'pen' },
       { to: '/filtering', label: 'Filtering', icon: 'filter' },

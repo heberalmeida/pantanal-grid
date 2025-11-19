@@ -408,7 +408,6 @@ watchEffect(async () => {
 
 ## Suggested Links
 
-* [Aggregates in Kendo UI Grid for jQuery](https://docs.telerik.com/kendo-ui/controls/data-management/grid/aggregates)
 * [Grouping Guide](/guide/grouping) - Complete grouping documentation
 * [Grouping Examples](/examples/grouping) - Grouping examples with aggregates
 * [Grid Props API](/api/grid-props) - All grid props
