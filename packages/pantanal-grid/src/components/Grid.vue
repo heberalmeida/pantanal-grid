@@ -1429,8 +1429,8 @@
       <!-- Bottom row: pagination controls -->
       <div v-if="!props.virtual && props.pageable !== false" style="display:flex;justify-content:center;align-items:center;width:100%;overflow-x:auto;">
         <GridPagination 
-          :page="page.value" 
-          :pageSize="pageSize.value" 
+          :page="page?.value ?? props.page ?? 1" 
+          :pageSize="pageSize?.value ?? props.pageSize ?? 20" 
           :total="total" 
           :variant="props.paginationVariant ?? 'simple'"
           :showText="props.paginationShowText ?? true" 
