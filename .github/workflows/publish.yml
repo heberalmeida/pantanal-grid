@@ -97,6 +97,30 @@ jobs:
           # Update package.json using node
           node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = '$NEW_VERSION'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
 
+      - name: Verify NPM authentication
+        working-directory: packages/pantanal-grid
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::error::NPM_TOKEN secret is missing or empty."
+            echo "Add a publish token at: Repository Settings → Secrets and variables → Actions → NPM_TOKEN"
+            exit 1
+          fi
+
+          echo "Checking npm authentication..."
+          NPM_USER=$(npm whoami 2>&1) || {
+            echo "::error::npm whoami failed. The NPM_TOKEN is invalid or expired."
+            echo "Create a new token at https://www.npmjs.com/settings/~tokens"
+            echo "Use type 'Granular Access Token' with Read and Write for @pantanal/grid (or all packages)."
+            exit 1
+          }
+          echo "Authenticated as: $NPM_USER"
+
+          if ! npm access ls-packages "$NPM_USER" 2>/dev/null | grep -q '@pantanal/grid'; then
+            echo "::warning::@pantanal/grid not listed in npm access for $NPM_USER — publish may still work if you own the scope."
+          fi
+
       - name: Publish to NPM
         working-directory: packages/pantanal-grid
         env:
@@ -111,7 +135,14 @@ jobs:
           if npm view "$PKG@$VER" version >/dev/null 2>&1; then
             echo "$PKG@$VER already exists in registry. Skipping publish."
           else
-            npm publish --access public
+            if ! npm publish --access public; then
+              echo "::error::npm publish failed."
+              echo "Common causes for E404 on scoped packages:"
+              echo "  - NPM_TOKEN expired or revoked"
+              echo "  - Token lacks publish access to @pantanal scope"
+              echo "  - NPM_TOKEN secret not configured in GitHub Actions"
+              exit 1
+            fi
             echo "✅ Published: $PKG@$VER"
           fi
 
