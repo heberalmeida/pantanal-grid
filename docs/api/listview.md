@@ -11,10 +11,6 @@ slug: api_listviewcomponent
 
 # ListView
 
-## Directive
-
-`pantanal-listview`
-
 ## Component
 
 ```vue

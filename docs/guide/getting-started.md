@@ -169,7 +169,7 @@ npm install docx@^8.0.0 file-saver@^2.0.5
   :rows="rows"
   :columns="columns"
   key-field="id"
-  :toolbar="['word']"
+  :toolbar="['docx']"
 />
 ```
 
@@ -526,10 +526,12 @@ Pantanal Grid uses CSS variables for theming. You can customize colors and spaci
 
 ```css
 :root {
-  --v3grid-border-color: #e5e7eb;
-  --v3grid-header-bg: #f9fafb;
-  --v3grid-row-hover: #f3f4f6;
-  --v3grid-primary: #3b82f6;
+  --grid-bg: #ffffff;
+  --grid-border: #e5e7eb;
+  --grid-text: #0f172a;
+  --grid-header: #f8fafc;
+  --grid-accent: #18a058;
+  --grid-row-hover-bg: rgba(0, 0, 0, 0.02);
 }
 ```
 

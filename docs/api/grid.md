@@ -11,10 +11,6 @@ slug: api_pantanalgridcomponent
 
 # PantanalGrid
 
-## Directive
-
-`pantanal-grid`
-
 ## Component
 
 ```vue
@@ -72,7 +68,7 @@ slug: api_pantanalgridcomponent
 | `filterable` | `boolean` | `true` | Enable column filtering globally |
 | `filterableMode` | `'row' \| 'menu' \| 'menu, row' \| false` | `'row'` | Filter UI mode |
 | `filterableExtra` | `boolean` | `false` | Allow second filter criterion |
-| `showFilterRow` | `boolean` | - | Show filter row (auto-determined by filterableMode) |
+| `showFilterRow` | `boolean` | `true` | Show filter row |
 | `pageable` | `boolean` | `true` | Enable pagination |
 | `virtual` | `boolean` | `false` | Enable virtual scrolling |
 | `editable` | `boolean \| 'inline' \| 'popup' \| 'batch'` | `false` | Enable inline editing |

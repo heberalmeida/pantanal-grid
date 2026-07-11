@@ -25,4 +25,14 @@ describe('PantanalGrid filtering', () => {
     expect(bodyRows.length).toBe(1)
     expect(bodyRows[0].text()).toMatch(/Gamma/)
   })
+
+  it('shows filter row by default without per-column filterable flag', async () => {
+    const defaultColumns: ColumnDef<Row>[] = [
+      { field: 'id', title: 'ID', width: 100 },
+      { field: 'name', title: 'Name', width: 160 },
+    ]
+    const wrapper = mount(Grid, { props: { rows, columns: defaultColumns, responsive: 'table' } })
+    expect(wrapper.find('.v3grid__filters').exists()).toBe(true)
+    expect(wrapper.findAll('.v3grid__filters input.v3grid__input[type="text"]').length).toBeGreaterThan(0)
+  })
 })

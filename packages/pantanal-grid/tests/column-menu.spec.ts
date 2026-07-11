@@ -464,16 +464,14 @@ describe('Column Menu', () => {
 
       const menu = wrapper.find('.v3grid__column-menu')
       if (menu.exists()) {
-        const sortButtons = menu.findAll('.v3grid__column-menu-action')
-        if (sortButtons.length > 0) {
-          // Click sort ascending (usually first button)
-          await sortButtons[0].trigger('click')
-          await nextTick()
+        const sortAscending = menu.findAll('.v3grid__column-menu-action')
+          .find(btn => btn.text().includes('Sort Ascending'))
+        expect(sortAscending).toBeDefined()
+        await sortAscending!.trigger('click')
+        await nextTick()
 
-          // Check if sort event was emitted
-          const events = wrapper.emitted('update:sort')
-          expect(events).toBeDefined()
-        }
+        const events = wrapper.emitted('update:sort')
+        expect(events).toBeDefined()
       }
     }
   })

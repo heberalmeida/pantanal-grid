@@ -4,7 +4,7 @@ Pantanal Grid provides flexible sorting capabilities with support for single and
 
 ## Basic Sorting
 
-Enable sorting by setting `sortable: true` on columns:
+Sorting is enabled by default on all columns. Disable it globally with `:sortable="false"` or per column with `sortable: false`:
 
 ```vue
 <script setup lang="ts">
@@ -13,8 +13,8 @@ import { PantanalGrid, type ColumnDef, type SortDescriptor } from '@pantanal/gri
 
 const rows = ref([/* ... */])
 const columns: ColumnDef[] = [
-  { field: 'name', title: 'Name', sortable: true },
-  { field: 'price', title: 'Price', sortable: true }
+  { field: 'name', title: 'Name' },
+  { field: 'price', title: 'Price' }
 ]
 
 const sort = ref<SortDescriptor[]>([])

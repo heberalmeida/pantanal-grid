@@ -29,8 +29,9 @@ createApp(App).mount('#app')</code></pre>
 
       <h3 class="text-lg font-semibold mt-6">3. Render your first grid</h3>
       <p class="text-sm text-slate-600 dark:text-slate-200">
-        Drop the component into a page and pass <code>rows</code> and <code>columns</code>. Columns accept the same
-        options you see across the playground demos.
+        Drop the component into a page and pass <code>rows</code> and <code>columns</code>. Sorting and filtering are
+        enabled by default — set <code>:sortable="false"</code> or <code>:filterable="false"</code> to disable globally,
+        or override per column.
       </p>
       <pre class="code-block"><code>&lt;script setup lang="ts"&gt;
 import { PantanalGrid } from '@pantanal/grid'
@@ -42,7 +43,7 @@ const rows = [
 
 const columns = [
   { field: 'id', title: 'ID', width: 80 },
-  { field: 'name', title: 'Name', sortable: true, filterable: true },
+  { field: 'name', title: 'Name' },
   { field: 'price', title: 'Price', format: (v:number) =&gt; `$ ${v.toFixed(2)}` },
 ]
 &lt;/script&gt;

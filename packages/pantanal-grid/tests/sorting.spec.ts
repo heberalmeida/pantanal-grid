@@ -20,4 +20,15 @@ describe('PantanalGrid sorting', () => {
     await headers[0].trigger('click') // desc
     expect(wrapper.find('img[alt="sort-desc"]').exists()).toBe(true)
   })
+
+  it('sorts by default without per-column sortable flag', async () => {
+    const defaultColumns: ColumnDef<Row>[] = [
+      { field: 'id', title: 'ID', width: 100 },
+      { field: 'name', title: 'Name', width: 160 },
+    ]
+    const wrapper = mount(Grid, { props: { rows, columns: defaultColumns } })
+    const headers = wrapper.findAll('.v3grid__head .v3grid__headercell')
+    await headers[0].trigger('click')
+    expect(wrapper.find('img[alt="sort-asc"]').exists()).toBe(true)
+  })
 })

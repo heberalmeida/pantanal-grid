@@ -378,6 +378,8 @@ Most props have sensible defaults. Here are the key defaults:
   pageableInfo: true,
   sortable: true,
   filterable: true,
+  filterableMode: 'row',
+  showFilterRow: true,
   sortableAllowUnsort: true,
   autoBind: true
 }

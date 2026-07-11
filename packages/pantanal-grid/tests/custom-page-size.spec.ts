@@ -180,11 +180,12 @@ describe('PantanalGrid Custom Page Size', () => {
           pageable: true,
           pageablePageSizes: [10, 20, 50, 100],
           pageableCustomPageSize: false,
+          filterable: false,
           keyField: 'id',
         },
       })
 
-      const select = wrapper.find('select')
+      const select = wrapper.find('.v3grid__footer select')
       if (select.exists()) {
         const options = select.findAll('option')
         const customOption = options.find(opt => opt.attributes('value') === 'custom')
@@ -200,16 +201,16 @@ describe('PantanalGrid Custom Page Size', () => {
           pageable: true,
           pageablePageSizes: [10, 20, 50, 100],
           pageableCustomPageSize: true,
+          filterable: false,
           keyField: 'id',
         },
       })
 
-      const select = wrapper.find('select')
-      if (select.exists()) {
-        const options = select.findAll('option')
-        const customOption = options.find(opt => opt.attributes('value') === 'custom')
-        expect(customOption).toBeDefined()
-      }
+      const select = wrapper.find('.v3grid__footer select')
+      expect(select.exists()).toBe(true)
+      const options = select.findAll('option')
+      const customOption = options.find(opt => opt.attributes('value') === 'custom')
+      expect(customOption).toBeDefined()
     })
 
     it('should pass customPageSize prop to Pagination component', () => {
@@ -220,23 +221,16 @@ describe('PantanalGrid Custom Page Size', () => {
           pageable: true,
           pageablePageSizes: [10, 20, 50, 100],
           pageableCustomPageSize: true,
+          filterable: false,
           keyField: 'id',
         },
       })
 
-      // Find pagination component by looking for the component or its props
-      const paginationComponent = wrapper.findComponent({ name: 'GridPagination' })
-      if (paginationComponent.exists()) {
-        expect(paginationComponent.props('customPageSize')).toBe(true)
-      } else {
-        // Alternative: check if custom option appears in select
-        const select = wrapper.find('select')
-        if (select.exists()) {
-          const options = select.findAll('option')
-          const customOption = options.find(opt => opt.attributes('value') === 'custom')
-          expect(customOption).toBeDefined()
-        }
-      }
+      const select = wrapper.find('.v3grid__footer select')
+      expect(select.exists()).toBe(true)
+      const customOption = select.findAll('option')
+        .find(opt => opt.attributes('value') === 'custom')
+      expect(customOption).toBeDefined()
     })
   })
 })

@@ -4,7 +4,7 @@ Pantanal Grid provides powerful filtering capabilities with multiple operators, 
 
 ## Basic Filtering
 
-Enable filtering by setting `filterable: true` on columns:
+Filtering is enabled by default on all columns. The filter row is shown automatically. Disable it globally with `:filterable="false"` or per column with `filterable: false`:
 
 ```vue
 <script setup lang="ts">
@@ -13,8 +13,8 @@ import { PantanalGrid, type ColumnDef, type FilterDescriptor } from '@pantanal/g
 
 const rows = ref([/* ... */])
 const columns: ColumnDef[] = [
-  { field: 'name', title: 'Name', filterable: true },
-  { field: 'price', title: 'Price', filterable: true }
+  { field: 'name', title: 'Name' },
+  { field: 'price', title: 'Price' }
 ]
 
 const filter = ref<FilterDescriptor[]>([])

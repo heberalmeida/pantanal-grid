@@ -45,3 +45,4 @@ Arquivo.zip
 # VitePress
 docs/.vitepress/cache/
 docs/.vitepress/dist/
+.gitacc.json

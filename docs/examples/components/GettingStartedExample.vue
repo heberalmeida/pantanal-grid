@@ -11,18 +11,18 @@ const rows = ref([
 ])
 
 const columns: ColumnDef[] = [
-  { field: 'id', title: 'ID', width: 80, sortable: true },
-  { field: 'name', title: 'Name', sortable: true, filterable: true },
-  { field: 'price', title: 'Price', sortable: true, format: (v: number) => `$${v.toFixed(2)}` },
-  { field: 'category', title: 'Category', filterable: true },
-  { field: 'stock', title: 'Stock', sortable: true }
+  { field: 'id', title: 'ID', width: 80 },
+  { field: 'name', title: 'Name' },
+  { field: 'price', title: 'Price', format: (v: number) => `$${v.toFixed(2)}` },
+  { field: 'category', title: 'Category' },
+  { field: 'stock', title: 'Stock' }
 ]
 </script>
 
 <template>
   <div class="getting-started-example">
     <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-      A simple grid with sorting, filtering, and formatting. Try clicking column headers to sort, or use the filter inputs.
+      A simple grid with sorting, filtering, and formatting enabled by default. Try clicking column headers to sort, or use the filter inputs.
     </p>
     <PantanalGrid
       :rows="rows"
