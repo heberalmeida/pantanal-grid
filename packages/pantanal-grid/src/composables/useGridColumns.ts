@@ -53,7 +53,7 @@ function resolveFormat<T>(
         return Number.isNaN(date.getTime()) ? String(value ?? '') : intl.formatDate(date, { datetime: 'short' })
       }
     case 'number':
-      return (value) => intl.formatNumber(Number(value))
+      return (value) => intl.formatNumber(Number(value), { style: 'decimal' })
     case 'boolean':
       return (value) => (value ? 'Yes' : 'No')
     default:

@@ -1,10 +1,10 @@
-import { computed, type ComputedRef, type MaybeRef, unref } from 'vue'
+import { computed, type MaybeRef, unref } from 'vue'
 import type { ColumnDef, DataProvider, GridProps, Row, SelectionMode } from '../types'
 import { getGridPresetProps, mergeGridProps, type GridPreset } from './grid-presets'
-import { buildGridColumns, useGridColumns, type SimpleColumnInput, type UseGridColumnsOptions } from './useGridColumns'
+import { buildGridColumns, type SimpleColumnInput, type UseGridColumnsOptions } from './useGridColumns'
 import { useGridState, type UseGridStateOptions } from './useGridState'
 
-export interface UseGridOptions<T = Row> extends UseGridStateOptions, UseGridColumnsOptions {
+export interface UseGridOptions<T extends Row = Row> extends UseGridStateOptions, UseGridColumnsOptions {
   rows: MaybeRef<T[]>
   keyField: keyof T | string
   columns?: MaybeRef<SimpleColumnInput<T>[]>
@@ -18,7 +18,7 @@ export interface UseGridOptions<T = Row> extends UseGridStateOptions, UseGridCol
   locale?: MaybeRef<string>
 }
 
-export function useGrid<T = Row>(options: UseGridOptions<T>) {
+export function useGrid<T extends Row = Row>(options: UseGridOptions<T>) {
   const state = useGridState(options)
   const preset = options.preset ?? 'interactive'
 
@@ -33,20 +33,22 @@ export function useGrid<T = Row>(options: UseGridOptions<T>) {
     })
   })
 
-  const gridProps: ComputedRef<Partial<GridProps<T>> & {
+  const gridProps = computed((): Partial<GridProps<T>> & {
     rows: T[]
     columns: ColumnDef<T>[]
     keyField: keyof T | string
-  }> = computed(() => mergeGridProps(getGridPresetProps(preset), {
+  } => ({
+    ...mergeGridProps(getGridPresetProps<T>(preset), {
+      selectable: options.selectable,
+      serverSide: options.serverSide,
+      total: unref(options.total),
+      dataProvider: options.dataProvider,
+      height: options.height,
+      locale: unref(options.locale),
+    }),
     rows: unref(options.rows),
     columns: columnDefs.value,
     keyField: options.keyField,
-    selectable: options.selectable,
-    serverSide: options.serverSide,
-    total: unref(options.total),
-    dataProvider: options.dataProvider,
-    height: options.height,
-    locale: unref(options.locale),
   }))
 
   return {

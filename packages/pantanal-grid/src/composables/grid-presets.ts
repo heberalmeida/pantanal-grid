@@ -1,4 +1,4 @@
-import type { GridProps } from '../types'
+import type { GridProps, Row } from '../types'
 
 export type GridPreset = 'minimal' | 'interactive' | 'selectable' | 'server' | 'readonly'
 
@@ -53,16 +53,16 @@ export const GRID_PRESETS: Record<GridPreset, Partial<GridProps>> = {
   },
 }
 
-export function getGridPresetProps(preset?: GridPreset): Partial<GridProps> {
+export function getGridPresetProps<T extends Row = Row>(preset?: GridPreset): Partial<GridProps<T>> {
   if (!preset) return {}
-  return { ...GRID_PRESETS[preset] }
+  return { ...GRID_PRESETS[preset] } as Partial<GridProps<T>>
 }
 
-export function mergeGridProps(
-  base: Partial<GridProps>,
-  overrides: Partial<GridProps> & { preset?: GridPreset },
-): Partial<GridProps> {
-  const result: Partial<GridProps> = { ...base }
+export function mergeGridProps<T extends Row = Row>(
+  base: Partial<GridProps<T>>,
+  overrides: Partial<GridProps<T>> & { preset?: GridPreset },
+): Partial<GridProps<T>> {
+  const result: Partial<GridProps<T>> = { ...base }
   for (const [key, value] of Object.entries(overrides)) {
     if (key === 'preset' || value === undefined) continue
     ;(result as Record<string, unknown>)[key] = value
