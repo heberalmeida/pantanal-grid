@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { PantanalGrid, type ColumnDef } from '@pantanal/grid'
+import { PantanalSimpleGrid, useGrid } from '@pantanal/grid'
 
 const rows = ref([
   { id: 1, name: 'Product A', price: 29.99, category: 'Electronics', stock: 150 },
@@ -10,25 +10,32 @@ const rows = ref([
   { id: 5, name: 'Product E', price: 59.99, category: 'Clothing', stock: 100 }
 ])
 
-const columns: ColumnDef[] = [
-  { field: 'id', title: 'ID', width: 80 },
-  { field: 'name', title: 'Name' },
-  { field: 'price', title: 'Price', format: (v: number) => `$${v.toFixed(2)}` },
-  { field: 'category', title: 'Category' },
-  { field: 'stock', title: 'Stock' }
-]
+const { sort, filter, page, pageSize, gridProps } = useGrid({
+  rows,
+  keyField: 'id',
+  preset: 'interactive',
+  locale: 'en',
+  columns: [
+    { field: 'id', title: 'ID', width: 80 },
+    { field: 'name', title: 'Name' },
+    { field: 'price', title: 'Price', format: 'currency' },
+    { field: 'category', title: 'Category' },
+    { field: 'stock', title: 'Stock', type: 'number' },
+  ],
+})
 </script>
 
 <template>
   <div class="getting-started-example">
     <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-      A simple grid with sorting, filtering, and formatting enabled by default. Try clicking column headers to sort, or use the filter inputs.
+      Simple API with <code>useGrid</code> and <code>PantanalSimpleGrid</code>. Sorting, filtering, pagination and keyboard navigation come from the <code>interactive</code> preset.
     </p>
-    <PantanalGrid
-      :rows="rows"
-      :columns="columns"
-      key-field="id"
-      locale="en"
+    <PantanalSimpleGrid
+      v-bind="gridProps"
+      v-model:sort="sort"
+      v-model:filter="filter"
+      v-model:page="page"
+      v-model:page-size="pageSize"
       :height="350"
       responsive="table"
     />
@@ -56,5 +63,3 @@ const columns: ColumnDef[] = [
   margin-bottom: 1rem;
 }
 </style>
-
-

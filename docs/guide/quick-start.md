@@ -2,9 +2,59 @@
 
 This guide will walk you through creating your first Pantanal Grid with common features enabled.
 
+## Simple API (recommended)
+
+For most apps, use `useGrid` + `PantanalSimpleGrid` instead of configuring dozens of props manually:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { PantanalSimpleGrid, useGrid } from '@pantanal/grid'
+
+const rows = ref([
+  { id: 1, name: 'Product A', price: 29.99 },
+  { id: 2, name: 'Product B', price: 49.99 },
+])
+
+const { sort, filter, page, pageSize, gridProps } = useGrid({
+  rows,
+  keyField: 'id',
+  preset: 'interactive',
+  columns: [
+    { field: 'id', width: 80 },
+    { field: 'name' },
+    { field: 'price', format: 'currency' },
+  ],
+})
+</script>
+
+<template>
+  <PantanalSimpleGrid
+    v-bind="gridProps"
+    v-model:sort="sort"
+    v-model:filter="filter"
+    v-model:page="page"
+    v-model:page-size="pageSize"
+    :height="400"
+  />
+</template>
+```
+
+### Presets
+
+| Preset | Use case |
+|--------|----------|
+| `minimal` | Read-only table with sort, filter and pagination |
+| `interactive` | Default dashboard grid with keyboard navigation |
+| `selectable` | Interactive grid + multiple row selection |
+| `server` | Server-side paging, sort and filter |
+| `readonly` | Display-only, no interaction |
+
+Override any preset default by passing the prop directly to `PantanalSimpleGrid`.
+
 ## Basic Example
 
-Here's a minimal working example:
+Here's a minimal working example using the full API:
 
 ```vue
 <script setup lang="ts">
