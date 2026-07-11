@@ -11,6 +11,9 @@
       '--footer-h': footerH + 'px',
       ...getGridContainerStyle()
     }">
+    <div style="display: none" aria-hidden="true">
+      <slot />
+    </div>
     <!-- TOOLBAR -->
     <div v-if="props.toolbar" class="v3grid__toolbar">
       <!-- Custom toolbar template -->
@@ -1712,8 +1715,8 @@
 </template>
 
 <script setup lang="ts">
-import { Fragment, computed, defineComponent, h, isVNode, nextTick, onBeforeUnmount, onMounted, ref, useSlots, watch } from 'vue'
-import type { CSSProperties, ComponentPublicInstance, PropType, VNode, VNodeArrayChildren } from 'vue'
+import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, provide, ref, useSlots, watch } from 'vue'
+import type { CSSProperties, ComponentPublicInstance, PropType } from 'vue'
 import type { ColumnDef, ColumnTemplateContext, ColumnTemplateFn, FilterDescriptor, GridEmits, GridProps, SortDescriptor, ImageColumnOptions, Row } from '../types'
 import { applyFilter, applySort, paginate } from '../composables/data'
 import { useColumnResize } from '../composables/resize'
@@ -1729,7 +1732,6 @@ import { getMessages } from '../i18n/messages'
 import { buildGroupTree, flattenTree, computeAggregates, type GroupDescriptor, type GroupNode } from '../composables/group'
 import type { AggregateName, Messages } from '../types'
 import GridPagination from './Pagination.vue'
-import PantanalColumn from './Column.vue'
 
 // Import SVG assets - Vite will process these correctly with base paths
 import iconArrowRightSrc from '../assets/arrow-right.svg?url'
@@ -1906,39 +1908,56 @@ const TemplateRenderer = defineComponent({
   }
 })
 
-function collectSlotColumns(children: VNodeArrayChildren | VNode | undefined, acc: ColumnDef[]): void {
-  if (!children) return
-  if (Array.isArray(children)) {
-    children.forEach(child => collectSlotColumns(child as any, acc))
-    return
-  }
-  if (!isVNode(children)) return
-  if (children.type === Fragment) {
-    collectSlotColumns(children.children as any, acc)
-    return
-  }
-  if (children.type === PantanalColumn) {
-    const vnodeProps = (children.props ?? {}) as Record<string, unknown>
-    const instanceProps = (children.component?.props ?? {}) as Record<string, unknown>
-    const rawProps = { ...instanceProps, ...vnodeProps }
-    const column: Partial<ColumnDef> = {}
-    Object.entries(rawProps).forEach(([prop, value]) => {
-      if (prop === 'key' || prop === 'ref') return
-      ;(column as any)[prop] = value
-    })
-    const tpl = rawProps.template
-    if (typeof tpl === 'function') {
-      column.template = tpl as ColumnTemplateFn
-    } else if (typeof tpl === 'string') {
-      const candidate = slots[tpl as keyof typeof slots]
-      if (candidate) {
-        column.template = ((ctx) => candidate(ctx as any)) as ColumnTemplateFn
-      }
-    }
-    if (column.field == null) return
-    acc.push(column as ColumnDef)
-  }
+const declarativeColumnsByField = ref(new Map<string, ColumnDef>())
+const declarativeColumnSignatures = ref(new Map<string, string>())
+
+function columnRegistrationSignature(column: ColumnDef): string {
+  const { template, ...rest } = column
+  const templatePart = typeof template === 'string'
+    ? `s:${template}`
+    : typeof template === 'function'
+      ? 'f'
+      : 'n'
+  return `${JSON.stringify(rest)}|${templatePart}`
 }
+
+function resolveDeclarativeColumnTemplate(template: ColumnDef['template']): ColumnDef['template'] {
+  if (typeof template === 'string') {
+    const candidate = slots[template as keyof typeof slots]
+    if (candidate) {
+      return ((ctx) => candidate(ctx as any)) as ColumnTemplateFn
+    }
+  }
+  return template
+}
+
+function registerDeclarativeColumn(column: ColumnDef) {
+  if (column.field == null) return
+  const field = String(column.field)
+  const signature = columnRegistrationSignature(column)
+  if (declarativeColumnSignatures.value.get(field) === signature) return
+  const next: ColumnDef = {
+    ...column,
+    template: resolveDeclarativeColumnTemplate(column.template),
+  }
+  const map = new Map(declarativeColumnsByField.value)
+  map.set(field, next)
+  declarativeColumnsByField.value = map
+  declarativeColumnSignatures.value.set(field, signature)
+}
+
+function unregisterDeclarativeColumn(field: string) {
+  if (!declarativeColumnsByField.value.has(field)) return
+  const map = new Map(declarativeColumnsByField.value)
+  map.delete(field)
+  declarativeColumnsByField.value = map
+  declarativeColumnSignatures.value.delete(field)
+}
+
+provide('pantanalGridRegisterColumn', registerDeclarativeColumn)
+provide('pantanalGridUnregisterColumn', unregisterDeclarativeColumn)
+
+const declarativeColumnDefs = computed(() => Array.from(declarativeColumnsByField.value.values()))
 
 const msgs = computed(() => getMessages(String(props.locale ?? 'en'), props.messages))
 
@@ -2325,14 +2344,6 @@ function isCellEditing(row: any, column: ColumnDef): boolean {
   return false
 }
 
-const slotColumnDefs = computed<ColumnDef[]>(() => {
-  const acc: ColumnDef[] = []
-  const defaultSlot = slots.default as unknown as (() => VNodeArrayChildren | undefined) | undefined
-  const children = defaultSlot ? defaultSlot() : undefined
-  collectSlotColumns(children as any, acc)
-  return acc
-})
-
 function normalizeCommand(command: ColumnDef['command']): ColumnDef['command'] {
   if (!command) return undefined
   if (Array.isArray(command)) return command
@@ -2348,7 +2359,7 @@ function normalizeCommand(command: ColumnDef['command']): ColumnDef['command'] {
 }
 
 const columns = computed<ColumnDef[]>(() => {
-  const cols = (slotColumnDefs.value.length > 0 ? slotColumnDefs.value : (props.columns ?? [])) as ColumnDef[]
+  const cols = (declarativeColumnDefs.value.length > 0 ? declarativeColumnDefs.value : (props.columns ?? [])) as ColumnDef[]
   return cols.map((col, idx) => {
     let fieldStr = col.field ? String(col.field) : null
     const enhancedCol = { ...col } as ColumnDef
