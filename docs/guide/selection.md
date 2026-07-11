@@ -15,11 +15,6 @@ const rows = ref([/* ... */])
 const columns: ColumnDef[] = [/* ... */]
 
 const selectedKeys = ref<number[]>([])
-
-function handleSelectionChange(keys: number[]) {
-  selectedKeys.value = keys
-  console.log('Selected rows:', keys)
-}
 </script>
 
 <template>
@@ -28,7 +23,7 @@ function handleSelectionChange(keys: number[]) {
     :columns="columns"
     key-field="id"
     selectable="multiple"
-    @selectionChange="handleSelectionChange"
+    v-model:selectedKeys="selectedKeys"
   />
 </template>
 ```

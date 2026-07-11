@@ -235,14 +235,13 @@ describe('PantanalGrid Persist State', () => {
     // selectedKeys may be undefined if nothing is selected, which is valid
   })
 
-  it('should set selectedKeys via setOptions when persistSelection is enabled', async () => {
+  it('should set selectedKeys via setOptions', async () => {
     const wrapper = mount(Grid, {
       props: {
         rows,
         columns,
         keyField: 'id',
         selectable: 'multiple',
-        persistSelection: true,
       },
     })
 
@@ -258,9 +257,7 @@ describe('PantanalGrid Persist State', () => {
     await nextTick()
 
     const savedOptions = vm.getOptions()
-    if (savedOptions.selectedKeys) {
-      expect(savedOptions.selectedKeys).toEqual(newOptions.selectedKeys)
-    }
+    expect(savedOptions.selectedKeys).toEqual(newOptions.selectedKeys)
   })
 
   it('should work with partial options (only setting some properties)', async () => {

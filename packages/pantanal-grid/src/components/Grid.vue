@@ -2199,8 +2199,34 @@ function normalizeValidationMessage(value: string | boolean): string {
   return msgs.value.invalidValue ?? 'Invalid value'
 }
 
-const selectedKeys = ref<Set<unknown>>(new Set())
+const selectedKeys = ref<Set<unknown>>(new Set(props.selectedKeys ?? []))
 const keyFieldStr = computed(() => String(props.keyField))
+
+function selectedKeysArray(): unknown[] {
+  return Array.from(selectedKeys.value)
+}
+
+function selectionKeysEqual(current: Set<unknown>, keys: unknown[]): boolean {
+  if (current.size !== keys.length) return false
+  return keys.every(key => current.has(key))
+}
+
+function syncSelectedKeysFromProps(keys: unknown[] | undefined) {
+  if (keys === undefined) return
+  if (selectionKeysEqual(selectedKeys.value, keys)) return
+  selectedKeys.value = new Set(keys)
+}
+
+function emitSelectionChange() {
+  const keys = selectedKeysArray()
+  emit('selectionChange', keys)
+  emit('update:selectedKeys', keys)
+}
+
+watch(() => props.selectedKeys, (keys) => {
+  syncSelectedKeysFromProps(keys)
+})
+
 function isSelected(row: any) { return selectedKeys.value.has(row[keyFieldStr.value]) }
 function toggleRow(row: any) {
   if (!props.selectable) return
@@ -2211,7 +2237,7 @@ function toggleRow(row: any) {
     s.has(k) ? s.delete(k) : s.add(k)
     selectedKeys.value = s
   }
-  emit('selectionChange', Array.from(selectedKeys.value))
+  emitSelectionChange()
 }
 function toggleAllVisible(current: Array<Record<string, unknown>>) {
   if (!props.selectable) return
@@ -2223,7 +2249,7 @@ function toggleAllVisible(current: Array<Record<string, unknown>>) {
     allSelected ? s.delete(key) : s.add(key)
   })
   selectedKeys.value = s
-  emit('selectionChange', Array.from(selectedKeys.value))
+  emitSelectionChange()
 }
 
 function getRowKeyValue(row: any): string | number | undefined {
@@ -5216,7 +5242,7 @@ const keyboardNav = useKeyboardNav({
         s.has(k) ? s.delete(k) : s.add(k)
         selectedKeys.value = s
       }
-      emit('selectionChange', Array.from(selectedKeys.value))
+      emitSelectionChange()
     }
   },
   onSelectRange: (startRow: number, endRow: number) => {
@@ -5236,7 +5262,7 @@ const keyboardNav = useKeyboardNav({
       }
     }
     selectedKeys.value = s
-    emit('selectionChange', Array.from(selectedKeys.value))
+    emitSelectionChange()
   },
   onToggleGroup: (key: string) => {
     toggleGroupKey(key)
@@ -7322,6 +7348,7 @@ onMounted(() => {
   // Load persisted selection if persistSelection is enabled
   if (props.persistSelection && loaded.selectedKeys && Array.isArray(loaded.selectedKeys)) {
     selectedKeys.value = new Set(loaded.selectedKeys)
+    emitSelectionChange()
   }
 })
 watch([sortState, page, pageSize, filters, order, widths], () => {
@@ -7386,8 +7413,8 @@ function getOptions(): GridOptions {
     options.widths = [...widths.value]
   }
   
-  if (props.persistSelection && selectedKeys.value.size > 0) {
-    options.selectedKeys = Array.from(selectedKeys.value)
+  if (selectedKeys.value.size > 0) {
+    options.selectedKeys = selectedKeysArray()
   }
   
   // Note: group is controlled via props, so we don't include it in getOptions
@@ -7423,8 +7450,9 @@ function setOptions(options: GridOptions): void {
     ) as any
   }
   
-  if (options.selectedKeys !== undefined && props.persistSelection) {
+  if (options.selectedKeys !== undefined) {
     selectedKeys.value = new Set(options.selectedKeys)
+    emitSelectionChange()
   }
   
   // Note: group state is controlled via props, so it cannot be set via setOptions

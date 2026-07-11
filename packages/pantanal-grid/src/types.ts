@@ -347,6 +347,7 @@ export interface GridProps<T = Row> {
   page?: number
   pageSize?: number
   selectable?: SelectionMode
+  selectedKeys?: unknown[]
 
   striped?: boolean
 
@@ -538,6 +539,7 @@ export interface GridEmits {
   (e: 'update:pageSize', value: number): void
   (e: 'update:filter', value: FilterDescriptor[]): void
   (e: 'update:group', value: GroupDescriptor[]): void
+  (e: 'update:selectedKeys', value: unknown[]): void
   (e: 'selectionChange', value: unknown[]): void
   (e: 'rowClick', value: unknown): void
   (e: 'refresh'): void

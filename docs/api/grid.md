@@ -320,7 +320,7 @@ gridRef.value?.getOptions()
 
 ##### returns
 
-Returns the current grid state including sort, filter, page, pageSize, column order, widths, and selectedKeys (if persistSelection is enabled).
+Returns the current grid state including sort, filter, page, pageSize, column order, widths, and selectedKeys.
 
 **Returns:** `GridOptions`
 

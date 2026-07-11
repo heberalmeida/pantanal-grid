@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
+import { ref } from 'vue'
 import Grid from '../src/components/Grid.vue'
 import type { ColumnDef } from '../src/types'
 
@@ -85,6 +86,77 @@ describe('PantanalGrid selection', () => {
     }
     // In single mode, only one row should be selected (we allow 0 or 1)
     expect(checked.length).toBeLessThanOrEqual(1)
+  })
+
+  it('should emit update:selectedKeys when using v-model', async () => {
+    const selectedKeys = ref<number[]>([])
+    const wrapper = mount(Grid, {
+      props: {
+        rows,
+        columns,
+        selectable: 'multiple',
+        keyField: 'id',
+        responsive: 'table',
+        selectedKeys: selectedKeys.value,
+        'onUpdate:selectedKeys': (keys: number[]) => { selectedKeys.value = keys },
+      },
+    })
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    const rowCheckboxes = wrapper.findAll('.v3grid__row input[type="checkbox"]')
+    if (rowCheckboxes.length === 0) return
+
+    ;(rowCheckboxes[0].element as HTMLInputElement).checked = true
+    await rowCheckboxes[0].trigger('change')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.emitted('update:selectedKeys')).toBeTruthy()
+    expect(selectedKeys.value).toContain(1)
+  })
+
+  it('should sync selection from v-model prop', async () => {
+    const wrapper = mount(Grid, {
+      props: {
+        rows,
+        columns,
+        selectable: 'multiple',
+        keyField: 'id',
+        responsive: 'table',
+        selectedKeys: [2],
+      },
+    })
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    const rowCheckboxes = wrapper.findAll('.v3grid__row input[type="checkbox"]')
+    if (rowCheckboxes.length < 2) return
+
+    expect((rowCheckboxes[1].element as HTMLInputElement).checked).toBe(true)
+    expect((rowCheckboxes[0].element as HTMLInputElement).checked).toBe(false)
+  })
+
+  it('should clear selection when v-model prop is emptied', async () => {
+    const wrapper = mount(Grid, {
+      props: {
+        rows,
+        columns,
+        selectable: 'multiple',
+        keyField: 'id',
+        responsive: 'table',
+        selectedKeys: [1, 2],
+      },
+    })
+    await wrapper.vm.$nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    await wrapper.setProps({ selectedKeys: [] })
+    await wrapper.vm.$nextTick()
+
+    const rowCheckboxes = wrapper.findAll('.v3grid__row input[type="checkbox"]')
+    if (rowCheckboxes.length === 0) return
+
+    expect(rowCheckboxes.every(cb => !(cb.element as HTMLInputElement).checked)).toBe(true)
   })
 
   it('should emit selectionChange when row is selected', async () => {
