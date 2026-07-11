@@ -5208,6 +5208,7 @@ function isFocusedRow(rowIndex: number): boolean {
 const keyboardNav = useKeyboardNav({
   rowsCount: navigableRowsCount,
   colsCount: computed(() => unlockedCols.value.length),
+  rootEl,
   navigatable: props.navigatable ?? false,
   selectable: props.selectable,
   sortable: true,

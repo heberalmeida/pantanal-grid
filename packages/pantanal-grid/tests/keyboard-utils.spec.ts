@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { useKeyboardNav } from '../src/composables/keyboard'
 import type { SortDescriptor } from '../src/types'
 
@@ -494,7 +494,51 @@ describe('useKeyboardNav - Unit Tests', () => {
       const event = new KeyboardEvent('keydown', { key: 'ArrowDown' })
       onKeydown(event, 0, 0)
 
-      expect(focusRow.value).toBe(0) // Should not change
+      expect(focusRow.value).toBe(0)
+    })
+  })
+
+  describe('scrollCellIntoView scoping', () => {
+    it('should only focus cells inside rootEl', async () => {
+      const root1 = document.createElement('div')
+      root1.className = 'v3grid'
+      const cell1 = document.createElement('div')
+      cell1.className = 'v3grid__cell'
+      cell1.setAttribute('data-focus', 'true')
+      cell1.setAttribute('data-row-index', '0')
+      cell1.setAttribute('data-col-index', '0')
+      cell1.setAttribute('tabindex', '0')
+      root1.appendChild(cell1)
+
+      const root2 = document.createElement('div')
+      root2.className = 'v3grid'
+      const cell2 = document.createElement('div')
+      cell2.className = 'v3grid__cell'
+      cell2.setAttribute('data-row-index', '1')
+      cell2.setAttribute('data-col-index', '0')
+      cell2.setAttribute('tabindex', '0')
+      cell2.scrollIntoView = vi.fn()
+      const focusSpy = vi.spyOn(cell2, 'focus')
+      root2.appendChild(cell2)
+
+      document.body.appendChild(root1)
+      document.body.appendChild(root2)
+
+      const { onKeydown } = useKeyboardNav({
+        navigatable: true,
+        rowsCount: 2,
+        colsCount: 1,
+        rootEl: ref(root2),
+      })
+
+      onKeydown(new KeyboardEvent('keydown', { key: 'ArrowDown' }), 0, 0)
+      await nextTick()
+
+      expect(focusSpy).toHaveBeenCalled()
+      expect(document.activeElement).not.toBe(cell1)
+
+      document.body.removeChild(root1)
+      document.body.removeChild(root2)
     })
   })
 })

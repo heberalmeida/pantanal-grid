@@ -11,6 +11,7 @@ export interface KeyboardNavState {
 export interface KeyboardNavOptions {
   rowsCount: number | Ref<number> | ComputedRef<number>
   colsCount: number | Ref<number> | ComputedRef<number>
+  rootEl?: Ref<HTMLElement | null>
   navigatable?: boolean
   selectable?: boolean | 'single' | 'multiple'
   sortable?: boolean
@@ -41,6 +42,15 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
   const focusCol = ref(0)
   const lastSelectedRow = ref<number | null>(null)
   const isShiftSelecting = ref(false)
+
+  function getRootElement(): HTMLElement | null {
+    if (!options.rootEl) return null
+    return options.rootEl.value
+  }
+
+  function getQueryScope(): ParentNode {
+    return getRootElement() ?? document
+  }
 
   function onKeydown(e: KeyboardEvent, rowIndex?: number, colIndex?: number) {
     if (!options.navigatable) return
@@ -251,12 +261,13 @@ export function useKeyboardNav(options: KeyboardNavOptions = {} as KeyboardNavOp
     focusCol.value = colIndex
     
     nextTick(() => {
-      const cell = document.querySelector(`[data-focus="true"]`) as HTMLElement
+      const scope = getQueryScope()
+      const cell = scope.querySelector(`[data-focus="true"]`) as HTMLElement
       if (cell) {
         cell.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
         cell.focus()
       } else {
-        const cells = document.querySelectorAll('.v3grid__cell[tabindex="0"]')
+        const cells = scope.querySelectorAll('.v3grid__cell[tabindex="0"]')
         if (cells.length > 0) {
           const targetCell = Array.from(cells).find(c => {
             const cellRow = (c as HTMLElement).getAttribute('data-row-index')
